@@ -2,10 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://ckuiskbegrlrethnlhzq.supabase.co";
-const SUPABASE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+const supabase = createClient(
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+);
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -36,79 +38,49 @@ export default function LoginPage() {
 
     try {
       if (isSignup) {
-        const response = await fetch(
-          `${SUPABASE_URL}/auth/v1/signup`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: SUPABASE_KEY,
-            },
-            body: JSON.stringify({
-              email: email.trim(),
-              password,
-            }),
-          }
-        );
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: "https://localplatform-one.vercel.app",
+          },
+        });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data?.msg ||
-              data?.message ||
-              data?.error_description ||
-              "Account creation failed."
-          );
+        if (error) {
+          setErrorMessage(error.message);
+          setLoading(false);
+          return;
         }
 
-        setMessage(
-          "Account created successfully. Please check your email to confirm your account."
-        );
-        setEmail("");
-        setPassword("");
+        if (data.user) {
+          setMessage(
+            "Account created successfully. Please check your email to confirm your account."
+          );
+          setEmail("");
+          setPassword("");
+        }
       } else {
-        const response = await fetch(
-          `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: SUPABASE_KEY,
-            },
-            body: JSON.stringify({
-              email: email.trim(),
-              password,
-            }),
-          }
-        );
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
 
-        const data = await response.json();
+        if (error) {
+          setErrorMessage(error.message);
+          setLoading(false);
+          return;
+        }
 
-        if (!response.ok) {
-          throw new Error(
-            data?.msg ||
-              data?.message ||
-              data?.error_description ||
-              "Login failed."
+        if (!data.session) {
+          setErrorMessage(
+            "Login successful, but session was not created. Please try again."
           );
+          setLoading(false);
+          return;
         }
 
-        if (!data.access_token || !data.refresh_token) {
-          throw new Error("Login successful but session was not received.");
-        }
-
-        localStorage.setItem(
-          "localplatform_access_token",
-          data.access_token
-        );
-
-        localStorage.setItem(
-          "localplatform_refresh_token",
-          data.refresh_token
-        );
-
-        window.location.href = "/list-business";
+        window.location.assign("/list-business");
+        return;
       }
     } catch (error) {
       setErrorMessage(
@@ -116,9 +88,9 @@ export default function LoginPage() {
           ? error.message
           : "Something went wrong. Please try again."
       );
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
