@@ -335,7 +335,7 @@ export default function ListBusinessPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const checkUser = async () => {
+    async function checkUser() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -346,7 +346,7 @@ export default function ListBusinessPage() {
       }
 
       setUserId(session.user.id);
-    };
+    }
 
     checkUser();
   }, [router]);
@@ -421,7 +421,9 @@ export default function ListBusinessPage() {
 
         setLatitude(lat);
         setLongitude(lng);
-        setMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+        setMapsUrl(
+          `https://www.google.com/maps?q=${lat},${lng}`
+        );
 
         setMessage("✓ Current location detect ho gayi.");
         setLocationLoading(false);
@@ -456,7 +458,47 @@ export default function ListBusinessPage() {
     }
 
     setImage(file);
+
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
     setImagePreview(URL.createObjectURL(file));
+  };
+
+  const validateStep = (targetStep: number) => {
+    setError("");
+
+    if (targetStep >= 2 && !businessName.trim()) {
+      setError("Business Name required hai.");
+      setStep(1);
+      return false;
+    }
+
+    if (targetStep >= 2 && !category) {
+      setError("Category required hai.");
+      setStep(1);
+      return false;
+    }
+
+    if (targetStep >= 4 && !city.trim()) {
+      setError("City required hai.");
+      setStep(4);
+      return false;
+    }
+
+    return true;
+  };
+
+  const goNext = () => {
+    if (!validateStep(step + 1)) return;
+
+    if (step === 1 && !description) {
+      generateListing();
+      return;
+    }
+
+    setStep((old) => Math.min(5, old + 1));
   };
 
   const publishBusiness = async () => {
@@ -492,12 +534,16 @@ export default function ListBusinessPage() {
       let imageUrl = "";
 
       if (image) {
-        const extension = image.name.split(".").pop() || "jpg";
-        const path = `${userId}/${Date.now()}.${extension}`;
+        const extension =
+          image.name.split(".").pop() || "jpg";
 
-        const { error: uploadError } = await supabase.storage
-          .from("business-images")
-          .upload(path, image);
+        const path =
+          `${userId}/${Date.now()}.${extension}`;
+
+        const { error: uploadError } =
+          await supabase.storage
+            .from("business-images")
+            .upload(path, image);
 
         if (uploadError) {
           throw uploadError;
@@ -516,27 +562,22 @@ export default function ListBusinessPage() {
           business_name: businessName.trim(),
           category: category.trim(),
           subcategory: subcategory.trim() || null,
-
           services,
-
           description: description.trim() || null,
-          short_description: shortDescription.trim() || null,
+          short_description:
+            shortDescription.trim() || null,
           seo_keywords: seoKeywords,
           highlights,
-
           address: address.trim() || null,
           area: area.trim() || null,
           landmark: landmark.trim() || null,
           city: city.trim(),
           state: state.trim() || null,
           pincode: pincode.trim() || null,
-
           latitude,
           longitude,
           maps_url: mapsUrl.trim() || null,
-
           phone: phone.trim() || null,
-
           owner_id: userId,
           image_url: imageUrl || null,
         });
@@ -563,470 +604,832 @@ export default function ListBusinessPage() {
     }
   };
 
+  const steps = [
+    "Business",
+    "Profile",
+    "Services",
+    "Location",
+    "Publish",
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
 
-        <div className="mb-8">
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
-            FREE AI ASSISTANT
-          </span>
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:min-h-[72px] sm:px-6">
 
-          <h1 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
-            Apna Business List Karo
-          </h1>
+          <Link
+            href="/"
+            className="shrink-0 text-[21px] font-extrabold tracking-tight sm:text-3xl"
+          >
+            <span className="text-blue-600">Local</span>
+            <span className="text-orange-500">Platform</span>
+          </Link>
 
-          <p className="mt-2 text-slate-600">
-            Kam typing karo — LocalPlatform automatically aapki listing
-            prepare karega.
-          </p>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:px-4 sm:text-sm"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/"
+              className="hidden rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 sm:block sm:text-sm"
+            >
+              Home
+            </Link>
+          </div>
         </div>
+      </header>
 
-        <div className="mb-6 grid grid-cols-5 gap-1 rounded-2xl bg-white p-2 shadow-sm">
-          {["Business", "Profile", "Services", "Location", "Publish"].map(
-            (item, index) => {
+      {/* PAGE INTRO */}
+      <section className="bg-gradient-to-br from-blue-700 via-blue-700 to-indigo-800">
+        <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+
+          <div className="max-w-3xl text-white">
+            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-blue-50 sm:text-xs">
+              Free Business Listing
+            </span>
+
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+              Apna Business List Karo
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
+              Kam typing karo — LocalPlatform automatically
+              aapki listing prepare karega.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* PROGRESS */}
+      <section className="mx-auto w-full max-w-7xl px-4 pt-5 sm:px-6 sm:pt-7">
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+
+          {/* MOBILE */}
+          <div className="flex items-center gap-2 sm:hidden">
+            {steps.map((item, index) => {
               const number = index + 1;
+              const active = step === number;
+              const completed = number < step;
+
+              return (
+                <div
+                  key={item}
+                  className="flex min-w-0 flex-1 items-center"
+                >
+                  <button
+                    type="button"
+                    disabled={number > step}
+                    onClick={() => {
+                      if (number <= step) {
+                        setStep(number);
+                      }
+                    }}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
+                      active
+                        ? "bg-blue-600 text-white"
+                        : completed
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-slate-100 text-slate-400"
+                    }`}
+                  >
+                    {completed ? "✓" : number}
+                  </button>
+
+                  {index < steps.length - 1 && (
+                    <div
+                      className={`mx-1 h-1 flex-1 rounded-full ${
+                        number < step
+                          ? "bg-blue-500"
+                          : "bg-slate-100"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* MOBILE CURRENT STEP NAME */}
+          <div className="mt-2 text-center text-xs font-bold text-slate-600 sm:hidden">
+            Step {step} of 5 — {steps[step - 1]}
+          </div>
+
+          {/* DESKTOP */}
+          <div className="hidden sm:grid sm:grid-cols-5 sm:gap-2">
+            {steps.map((item, index) => {
+              const number = index + 1;
+              const active = step === number;
+              const completed = number < step;
 
               return (
                 <button
                   key={item}
                   type="button"
+                  disabled={number > step}
                   onClick={() => {
                     if (number <= step) {
                       setStep(number);
                     }
                   }}
-                  className={`rounded-xl px-2 py-3 text-xs font-bold sm:text-sm ${
-                    step === number
-                      ? "bg-blue-600 text-white"
-                      : number < step
+                  className={`rounded-xl px-3 py-3 text-sm font-bold transition ${
+                    active
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : completed
                         ? "bg-blue-50 text-blue-700"
                         : "text-slate-400"
                   }`}
                 >
-                  {number}. {item}
+                  {completed ? "✓ " : `${number}. `}
+                  {item}
                 </button>
               );
-            }
-          )}
+            })}
+          </div>
         </div>
+      </section>
 
+      {/* MESSAGES */}
+      <section className="mx-auto w-full max-w-7xl px-4 pt-5 sm:px-6">
         {error && (
-          <div className="mb-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700">
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mb-5 rounded-xl bg-green-50 p-4 text-sm font-semibold text-green-700">
+          <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
             {message}
           </div>
         )}
+      </section>
 
-        <div className="rounded-3xl bg-white p-5 shadow-sm sm:p-8">
+      {/* FORM */}
+      <section className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
 
-          {step === 1 && (
-            <>
-              <h2 className="text-2xl font-black text-slate-900">
-                Business Information
-              </h2>
+          {/* MAIN FORM */}
+          <div className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
 
-              <p className="mt-1 text-sm text-slate-500">
-                Sirf basic details do.
-              </p>
-
-              <div className="mt-7 grid gap-5 md:grid-cols-2">
-
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold">
-                    Business Name *
-                  </label>
-
-                  <input
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="Sunlight Architects"
-                    className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
-
+            {/* STEP 1 */}
+            {step === 1 && (
+              <>
                 <div>
-                  <label className="mb-2 block text-sm font-bold">
-                    Category *
-                  </label>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Step 1
+                  </p>
 
-                  <select
-                    value={category}
-                    onChange={(e) => {
-                      setCategory(e.target.value);
-                      setServices([]);
-                      setSubcategory("");
-                    }}
-                    className="w-full rounded-xl border bg-white px-4 py-3"
-                  >
-                    <option value="">Select Category</option>
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
+                    Business Information
+                  </h2>
 
-                    {CATEGORIES.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold">
-                    Phone
-                  </label>
-
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="9876543210"
-                    inputMode="tel"
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold">
-                    City
-                  </label>
-
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Lucknow"
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold">
-                    Business ke baare me 1-2 line
-                  </label>
-
-                  <textarea
-                    value={ownerInput}
-                    onChange={(e) => setOwnerInput(e.target.value)}
-                    rows={4}
-                    placeholder="Hum Lucknow me house planning aur 3D elevation ka kaam karte hain..."
-                    className="w-full resize-none rounded-xl border px-4 py-3"
-                  />
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Hindi/Hinglish me bhi likh sakte ho.
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Sirf basic details do. Baaki listing
+                    automatically prepare hogi.
                   </p>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                onClick={generateListing}
-                disabled={generating}
-                className="mt-7 w-full rounded-xl bg-blue-600 px-5 py-4 font-black text-white hover:bg-blue-700 disabled:opacity-60"
-              >
-                {generating
-                  ? "Listing Prepare Ho Rahi Hai..."
-                  : "✨ Automatically Meri Listing Banao"}
-              </button>
-            </>
-          )}
+                <div className="mt-7 grid gap-5 sm:grid-cols-2">
 
-          {step === 2 && (
-            <>
-              <h2 className="text-2xl font-black text-slate-900">
-                Business Profile
-              </h2>
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-sm font-bold">
+                      Business Name *
+                    </label>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Content ko publish se pehle edit kar sakte ho.
-              </p>
+                    <input
+                      value={businessName}
+                      onChange={(e) =>
+                        setBusinessName(e.target.value)
+                      }
+                      placeholder="Sunlight Architects"
+                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:text-base"
+                    />
+                  </div>
 
-              <div className="mt-6 space-y-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold">
+                      Category *
+                    </label>
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold">
-                    Short Description
-                  </label>
-
-                  <input
-                    value={shortDescription}
-                    onChange={(e) =>
-                      setShortDescription(e.target.value)
-                    }
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold">
-                    Description
-                  </label>
-
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={8}
-                    className="w-full resize-none rounded-xl border px-4 py-3 leading-7"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold">
-                    Subcategory
-                  </label>
-
-                  <input
-                    value={subcategory}
-                    onChange={(e) => setSubcategory(e.target.value)}
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
-                </div>
-
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <h2 className="text-2xl font-black text-slate-900">
-                Services
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Category ke according services automatically suggest ki gayi
-                hain.
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {availableServices.map((service) => {
-                  const selected = services.includes(service);
-
-                  return (
-                    <button
-                      key={service}
-                      type="button"
-                      onClick={() => toggleService(service)}
-                      className={`rounded-full border px-4 py-2 text-sm font-semibold ${
-                        selected
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-slate-300 bg-white text-slate-700"
-                      }`}
+                    <select
+                      value={category}
+                      onChange={(e) => {
+                        setCategory(e.target.value);
+                        setServices([]);
+                        setSubcategory("");
+                        setDescription("");
+                        setShortDescription("");
+                      }}
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-500"
                     >
-                      {selected ? "✓ " : "+ "}
-                      {service}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+                      <option value="">
+                        Select Category
+                      </option>
 
-          {step === 4 && (
-            <>
-              <h2 className="text-2xl font-black text-slate-900">
-                Business Location
-              </h2>
+                      {CATEGORIES.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <button
-                type="button"
-                onClick={detectLocation}
-                disabled={locationLoading}
-                className="mt-6 w-full rounded-2xl border-2 border-blue-600 bg-blue-50 px-5 py-4 font-black text-blue-700 disabled:opacity-60"
-              >
-                📍{" "}
-                {locationLoading
-                  ? "Location Detect Ho Rahi Hai..."
-                  : "Use My Current Location"}
-              </button>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold">
+                      Phone
+                    </label>
 
-              {latitude !== null && longitude !== null && (
-                <div className="mt-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
-                  ✓ Location detected
-                  <div className="mt-1 text-xs">
-                    {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                    <input
+                      value={phone}
+                      onChange={(e) =>
+                        setPhone(e.target.value)
+                      }
+                      placeholder="9876543210"
+                      inputMode="tel"
+                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-sm font-bold">
+                      City
+                    </label>
+
+                    <input
+                      value={city}
+                      onChange={(e) =>
+                        setCity(e.target.value)
+                      }
+                      placeholder="Lucknow"
+                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-sm font-bold">
+                      Business ke baare me 1-2 line
+                    </label>
+
+                    <textarea
+                      value={ownerInput}
+                      onChange={(e) =>
+                        setOwnerInput(e.target.value)
+                      }
+                      rows={4}
+                      placeholder="Hum Lucknow me house planning aur 3D elevation ka kaam karte hain..."
+                      className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm leading-6 outline-none focus:border-blue-500"
+                    />
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      Hindi/Hinglish me bhi likh sakte ho.
+                    </p>
                   </div>
                 </div>
-              )}
+              </>
+            )}
 
-              <div className="mt-6 grid gap-5 md:grid-cols-2">
+            {/* STEP 2 */}
+            {step === 2 && (
+              <>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Step 2
+                  </p>
 
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold">
-                    Complete Address
-                  </label>
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
+                    Business Profile
+                  </h2>
 
-                  <textarea
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-xl border px-4 py-3"
-                  />
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Automatically generated content ko
+                    publish se pehle edit kar sakte ho.
+                  </p>
                 </div>
 
-                <input
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  placeholder="Area / Locality"
-                  className="rounded-xl border px-4 py-3"
-                />
+                <div className="mt-7 space-y-5">
 
-                <input
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                  placeholder="Landmark"
-                  className="rounded-xl border px-4 py-3"
-                />
+                  <div>
+                    <label className="mb-2 block text-sm font-bold">
+                      Short Description
+                    </label>
 
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City *"
-                  className="rounded-xl border px-4 py-3"
-                />
+                    <input
+                      value={shortDescription}
+                      onChange={(e) =>
+                        setShortDescription(e.target.value)
+                      }
+                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <input
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  placeholder="State"
-                  className="rounded-xl border px-4 py-3"
-                />
+                  <div>
+                    <label className="mb-2 block text-sm font-bold">
+                      Description
+                    </label>
 
-                <input
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
-                  placeholder="Pincode"
-                  inputMode="numeric"
-                  maxLength={6}
-                  className="rounded-xl border px-4 py-3"
-                />
+                    <textarea
+                      value={description}
+                      onChange={(e) =>
+                        setDescription(e.target.value)
+                      }
+                      rows={8}
+                      className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm leading-7 outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <input
-                  value={mapsUrl}
-                  onChange={(e) => setMapsUrl(e.target.value)}
-                  placeholder="Google Maps Location"
-                  className="rounded-xl border px-4 py-3"
-                />
-              </div>
-            </>
-          )}
+                  <div>
+                    <label className="mb-2 block text-sm font-bold">
+                      Subcategory
+                    </label>
 
-          {step === 5 && (
-            <>
-              <h2 className="text-2xl font-black text-slate-900">
-                Photo & Publish
-              </h2>
+                    <input
+                      value={subcategory}
+                      onChange={(e) =>
+                        setSubcategory(e.target.value)
+                      }
+                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
-              <label className="mt-6 flex min-h-52 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-slate-50">
+            {/* STEP 3 */}
+            {step === 3 && (
+              <>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Step 3
+                  </p>
 
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Business preview"
-                    className="h-52 w-full object-cover"
-                  />
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
+                    Services
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Customers ko jo services milti hain,
+                    unhe select karo.
+                  </p>
+                </div>
+
+                {availableServices.length > 0 ? (
+                  <div className="mt-7 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {availableServices.map((service) => {
+                      const selected =
+                        services.includes(service);
+
+                      return (
+                        <button
+                          key={service}
+                          type="button"
+                          onClick={() =>
+                            toggleService(service)
+                          }
+                          className={`flex min-w-0 items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold transition ${
+                            selected
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${
+                              selected
+                                ? "bg-white/20"
+                                : "bg-slate-100"
+                            }`}
+                          >
+                            {selected ? "✓" : "+"}
+                          </span>
+
+                          <span className="min-w-0 break-words">
+                            {service}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <div className="text-center">
-                    <div className="text-4xl">📷</div>
+                  <div className="mt-7 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                    <div className="text-3xl">🛠️</div>
 
-                    <p className="mt-2 font-bold">
-                      Upload Business Photo
-                    </p>
-
-                    <p className="text-xs text-slate-500">
-                      JPG / PNG • Maximum 5 MB
+                    <p className="mt-2 text-sm font-semibold text-slate-600">
+                      Is category ke liye predefined
+                      services available nahi hain.
                     </p>
                   </div>
                 )}
 
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) =>
-                    handleImage(e.target.files?.[0])
-                  }
-                />
-              </label>
+                <div className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm font-semibold text-blue-800">
+                  {services.length} service
+                  {services.length === 1 ? "" : "s"} selected
+                </div>
+              </>
+            )}
 
-              <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-                <h3 className="text-xl font-black text-slate-900">
-                  {businessName}
-                </h3>
+            {/* STEP 4 */}
+            {step === 4 && (
+              <>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Step 4
+                  </p>
 
-                <p className="mt-1 font-semibold text-blue-600">
-                  {subcategory || category}
-                </p>
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
+                    Business Location
+                  </h2>
 
-                <p className="mt-4 text-sm leading-6 text-slate-600">
-                  {description}
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {services.slice(0, 10).map((service) => (
-                    <span
-                      key={service}
-                      className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700"
-                    >
-                      {service}
-                    </span>
-                  ))}
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Address aur location details customers
+                    ko business tak pahunchne mein help karengi.
+                  </p>
                 </div>
 
-                <p className="mt-5 text-sm text-slate-600">
-                  📍{" "}
-                  {[area, city, state, pincode]
-                    .filter(Boolean)
-                    .join(", ")}
-                </p>
-              </div>
+                <button
+                  type="button"
+                  onClick={detectLocation}
+                  disabled={locationLoading}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-blue-600 bg-blue-50 px-5 py-4 text-sm font-extrabold text-blue-700 transition hover:bg-blue-100 disabled:opacity-60"
+                >
+                  📍
+                  {locationLoading
+                    ? "Location Detect Ho Rahi Hai..."
+                    : "Use My Current Location"}
+                </button>
 
-              <button
-                type="button"
-                onClick={publishBusiness}
-                disabled={saving}
-                className="mt-7 w-full rounded-xl bg-blue-600 px-5 py-4 font-black text-white hover:bg-blue-700 disabled:opacity-60"
-              >
-                {saving
-                  ? "Publishing..."
-                  : "🚀 Publish Business"}
-              </button>
-            </>
-          )}
+                {latitude !== null &&
+                  longitude !== null && (
+                    <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                      <p className="text-sm font-bold text-emerald-700">
+                        ✓ Location detected
+                      </p>
 
-          {step < 5 && (
-            <div className="mt-8 flex justify-between border-t pt-6">
+                      <p className="mt-1 text-xs text-emerald-600">
+                        {latitude.toFixed(6)},{" "}
+                        {longitude.toFixed(6)}
+                      </p>
+                    </div>
+                  )}
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-sm font-bold">
+                      Complete Address
+                    </label>
+
+                    <textarea
+                      value={address}
+                      onChange={(e) =>
+                        setAddress(e.target.value)
+                      }
+                      rows={3}
+                      placeholder="House / Shop / Office address"
+                      className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <input
+                    value={area}
+                    onChange={(e) =>
+                      setArea(e.target.value)
+                    }
+                    placeholder="Area / Locality"
+                    className="h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                  />
+
+                  <input
+                    value={landmark}
+                    onChange={(e) =>
+                      setLandmark(e.target.value)
+                    }
+                    placeholder="Landmark"
+                    className="h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                  />
+
+                  <input
+                    value={city}
+                    onChange={(e) =>
+                      setCity(e.target.value)
+                    }
+                    placeholder="City *"
+                    className="h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                  />
+
+                  <input
+                    value={state}
+                    onChange={(e) =>
+                      setState(e.target.value)
+                    }
+                    placeholder="State"
+                    className="h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                  />
+
+                  <input
+                    value={pincode}
+                    onChange={(e) =>
+                      setPincode(
+                        e.target.value.replace(/\D/g, "")
+                      )
+                    }
+                    placeholder="Pincode"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                  />
+
+                  <input
+                    value={mapsUrl}
+                    onChange={(e) =>
+                      setMapsUrl(e.target.value)
+                    }
+                    placeholder="Google Maps URL"
+                    className="h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* STEP 5 */}
+            {step === 5 && (
+              <>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Step 5
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl">
+                    Photo & Publish
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Final preview check karo aur business
+                    publish karo.
+                  </p>
+                </div>
+
+                {/* IMAGE */}
+                <label className="mt-7 block cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-blue-400 hover:bg-blue-50">
+
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Business preview"
+                        className="h-56 w-full object-cover sm:h-72"
+                      />
+
+                      <div className="absolute bottom-3 left-3 rounded-lg bg-black/70 px-3 py-1.5 text-xs font-bold text-white">
+                        Change Photo
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex min-h-56 flex-col items-center justify-center px-5 text-center sm:min-h-64">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl">
+                        📷
+                      </div>
+
+                      <p className="mt-4 font-extrabold">
+                        Upload Business Photo
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        JPG / PNG • Maximum 5 MB
+                      </p>
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) =>
+                      handleImage(e.target.files?.[0])
+                    }
+                  />
+                </label>
+
+                {/* PREVIEW */}
+                <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+
+                  <div className="bg-gradient-to-br from-blue-700 to-indigo-800 p-5 text-white sm:p-6">
+                    <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold">
+                      {category}
+                    </span>
+
+                    <h3 className="mt-4 break-words text-2xl font-extrabold">
+                      {businessName || "Business Name"}
+                    </h3>
+
+                    <p className="mt-2 text-sm text-blue-100">
+                      {subcategory || category}
+                    </p>
+
+                    <p className="mt-3 text-sm text-blue-100">
+                      📍{" "}
+                      {[area, city, state, pincode]
+                        .filter(Boolean)
+                        .join(", ") ||
+                        "Location not added"}
+                    </p>
+                  </div>
+
+                  <div className="p-5 sm:p-6">
+                    <h4 className="font-extrabold">
+                      About
+                    </h4>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {description ||
+                        "Business description will appear here."}
+                    </p>
+
+                    {services.length > 0 && (
+                      <>
+                        <h4 className="mt-6 font-extrabold">
+                          Services
+                        </h4>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {services
+                            .slice(0, 10)
+                            .map((service) => (
+                              <span
+                                key={service}
+                                className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700"
+                              >
+                                {service}
+                              </span>
+                            ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={publishBusiness}
+                  disabled={saving}
+                  className="mt-7 w-full rounded-2xl bg-blue-600 px-5 py-4 text-sm font-extrabold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+                >
+                  {saving
+                    ? "Publishing..."
+                    : "🚀 Publish Business"}
+                </button>
+              </>
+            )}
+
+            {/* NAVIGATION */}
+            <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
               {step > 1 ? (
                 <button
                   type="button"
-                  onClick={() => setStep(step - 1)}
-                  className="rounded-xl border px-6 py-3 font-bold text-slate-700"
+                  onClick={() => {
+                    setError("");
+                    setMessage("");
+                    setStep((old) => old - 1);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 sm:w-auto"
                 >
                   ← Back
                 </button>
               ) : (
                 <Link
                   href="/dashboard"
-                  className="rounded-xl border px-6 py-3 font-bold text-slate-700"
+                  className="w-full rounded-xl border border-slate-200 px-6 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50 sm:w-auto"
                 >
                   Cancel
                 </Link>
               )}
 
-              <button
-                type="button"
-                onClick={() => setStep(step + 1)}
-                className="rounded-xl bg-slate-900 px-7 py-3 font-bold text-white"
-              >
-                Continue →
-              </button>
+              {step < 5 && (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={generating}
+                  className="w-full rounded-xl bg-slate-900 px-7 py-3 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60 sm:w-auto"
+                >
+                  {generating
+                    ? "Preparing..."
+                    : step === 1
+                      ? "Continue & Prepare Listing →"
+                      : "Continue →"}
+                </button>
+              )}
             </div>
-          )}
+          </div>
 
+          {/* DESKTOP SIDE INFO */}
+          <aside className="hidden space-y-4 lg:block">
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                Listing Guide
+              </p>
+
+              <h2 className="mt-1 text-xl font-extrabold">
+                Simple & Fast
+              </h2>
+
+              <div className="mt-5 space-y-4">
+                {steps.map((item, index) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3"
+                  >
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
+                        index + 1 <= step
+                          ? "bg-blue-600 text-white"
+                          : "bg-slate-100 text-slate-400"
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-bold">
+                        {item}
+                      </p>
+
+                      <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                        {index === 0 &&
+                          "Basic business details"}
+                        {index === 1 &&
+                          "Automatic profile content"}
+                        {index === 2 &&
+                          "Choose your services"}
+                        {index === 3 &&
+                          "Address & location"}
+                        {index === 4 &&
+                          "Photo, preview & publish"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white shadow-lg">
+              <div className="text-3xl">🚀</div>
+
+              <h2 className="mt-3 text-xl font-extrabold">
+                Get discovered
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-blue-100">
+                Apni services aur location add karke
+                customers ke liye searchable business
+                profile banao.
+              </p>
+            </div>
+
+          </aside>
         </div>
-      </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="mt-5 bg-slate-950 px-4 py-8 text-center text-slate-400 sm:mt-10">
+        <div className="text-xl font-extrabold">
+          <span className="text-blue-400">Local</span>
+          <span className="text-orange-400">Platform</span>
+        </div>
+
+        <p className="mt-1 text-xs">
+          Find. Connect. Grow.
+        </p>
+
+        <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs sm:text-sm">
+          <Link href="/" className="hover:text-white">
+            Home
+          </Link>
+
+          <Link
+            href="/search"
+            className="hover:text-white"
+          >
+            Search
+          </Link>
+
+          <Link
+            href="/dashboard"
+            className="hover:text-white"
+          >
+            Dashboard
+          </Link>
+        </div>
+
+        <p className="mt-5 text-[10px]">
+          © 2026 LocalPlatform. All rights reserved.
+        </p>
+      </footer>
     </main>
   );
 }
