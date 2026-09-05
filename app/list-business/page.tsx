@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 
@@ -46,6 +46,7 @@ const categoryServices: Record<string, string[]> = {
     "Interior Design",
     "Structural Planning",
   ],
+
   "Interior Designer": [
     "Home Interior",
     "Office Interior",
@@ -54,6 +55,7 @@ const categoryServices: Record<string, string[]> = {
     "Living Room Design",
     "3D Interior",
   ],
+
   Construction: [
     "House Construction",
     "Building Construction",
@@ -62,6 +64,7 @@ const categoryServices: Record<string, string[]> = {
     "Contractor",
     "Turnkey Construction",
   ],
+
   Doctor: [
     "General Consultation",
     "Health Checkup",
@@ -69,6 +72,7 @@ const categoryServices: Record<string, string[]> = {
     "Emergency Care",
     "Diagnosis",
   ],
+
   Dentist: [
     "Dental Checkup",
     "Root Canal",
@@ -76,6 +80,7 @@ const categoryServices: Record<string, string[]> = {
     "Braces",
     "Dental Implant",
   ],
+
   Restaurant: [
     "Dine In",
     "Takeaway",
@@ -84,6 +89,7 @@ const categoryServices: Record<string, string[]> = {
     "South Indian",
     "Fast Food",
   ],
+
   Salon: [
     "Haircut",
     "Hair Styling",
@@ -92,6 +98,7 @@ const categoryServices: Record<string, string[]> = {
     "Bridal Makeup",
     "Beauty Services",
   ],
+
   Electrician: [
     "House Wiring",
     "Electrical Repair",
@@ -99,6 +106,7 @@ const categoryServices: Record<string, string[]> = {
     "AC Wiring",
     "Lighting",
   ],
+
   Plumber: [
     "Pipe Repair",
     "Bathroom Plumbing",
@@ -106,6 +114,7 @@ const categoryServices: Record<string, string[]> = {
     "Leakage Repair",
     "Tap Installation",
   ],
+
   "Real Estate": [
     "Property Sale",
     "Property Rent",
@@ -113,6 +122,7 @@ const categoryServices: Record<string, string[]> = {
     "Commercial Property",
     "Plots",
   ],
+
   "Auto Repair": [
     "Bike Repair",
     "Car Repair",
@@ -120,6 +130,7 @@ const categoryServices: Record<string, string[]> = {
     "Oil Change",
     "Brake Repair",
   ],
+
   Photographer: [
     "Wedding Photography",
     "Pre Wedding",
@@ -127,6 +138,7 @@ const categoryServices: Record<string, string[]> = {
     "Product Photography",
     "Video Shoot",
   ],
+
   Gym: [
     "Gym Training",
     "Personal Training",
@@ -134,12 +146,14 @@ const categoryServices: Record<string, string[]> = {
     "Strength Training",
     "Fitness Classes",
   ],
+
   "Coaching Institute": [
     "School Coaching",
     "Competitive Exams",
     "Online Classes",
     "Entrance Preparation",
   ],
+
   Hotel: [
     "Room Booking",
     "Family Rooms",
@@ -147,6 +161,7 @@ const categoryServices: Record<string, string[]> = {
     "Restaurant",
     "Conference Hall",
   ],
+
   Other: [
     "Professional Services",
     "Consultation",
@@ -178,8 +193,6 @@ export default function ListBusinessPage() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  // IMPORTANT:
-  // ₹49 Standard is selected by default
   const [listingPlan, setListingPlan] =
     useState<ListingPlan>("6_month");
 
@@ -192,6 +205,11 @@ export default function ListBusinessPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // IMPORTANT:
+  // React state alone is not enough for rapid multiple clicks.
+  // This synchronous ref prevents duplicate submissions.
+  const submitLock = useRef(false);
 
   function toggleService(service: string) {
     setServices((current) =>
@@ -285,7 +303,9 @@ export default function ListBusinessPage() {
       file.name.split(".").pop() || "jpg";
 
     const fileName =
-      `${userId}/${folder}-${Date.now()}.${extension}`;
+      `${userId}/${folder}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.${extension}`;
 
     const { error: uploadError } =
       await supabase.storage
@@ -352,30 +372,49 @@ export default function ListBusinessPage() {
 
     if (!paid) {
       const expiry = new Date(now);
-      expiry.setMonth(expiry.getMonth() + 3);
+      expiry.setMonth(
+        expiry.getMonth() + 3
+      );
       expiresAt = expiry.toISOString();
     }
 
     const automaticDescription =
-      description.trim() || generateDescription();
+      description.trim() ||
+      generateDescription();
 
     const { data, error: insertError } =
       await supabase
         .from("businesses")
         .insert({
-          business_name: businessName.trim(),
+          business_name:
+            businessName.trim(),
+
           category,
+
           subcategory:
             subcategory.trim() || null,
-          services,
-          city: city.trim(),
-          phone: phone.trim() || null,
 
-          address: address.trim() || null,
-          area: area.trim() || null,
-          landmark: landmark.trim() || null,
-          state: state.trim() || null,
-          pincode: pincode.trim() || null,
+          services,
+
+          city: city.trim(),
+
+          phone:
+            phone.trim() || null,
+
+          address:
+            address.trim() || null,
+
+          area:
+            area.trim() || null,
+
+          landmark:
+            landmark.trim() || null,
+
+          state:
+            state.trim() || null,
+
+          pincode:
+            pincode.trim() || null,
 
           latitude,
           longitude,
@@ -388,20 +427,27 @@ export default function ListBusinessPage() {
 
           image_url: imageUrl,
 
-          description: automaticDescription,
+          description:
+            automaticDescription,
 
           short_description:
-            automaticDescription.slice(0, 160),
+            automaticDescription.slice(
+              0,
+              160
+            ),
 
-          seo_keywords: generateKeywords(),
-          highlights: generateHighlights(),
+          seo_keywords:
+            generateKeywords(),
+
+          highlights:
+            generateHighlights(),
 
           listing_plan: paid
             ? listingPlan
             : "free",
 
-          // Paid listing payment verify hone tak
-          // public nahi hogi.
+          // Paid listing remains hidden
+          // until admin verification.
           listing_status: paid
             ? "expired"
             : "active",
@@ -422,13 +468,20 @@ export default function ListBusinessPage() {
         .single();
 
     if (insertError) {
-      throw new Error(insertError.message);
+      throw new Error(
+        insertError.message
+      );
     }
 
     return data.id;
   }
 
   async function submitFreeListing() {
+    // HARD LOCK
+    if (submitLock.current) return;
+
+    submitLock.current = true;
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -446,17 +499,27 @@ export default function ListBusinessPage() {
       );
 
       setStep(5);
+
+      // IMPORTANT:
+      // Do NOT unlock after success.
+      // This prevents submitting the same form again.
     } catch (err: any) {
       setError(
         err?.message ||
           "Business list karte waqt error aa gaya."
       );
+
+      // Error par retry allowed.
+      submitLock.current = false;
     } finally {
       setLoading(false);
     }
   }
 
   async function submitPaidPayment() {
+    // HARD LOCK
+    if (submitLock.current) return;
+
     if (!utrNumber.trim()) {
       setError(
         "Payment ke baad UTR / Transaction ID dalein."
@@ -470,6 +533,8 @@ export default function ListBusinessPage() {
       );
       return;
     }
+
+    submitLock.current = true;
 
     setLoading(true);
     setError("");
@@ -523,17 +588,24 @@ export default function ListBusinessPage() {
 
       setShowPayment(false);
       setStep(5);
+
+      // Lock remains active after success.
     } catch (err: any) {
       setError(
         err?.message ||
           "Payment submit karte waqt error aa gaya."
       );
+
+      // Allow retry only if something failed.
+      submitLock.current = false;
     } finally {
       setLoading(false);
     }
   }
 
   async function publish() {
+    if (submitLock.current) return;
+
     if (listingPlan === "free") {
       await submitFreeListing();
       return;
@@ -548,19 +620,25 @@ export default function ListBusinessPage() {
 
     if (step === 1) {
       if (!businessName.trim()) {
-        setError("Business name dalein.");
+        setError(
+          "Business name dalein."
+        );
         return;
       }
 
       if (!category) {
-        setError("Category select karein.");
+        setError(
+          "Category select karein."
+        );
         return;
       }
     }
 
     if (step === 2) {
       if (!phone.trim()) {
-        setError("Phone number dalein.");
+        setError(
+          "Phone number dalein."
+        );
         return;
       }
     }
@@ -588,8 +666,7 @@ export default function ListBusinessPage() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
 
-      {/* HEADER */}
-
+      {/* PAGE HEADER */}
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
 
@@ -613,7 +690,6 @@ export default function ListBusinessPage() {
       </section>
 
       {/* PROGRESS */}
-
       <div className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
 
@@ -655,11 +731,11 @@ export default function ListBusinessPage() {
             })}
 
           </div>
+
         </div>
       </div>
 
       {/* MAIN */}
-
       <section className="mx-auto max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
 
         {error && (
@@ -677,7 +753,6 @@ export default function ListBusinessPage() {
         <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
 
           {/* STEP 1 */}
-
           {step === 1 && (
             <div>
 
@@ -741,7 +816,6 @@ export default function ListBusinessPage() {
           )}
 
           {/* STEP 2 */}
-
           {step === 2 && (
             <div>
 
@@ -834,7 +908,6 @@ export default function ListBusinessPage() {
           )}
 
           {/* STEP 3 */}
-
           {step === 3 && (
             <div>
 
@@ -902,7 +975,6 @@ export default function ListBusinessPage() {
           )}
 
           {/* STEP 4 */}
-
           {step === 4 && (
             <div>
 
@@ -969,7 +1041,6 @@ export default function ListBusinessPage() {
           )}
 
           {/* STEP 5 */}
-
           {step === 5 && (
             <div>
 
@@ -978,8 +1049,6 @@ export default function ListBusinessPage() {
                 title="Choose Your Listing Plan"
                 description="₹49 Standard plan default selected hai. Free chahiye to Free select karein."
               />
-
-              {/* PAYMENT NOTICE */}
 
               <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 px-3 py-3 text-center">
                 <p className="text-[9px] font-black text-blue-700 sm:text-xs">
@@ -994,8 +1063,6 @@ export default function ListBusinessPage() {
                   No Auto-Renewal
                 </p>
               </div>
-
-              {/* THREE PLANS */}
 
               <div className="mt-5 grid grid-cols-3 gap-1.5 sm:gap-4">
 
@@ -1021,11 +1088,13 @@ export default function ListBusinessPage() {
                   onClick={() =>
                     setListingPlan("free")
                   }
+                  disabled={loading}
                 />
 
                 <PlanCard
                   selected={
-                    listingPlan === "6_month"
+                    listingPlan ===
+                    "6_month"
                   }
                   name="STANDARD"
                   price="₹49"
@@ -1047,11 +1116,13 @@ export default function ListBusinessPage() {
                       "6_month"
                     )
                   }
+                  disabled={loading}
                 />
 
                 <PlanCard
                   selected={
-                    listingPlan === "1_year"
+                    listingPlan ===
+                    "1_year"
                   }
                   name="PREMIUM"
                   price="₹99"
@@ -1073,11 +1144,10 @@ export default function ListBusinessPage() {
                       "1_year"
                     )
                   }
+                  disabled={loading}
                 />
 
               </div>
-
-              {/* SELECTED PLAN */}
 
               <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-5">
 
@@ -1089,9 +1159,11 @@ export default function ListBusinessPage() {
                     </p>
 
                     <p className="mt-1 text-sm font-black sm:text-lg">
-                      {planInfo[
-                        listingPlan
-                      ].name}
+                      {
+                        planInfo[
+                          listingPlan
+                        ].name
+                      }
                     </p>
 
                     <p className="text-[9px] text-slate-500 sm:text-xs">
@@ -1117,31 +1189,27 @@ export default function ListBusinessPage() {
 
               </div>
 
-              {/* EXPIRY NOTE */}
-
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3">
-
                 <p className="text-[9px] font-black leading-4 text-amber-800 sm:text-xs sm:leading-5">
                   ⚠️ Important: Plan ki validity
                   khatam hone par listing expire ho jayegi.
                   Continue karne ke liye dobara payment
                   karna hoga. Auto-renewal nahi hoga.
                 </p>
-
               </div>
 
             </div>
           )}
 
           {/* NAVIGATION */}
-
           <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-5">
 
             {step > 1 ? (
               <button
+                type="button"
                 onClick={previousStep}
                 disabled={loading}
-                className="rounded-xl border border-slate-200 px-5 py-3 text-xs font-black"
+                className="rounded-xl border border-slate-200 px-5 py-3 text-xs font-black disabled:opacity-50"
               >
                 ← Back
               </button>
@@ -1151,16 +1219,19 @@ export default function ListBusinessPage() {
 
             {step < 5 ? (
               <button
+                type="button"
                 onClick={nextStep}
-                className="rounded-xl bg-slate-950 px-6 py-3 text-xs font-black text-white"
+                disabled={loading}
+                className="rounded-xl bg-slate-950 px-6 py-3 text-xs font-black text-white disabled:opacity-50"
               >
                 Continue →
               </button>
             ) : (
               <button
+                type="button"
                 onClick={publish}
                 disabled={loading}
-                className="rounded-xl bg-slate-950 px-6 py-3 text-xs font-black text-white disabled:opacity-50"
+                className="rounded-xl bg-slate-950 px-6 py-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
                   ? "Processing..."
@@ -1180,7 +1251,6 @@ export default function ListBusinessPage() {
       </section>
 
       {/* PAYMENT MODAL */}
-
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
 
@@ -1209,10 +1279,13 @@ export default function ListBusinessPage() {
               </div>
 
               <button
+                type="button"
                 onClick={() =>
+                  !loading &&
                   setShowPayment(false)
                 }
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold"
+                disabled={loading}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold disabled:opacity-50"
               >
                 ×
               </button>
@@ -1220,7 +1293,6 @@ export default function ListBusinessPage() {
             </div>
 
             {/* AMOUNT */}
-
             <div className="mt-5 rounded-2xl bg-slate-950 p-5 text-center text-white">
 
               <div className="text-[10px] uppercase tracking-widest text-slate-400">
@@ -1243,7 +1315,6 @@ export default function ListBusinessPage() {
             </div>
 
             {/* QR */}
-
             <div className="mt-5 rounded-2xl border border-slate-200 p-4 text-center">
 
               <div className="text-xs font-black">
@@ -1264,7 +1335,6 @@ export default function ListBusinessPage() {
             </div>
 
             {/* UTR */}
-
             <div className="mt-5">
 
               <label className="mb-2 block text-xs font-black">
@@ -1278,21 +1348,27 @@ export default function ListBusinessPage() {
                     e.target.value
                   )
                 }
+                disabled={loading}
                 placeholder="Payment ke baad UTR number"
-                className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-slate-950"
+                className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-slate-950 disabled:bg-slate-100"
               />
 
             </div>
 
             {/* SCREENSHOT */}
-
             <div className="mt-5">
 
               <label className="mb-2 block text-xs font-black">
                 Payment Screenshot *
               </label>
 
-              <label className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-slate-200 px-4 py-5 text-center">
+              <label
+                className={`flex items-center justify-center rounded-xl border-2 border-dashed border-slate-200 px-4 py-5 text-center ${
+                  loading
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer"
+                }`}
+              >
 
                 <div>
 
@@ -1311,6 +1387,7 @@ export default function ListBusinessPage() {
                 <input
                   type="file"
                   accept="image/*"
+                  disabled={loading}
                   className="hidden"
                   onChange={(e) =>
                     handleScreenshot(
@@ -1325,13 +1402,13 @@ export default function ListBusinessPage() {
             </div>
 
             {/* SUBMIT */}
-
             <button
+              type="button"
               onClick={
                 submitPaidPayment
               }
               disabled={loading}
-              className="mt-6 h-12 w-full rounded-xl bg-slate-950 text-xs font-black text-white disabled:opacity-50"
+              className="mt-6 h-12 w-full rounded-xl bg-slate-950 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading
                 ? "Submitting..."
@@ -1437,6 +1514,7 @@ function PlanCard({
   renewText,
   buttonText,
   onClick,
+  disabled,
 }: {
   selected: boolean;
   name: string;
@@ -1449,6 +1527,7 @@ function PlanCard({
   renewText: string;
   buttonText: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   const colors = {
     blue: {
@@ -1458,6 +1537,7 @@ function PlanCard({
       button: "bg-blue-600",
       soft: "bg-blue-100",
     },
+
     orange: {
       border: "border-orange-500",
       bg: "bg-orange-50",
@@ -1465,6 +1545,7 @@ function PlanCard({
       button: "bg-orange-500",
       soft: "bg-orange-100",
     },
+
     green: {
       border: "border-emerald-500",
       bg: "bg-emerald-50",
@@ -1480,7 +1561,8 @@ function PlanCard({
     <button
       type="button"
       onClick={onClick}
-      className={`relative min-w-0 overflow-hidden rounded-xl border-2 p-2 text-left transition-all sm:rounded-2xl sm:p-5 ${
+      disabled={disabled}
+      className={`relative min-w-0 overflow-hidden rounded-xl border-2 p-2 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 sm:rounded-2xl sm:p-5 ${
         selected
           ? `${color.border} ${color.bg} shadow-lg`
           : "border-slate-200 bg-white"
@@ -1488,7 +1570,6 @@ function PlanCard({
     >
 
       {/* BADGE */}
-
       <div className="flex items-start justify-between gap-1">
 
         <div
@@ -1508,19 +1589,19 @@ function PlanCard({
               : "bg-slate-100 text-slate-500"
           }`}
         >
-          {selected ? "SELECTED" : badge}
+          {selected
+            ? "SELECTED"
+            : badge}
         </span>
 
       </div>
 
       {/* PRICE */}
-
       <div className="mt-2 text-xl font-black tracking-tight text-slate-950 sm:mt-4 sm:text-4xl">
         {price}
       </div>
 
       {/* DURATION */}
-
       <div
         className={`mt-0.5 text-[9px] font-black sm:text-sm ${color.text}`}
       >
@@ -1532,7 +1613,6 @@ function PlanCard({
       </div>
 
       {/* FEATURES */}
-
       <div className="mt-2.5 space-y-1.5 sm:mt-5 sm:space-y-2.5">
 
         {features.map(
@@ -1557,7 +1637,6 @@ function PlanCard({
       </div>
 
       {/* EXPIRY */}
-
       <div
         className={`mt-2.5 rounded-lg p-1.5 sm:mt-5 sm:rounded-xl sm:p-3 ${color.soft}`}
       >
@@ -1579,7 +1658,6 @@ function PlanCard({
       </div>
 
       {/* BUTTON */}
-
       <div
         className={`mt-2.5 rounded-lg px-1 py-2 text-center text-[7px] font-black text-white sm:mt-5 sm:rounded-xl sm:px-2 sm:py-3 sm:text-xs ${color.button}`}
       >
@@ -1587,7 +1665,6 @@ function PlanCard({
       </div>
 
       {/* PAYMENT TYPE */}
-
       <div className="mt-1.5 text-center text-[6px] font-medium text-slate-400 sm:mt-2 sm:text-[9px]">
         {price === "₹0"
           ? "No payment"
