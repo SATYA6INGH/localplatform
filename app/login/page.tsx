@@ -1,25 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
@@ -71,21 +69,16 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-
       {/* HEADER */}
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-xl font-extrabold text-white">
               L
             </div>
 
             <div>
-              <div className="text-xl font-bold">
-                LocalPlatform
-              </div>
-
+              <div className="text-xl font-bold">LocalPlatform</div>
               <div className="text-xs text-slate-500">
                 Find. Connect. Grow.
               </div>
@@ -98,28 +91,20 @@ export default function LoginPage() {
           >
             Home
           </Link>
-
         </div>
       </header>
 
-
       {/* LOGIN / SIGNUP */}
       <section className="flex min-h-[calc(100vh-82px)] items-center justify-center px-5 py-12">
-
         <div className="w-full max-w-md">
-
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
-
             <div className="text-center">
-
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-extrabold text-white">
                 L
               </div>
 
               <h1 className="mt-6 text-3xl font-bold">
-                {isSignup
-                  ? "Create Your Account"
-                  : "Welcome Back"}
+                {isSignup ? "Create Your Account" : "Welcome Back"}
               </h1>
 
               <p className="mt-2 text-sm text-slate-500">
@@ -127,9 +112,7 @@ export default function LoginPage() {
                   ? "Create an account to manage your business listing."
                   : "Login to manage your LocalPlatform business."}
               </p>
-
             </div>
-
 
             {/* MESSAGE */}
             {message && (
@@ -144,13 +127,8 @@ export default function LoginPage() {
               </div>
             )}
 
-
             {/* FORM */}
-            <form
-              onSubmit={handleSubmit}
-              className="mt-8 space-y-5"
-            >
-
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Email Address
@@ -165,7 +143,6 @@ export default function LoginPage() {
                   className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
-
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -184,7 +161,6 @@ export default function LoginPage() {
                 />
               </div>
 
-
               <button
                 type="submit"
                 disabled={loading}
@@ -193,16 +169,13 @@ export default function LoginPage() {
                 {loading
                   ? "Please wait..."
                   : isSignup
-                  ? "Create Account"
-                  : "Login"}
+                    ? "Create Account"
+                    : "Login"}
               </button>
-
             </form>
-
 
             {/* SWITCH */}
             <div className="mt-7 text-center text-sm text-slate-500">
-
               {isSignup
                 ? "Already have an account?"
                 : "Don't have an account?"}
@@ -218,20 +191,14 @@ export default function LoginPage() {
               >
                 {isSignup ? "Login" : "Create Account"}
               </button>
-
             </div>
-
           </div>
-
 
           <p className="mt-6 text-center text-xs text-slate-400">
             By continuing, you agree to use LocalPlatform responsibly.
           </p>
-
         </div>
-
       </section>
-
     </main>
   );
 }
