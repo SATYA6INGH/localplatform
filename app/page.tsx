@@ -35,74 +35,70 @@ type Business = {
   listing_expires_at?: string | null;
 };
 
-type Category = {
-  name: string;
-  label: string;
-  color: string;
-  bg: string;
-  icon: React.ReactNode;
-};
-
-/* =========================================================
-   COLOURFUL CATEGORY ICONS
-========================================================= */
-
-const categories: Category[] = [
+const categories = [
   {
     name: "Architect",
-    label: "Architecture & Design",
-    color: "#2563eb",
-    bg: "#eff6ff",
+    label: "Architecture",
     icon: <BuildingIcon />,
+    bg: "bg-blue-50",
+    text: "text-blue-600",
+    border: "hover:border-blue-200",
   },
   {
     name: "Interior Designer",
     label: "Interior & Decor",
-    color: "#9333ea",
-    bg: "#faf5ff",
     icon: <InteriorIcon />,
+    bg: "bg-violet-50",
+    text: "text-violet-600",
+    border: "hover:border-violet-200",
   },
   {
     name: "Construction",
-    label: "Builders & Contractors",
-    color: "#ea580c",
-    bg: "#fff7ed",
+    label: "Builders",
     icon: <ConstructionIcon />,
+    bg: "bg-orange-50",
+    text: "text-orange-600",
+    border: "hover:border-orange-200",
   },
   {
     name: "Doctor",
-    label: "Doctors & Clinics",
-    color: "#dc2626",
-    bg: "#fef2f2",
+    label: "Healthcare",
     icon: <DoctorIcon />,
+    bg: "bg-red-50",
+    text: "text-red-600",
+    border: "hover:border-red-200",
   },
   {
     name: "Restaurant",
     label: "Food & Dining",
-    color: "#e11d48",
-    bg: "#fff1f2",
     icon: <RestaurantIcon />,
+    bg: "bg-rose-50",
+    text: "text-rose-600",
+    border: "hover:border-rose-200",
   },
   {
     name: "Salon",
-    label: "Beauty & Salon",
-    color: "#db2777",
-    bg: "#fdf2f8",
+    label: "Beauty",
     icon: <SalonIcon />,
+    bg: "bg-pink-50",
+    text: "text-pink-600",
+    border: "hover:border-pink-200",
   },
   {
     name: "Electrician",
-    label: "Electrical Services",
-    color: "#ca8a04",
-    bg: "#fefce8",
+    label: "Electrical",
     icon: <ElectricIcon />,
+    bg: "bg-amber-50",
+    text: "text-amber-600",
+    border: "hover:border-amber-200",
   },
   {
     name: "Real Estate",
-    label: "Property & Real Estate",
-    color: "#059669",
-    bg: "#ecfdf5",
+    label: "Property",
     icon: <PropertyIcon />,
+    bg: "bg-emerald-50",
+    text: "text-emerald-600",
+    border: "hover:border-emerald-200",
   },
 ];
 
@@ -113,10 +109,6 @@ const popularSearches = [
   "Restaurant",
   "Salon",
 ];
-
-/* =========================================================
-   PAGE
-========================================================= */
 
 export default function HomePage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -180,22 +172,16 @@ export default function HomePage() {
       .map((business) => {
         const name =
           business.business_name?.toLowerCase() || "";
-
         const category =
           business.category?.toLowerCase() || "";
-
         const subcategory =
           business.subcategory?.toLowerCase() || "";
-
         const city =
           business.city?.toLowerCase() || "";
-
         const area =
           business.area?.toLowerCase() || "";
-
         const description =
           business.description?.toLowerCase() || "";
-
         const services =
           business.services?.join(" ").toLowerCase() || "";
 
@@ -227,10 +213,7 @@ export default function HomePage() {
   function search() {
     const params = new URLSearchParams();
 
-    if (query.trim()) {
-      params.set("q", query.trim());
-    }
-
+    if (query.trim()) params.set("q", query.trim());
     if (location.trim()) {
       params.set("location", location.trim());
     }
@@ -251,50 +234,52 @@ export default function HomePage() {
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
 
       {/* =====================================================
-          HERO
+          PREMIUM HERO
       ====================================================== */}
 
       <section className="relative overflow-hidden bg-slate-950">
 
-        {/* Background glow */}
-        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-sky-500/20 blur-3xl" />
+        {/* decorative grid */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)",
+            backgroundSize: "42px 42px",
+          }}
+        />
 
-        <div className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-sky-500/20 blur-[100px]" />
 
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/5 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-violet-500/15 blur-[100px]" />
 
         <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
 
           <div className="mx-auto max-w-5xl text-center">
 
-            {/* Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[10px] font-bold tracking-[0.15em] text-slate-300 sm:text-xs">
-              <span className="h-2 w-2 rounded-full bg-sky-400 shadow-lg shadow-sky-400/50" />
-              INDIA&apos;S LOCAL BUSINESS DISCOVERY PLATFORM
+            {/* badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-4 py-2 text-[10px] font-bold tracking-[0.16em] text-slate-300 shadow-xl sm:text-xs">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-sky-400" />
+              LOCAL BUSINESSES · LOCAL SERVICES · LOCAL PEOPLE
             </div>
 
-            {/* Heading */}
-            <h1 className="text-[42px] font-black leading-[1.03] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
-              Find the right
-              <span className="block bg-gradient-to-r from-sky-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
-                business near you.
+            <h1 className="text-[43px] font-black leading-[0.98] tracking-[-0.05em] text-white sm:text-6xl lg:text-7xl">
+              Discover what&apos;s
+              <span className="block bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400 bg-clip-text pb-2 text-transparent">
+                around you.
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7 lg:text-lg">
-              Discover local professionals, services and businesses
-              by category, service and location.
+              Find trusted local businesses and professionals by
+              category, service, city or area.
             </p>
 
-            {/* =================================================
-                SEARCH BOX
-            ================================================== */}
+            {/* SEARCH */}
+            <div className="mx-auto mt-9 max-w-4xl rounded-[25px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/40">
 
-            <div className="mx-auto mt-9 max-w-4xl rounded-[24px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/30">
+              <div className="grid gap-2 md:grid-cols-[1fr_0.72fr_auto]">
 
-              <div className="grid gap-2 md:grid-cols-[1fr_0.75fr_auto]">
-
-                {/* What */}
                 <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
 
                   <SearchIcon />
@@ -305,16 +290,14 @@ export default function HomePage() {
                       setQuery(e.target.value)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        search();
-                      }
+                      if (e.key === "Enter") search();
                     }}
-                    placeholder="What are you looking for?"
+                    placeholder="Business, service or category"
                     className="h-12 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
                   />
+
                 </div>
 
-                {/* Location */}
                 <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
 
                   <LocationIcon />
@@ -325,25 +308,25 @@ export default function HomePage() {
                       setLocation(e.target.value)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        search();
-                      }
+                      if (e.key === "Enter") search();
                     }}
                     placeholder="City or area"
                     className="h-12 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
                   />
+
                 </div>
 
                 <button
                   onClick={search}
-                  className="h-12 rounded-2xl bg-slate-950 px-8 text-sm font-black text-white transition hover:bg-slate-800"
+                  className="h-12 rounded-2xl bg-slate-950 px-8 text-sm font-black text-white transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800"
                 >
                   Search
                 </button>
+
               </div>
             </div>
 
-            {/* Popular */}
+            {/* popular */}
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
 
               <span className="mr-1 text-[11px] font-medium text-slate-500">
@@ -359,8 +342,8 @@ export default function HomePage() {
                   {item}
                 </button>
               ))}
-            </div>
 
+            </div>
           </div>
         </div>
       </section>
@@ -381,7 +364,7 @@ export default function HomePage() {
                   Search Results
                 </p>
 
-                <h2 className="mt-2 text-2xl font-black tracking-tight">
+                <h2 className="mt-2 text-2xl font-black">
                   Matching businesses
                 </h2>
               </div>
@@ -394,6 +377,7 @@ export default function HomePage() {
               >
                 View all →
               </Link>
+
             </div>
 
             {loading ? (
@@ -402,7 +386,6 @@ export default function HomePage() {
               </div>
             ) : searchResults.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
                   <SearchIcon />
                 </div>
@@ -433,24 +416,24 @@ export default function HomePage() {
           CATEGORY SECTION
       ====================================================== */}
 
-      <section className="bg-white">
+      <section className="relative bg-white">
 
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-600">
-                Explore
-              </p>
+              <div className="mb-3 inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-sky-600">
+                Explore Categories
+              </div>
 
-              <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-                Browse by category
+              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
+                What are you looking for?
               </h2>
 
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                Find professionals and businesses for your everyday
-                needs.
+                Explore popular local categories and find the
+                right professional for your need.
               </p>
             </div>
 
@@ -460,9 +443,8 @@ export default function HomePage() {
             >
               Explore all →
             </Link>
-          </div>
 
-          {/* Category cards */}
+          </div>
 
           <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
 
@@ -472,30 +454,29 @@ export default function HomePage() {
                 onClick={() =>
                   categorySearch(category.name)
                 }
-                className="group rounded-[20px] border border-slate-200 bg-white p-4 text-left shadow-sm transition duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-xl"
+                className={`group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-4 text-left shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl ${category.border}`}
               >
 
-                {/* Colourful icon */}
+                {/* colour glow */}
+                <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-slate-100 opacity-0 blur-2xl transition group-hover:opacity-100" />
+
                 <div
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl transition duration-300 group-hover:scale-110"
-                  style={{
-                    backgroundColor: category.bg,
-                    color: category.color,
-                  }}
+                  className={`relative flex h-12 w-12 items-center justify-center rounded-2xl ${category.bg} ${category.text} transition duration-300 group-hover:scale-110`}
                 >
                   {category.icon}
                 </div>
 
-                <h3 className="mt-4 line-clamp-2 min-h-[32px] text-xs font-black text-slate-900">
+                <h3 className="relative mt-4 line-clamp-2 min-h-[32px] text-xs font-black leading-4 text-slate-900">
                   {category.name}
                 </h3>
 
-                <p className="mt-1 line-clamp-2 text-[10px] leading-4 font-medium text-slate-400">
+                <p className="relative mt-1 line-clamp-2 text-[10px] leading-4 text-slate-400">
                   {category.label}
                 </p>
 
               </button>
             ))}
+
           </div>
         </div>
       </section>
@@ -504,73 +485,81 @@ export default function HomePage() {
           FEATURED BUSINESSES
       ====================================================== */}
 
-      <section className="border-y border-slate-200 bg-slate-50">
+      <section className="relative overflow-hidden border-y border-slate-200 bg-slate-50">
 
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-sky-100/60 blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
 
           <div className="flex items-end justify-between gap-4">
 
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-600">
-                Discover
-              </p>
 
-              <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-                Local businesses
+              <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-sky-600 shadow-sm">
+                Discover
+              </div>
+
+              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
+                Featured local businesses
               </h2>
 
               <p className="mt-2 text-sm text-slate-500">
-                Explore recently listed active businesses.
+                Recently listed businesses on LocalPlatform.
               </p>
+
             </div>
 
             <Link
               href="/search"
-              className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 shadow-sm sm:block"
+              className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:border-slate-900 sm:block"
             >
               View all
             </Link>
+
           </div>
 
           {loading ? (
-            <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-[370px] animate-pulse rounded-[22px] bg-white"
+                  className="h-[370px] animate-pulse rounded-[24px] bg-white"
                 />
               ))}
 
             </div>
+
           ) : featuredBusinesses.length === 0 ? (
 
-            <div className="mt-9 rounded-3xl border border-slate-200 bg-white px-6 py-14 text-center">
+            <div className="mt-9 rounded-[28px] border border-slate-200 bg-white px-6 py-16 text-center">
 
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-blue-600">
                 <BuildingIcon />
               </div>
 
-              <h3 className="mt-4 text-lg font-black">
-                Businesses coming soon
+              <h3 className="mt-5 text-lg font-black">
+                Be among the first
               </h3>
 
-              <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-                Be one of the first businesses listed on
-                LocalPlatform.
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                Your business can be one of the first businesses
+                discovered by local customers.
               </p>
 
               <Link
                 href="/list-business"
-                className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white"
+                className="mt-6 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white transition hover:bg-slate-800"
               >
                 List Your Business
               </Link>
 
             </div>
+
           ) : (
 
-            <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
               {featuredBusinesses.map((business) => (
                 <BusinessCard
@@ -581,6 +570,7 @@ export default function HomePage() {
 
             </div>
           )}
+
         </div>
       </section>
 
@@ -592,33 +582,34 @@ export default function HomePage() {
 
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
 
-          <div className="relative overflow-hidden rounded-[30px] bg-slate-950 px-7 py-10 sm:px-10 lg:px-14 lg:py-14">
+          <div className="relative overflow-hidden rounded-[32px] bg-slate-950 px-7 py-11 sm:px-10 lg:px-14 lg:py-14">
 
-            <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-sky-500/20 blur-3xl" />
+            <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-sky-500/20 blur-[80px]" />
+
+            <div className="pointer-events-none absolute -bottom-40 left-1/3 h-80 w-80 rounded-full bg-violet-500/10 blur-[80px]" />
 
             <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 
               <div className="max-w-2xl">
 
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">
+                <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-sky-400">
                   For Business Owners
-                </p>
+                </div>
 
-                <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  Put your business in front of local customers.
+                <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                  Make your business easier to discover.
                 </h2>
 
                 <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">
-                  Create your LocalPlatform listing, add your
-                  services and location, and make your business
-                  easier to discover.
+                  Create your LocalPlatform listing and connect
+                  with customers searching for your services.
                 </p>
 
               </div>
 
               <Link
                 href="/list-business"
-                className="shrink-0 rounded-2xl bg-white px-6 py-4 text-center text-sm font-black text-slate-950 shadow-xl transition hover:-translate-y-1 hover:bg-slate-100"
+                className="shrink-0 rounded-2xl bg-white px-6 py-4 text-center text-sm font-black text-slate-950 shadow-2xl transition hover:-translate-y-1 hover:bg-slate-100"
               >
                 List Your Business →
               </Link>
@@ -648,10 +639,7 @@ export default function HomePage() {
 
           <div className="flex flex-wrap gap-5 text-xs font-semibold text-slate-500">
 
-            <Link
-              href="/"
-              className="hover:text-slate-950"
-            >
+            <Link href="/" className="hover:text-slate-950">
               Home
             </Link>
 
@@ -705,10 +693,9 @@ function BusinessCard({
   business: Business;
 }) {
   return (
-    <article className="group overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-2xl">
+    <article className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-2xl">
 
       <Link href={`/business/${business.id}`}>
-
         <div className="relative h-52 overflow-hidden bg-slate-100">
 
           {business.image_url ? (
@@ -718,14 +705,14 @@ function BusinessCard({
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-200">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-lg">
                 <BuildingIcon />
               </div>
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
 
           <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black text-slate-800 shadow-lg">
             {business.category}
@@ -749,7 +736,6 @@ function BusinessCard({
         )}
 
         <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
-
           <LocationIcon small />
 
           <span className="line-clamp-1">
@@ -761,7 +747,6 @@ function BusinessCard({
               .filter(Boolean)
               .join(", ")}
           </span>
-
         </div>
 
         {(business.short_description ||
@@ -796,7 +781,7 @@ function BusinessCard({
             View Business
           </span>
 
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold transition group-hover:bg-slate-950 group-hover:text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold transition group-hover:bg-slate-950 group-hover:text-white">
             →
           </span>
 
@@ -814,8 +799,8 @@ function BusinessCard({
 function BuildingIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -837,8 +822,8 @@ function BuildingIcon() {
 function InteriorIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -858,8 +843,8 @@ function InteriorIcon() {
 function ConstructionIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -879,8 +864,8 @@ function ConstructionIcon() {
 function DoctorIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -901,8 +886,8 @@ function DoctorIcon() {
 function RestaurantIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -922,8 +907,8 @@ function RestaurantIcon() {
 function SalonIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -942,12 +927,12 @@ function SalonIcon() {
 function ElectricIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="currentColor"
     >
-      <path d="M13.2 2 4 13h6l-1.2 9L18 11h-6z" />
+      <path d="M13.4 2 4 13h6.1L9 22l9.8-12h-6.2z" />
     </svg>
   );
 }
@@ -955,8 +940,8 @@ function ElectricIcon() {
 function PropertyIcon() {
   return (
     <svg
-      width="25"
-      height="25"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
