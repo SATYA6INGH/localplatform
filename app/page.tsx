@@ -419,7 +419,101 @@ export default function Home() {
 
         </section>
       )}
+      {/* LATEST BUSINESSES */}
+      {!searched && (
+        <section className="bg-white px-5 py-20 md:px-6">
+          <div className="mx-auto max-w-6xl">
 
+            <div className="text-center">
+              <p className="font-semibold text-blue-600">
+                LATEST LISTINGS
+              </p>
+
+              <h2 className="mt-2 text-3xl font-bold md:text-4xl">
+                Recently Listed Businesses
+              </h2>
+
+              <p className="mt-3 text-slate-500">
+                Discover businesses and professionals recently added to LocalPlatform
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="mt-12 rounded-2xl bg-slate-50 px-6 py-14 text-center">
+                Loading businesses...
+              </div>
+            ) : businesses.length === 0 ? (
+              <div className="mt-12 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center">
+                <div className="text-5xl">🏢</div>
+
+                <h3 className="mt-5 text-xl font-bold">
+                  No businesses listed yet
+                </h3>
+
+                <p className="mt-2 text-slate-500">
+                  Be the first business to join LocalPlatform.
+                </p>
+
+                <Link
+                  href="/list-business"
+                  className="mt-6 inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white"
+                >
+                  List Your Business
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+                {businesses.slice(0, 6).map((business) => (
+                  <div
+                    key={business.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  >
+
+                    <div className="flex items-start justify-between">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-xl">
+                        🏢
+                      </div>
+
+                      <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                        Active
+                      </span>
+                    </div>
+
+                    <h3 className="mt-5 text-xl font-bold">
+                      {business.business_name}
+                    </h3>
+
+                    <p className="mt-2 font-semibold text-blue-600">
+                      {business.category}
+                    </p>
+
+                    <p className="mt-3 text-sm text-slate-500">
+                      📍 {business.city}
+                    </p>
+
+                    {business.phone && (
+                      <p className="mt-2 text-sm text-slate-500">
+                        📞 {business.phone}
+                      </p>
+                    )}
+
+                    <Link
+                      href={`/business/${business.id}`}
+                      className="mt-5 block w-full rounded-xl bg-blue-600 py-3 text-center font-semibold text-white hover:bg-blue-700"
+                    >
+                      View Business
+                    </Link>
+
+                  </div>
+                ))}
+
+              </div>
+            )}
+
+          </div>
+        </section>
+      )}
       {/* CATEGORIES */}
       <section
         id="categories"
