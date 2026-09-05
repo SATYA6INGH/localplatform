@@ -6,8 +6,16 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: "localplatform-auth",
+    },
+  }
 );
 
 type Business = {
@@ -15,7 +23,7 @@ type Business = {
   business_name: string;
   category: string;
   city: string;
-  phone: string;
+  phone: string | null;
 };
 
 export default function DashboardPage() {
@@ -29,35 +37,76 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let mounted = true;
+
     async function loadDashboard() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!user) {
-        router.push("/login");
-        return;
+        if (!mounted) return;
+
+        if (!session?.user) {
+          router.replace("/login");
+          return;
+        }
+
+        const user = session.user;
+
+        setUserEmail(user.email || "");
+        setUserId(user.id);
+
+        const { data, error } = await supabase
+          .from("businesses")
+          .select(
+            "id, business_name, category, city, phone"
+          )
+          .eq("owner_id", user.id)
+          .order("business_name", { ascending: true });
+
+        if (!mounted) return;
+
+        if (error) {
+          setError(error.message);
+        } else {
+          setBusinesses(data || []);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        if (!mounted) return;
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Dashboard load नहीं हो सका।"
+        );
+
+        setLoading(false);
       }
-
-      setUserEmail(user.email || "");
-      setUserId(user.id);
-
-      const { data, error } = await supabase
-        .from("businesses")
-        .select("id, business_name, category, city, phone")
-        .eq("owner_id", user.id)
-        .order("business_name", { ascending: true });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setBusinesses(data || []);
-      }
-
-      setLoading(false);
     }
 
     loadDashboard();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+
+      if (!session?.user) {
+        router.replace("/login");
+        return;
+      }
+
+      setUserEmail(session.user.email || "");
+      setUserId(session.user.id);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   async function handleDelete(id: string) {
@@ -79,7 +128,9 @@ export default function DashboardPage() {
     if (error) {
       setError(error.message);
     } else {
-      setBusinesses((prev) => prev.filter((business) => business.id !== id));
+      setBusinesses((prev) =>
+        prev.filter((business) => business.id !== id)
+      );
     }
 
     setDeletingId(null);
@@ -87,7 +138,7 @@ export default function DashboardPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.replace("/login");
   }
 
   if (loading) {
@@ -143,27 +194,37 @@ export default function DashboardPage() {
         {/* STATS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
           <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500 text-sm">Total Businesses</p>
+            <p className="text-gray-500 text-sm">
+              Total Businesses
+            </p>
+
             <p className="text-3xl font-bold mt-2">
               {businesses.length}
             </p>
           </div>
 
           <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500 text-sm">Account</p>
+            <p className="text-gray-500 text-sm">
+              Account
+            </p>
+
             <p className="text-lg font-semibold mt-2">
               Business Owner
             </p>
           </div>
 
           <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500 text-sm">Status</p>
+            <p className="text-gray-500 text-sm">
+              Status
+            </p>
+
             <p className="text-lg font-semibold text-green-600 mt-2">
               Active
             </p>
           </div>
         </div>
 
+        {/* ERROR */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
