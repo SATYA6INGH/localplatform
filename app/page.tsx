@@ -35,46 +35,74 @@ type Business = {
   listing_expires_at?: string | null;
 };
 
-const categories = [
+type Category = {
+  name: string;
+  label: string;
+  color: string;
+  bg: string;
+  icon: React.ReactNode;
+};
+
+/* =========================================================
+   COLOURFUL CATEGORY ICONS
+========================================================= */
+
+const categories: Category[] = [
   {
     name: "Architect",
-    label: "Architecture",
-    icon: "⌂",
+    label: "Architecture & Design",
+    color: "#2563eb",
+    bg: "#eff6ff",
+    icon: <BuildingIcon />,
   },
   {
     name: "Interior Designer",
-    label: "Interiors",
-    icon: "◫",
+    label: "Interior & Decor",
+    color: "#9333ea",
+    bg: "#faf5ff",
+    icon: <InteriorIcon />,
   },
   {
     name: "Construction",
-    label: "Construction",
-    icon: "▦",
+    label: "Builders & Contractors",
+    color: "#ea580c",
+    bg: "#fff7ed",
+    icon: <ConstructionIcon />,
   },
   {
     name: "Doctor",
-    label: "Healthcare",
-    icon: "✚",
+    label: "Doctors & Clinics",
+    color: "#dc2626",
+    bg: "#fef2f2",
+    icon: <DoctorIcon />,
   },
   {
     name: "Restaurant",
     label: "Food & Dining",
-    icon: "◉",
+    color: "#e11d48",
+    bg: "#fff1f2",
+    icon: <RestaurantIcon />,
   },
   {
     name: "Salon",
-    label: "Beauty",
-    icon: "✂",
+    label: "Beauty & Salon",
+    color: "#db2777",
+    bg: "#fdf2f8",
+    icon: <SalonIcon />,
   },
   {
     name: "Electrician",
-    label: "Electrical",
-    icon: "ϟ",
+    label: "Electrical Services",
+    color: "#ca8a04",
+    bg: "#fefce8",
+    icon: <ElectricIcon />,
   },
   {
     name: "Real Estate",
-    label: "Property",
-    icon: "▥",
+    label: "Property & Real Estate",
+    color: "#059669",
+    bg: "#ecfdf5",
+    icon: <PropertyIcon />,
   },
 ];
 
@@ -85,6 +113,10 @@ const popularSearches = [
   "Restaurant",
   "Salon",
 ];
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 export default function HomePage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -133,9 +165,10 @@ export default function HomePage() {
     setLoading(false);
   }
 
-  const featuredBusinesses = useMemo(() => {
-    return businesses.slice(0, 6);
-  }, [businesses]);
+  const featuredBusinesses = useMemo(
+    () => businesses.slice(0, 6),
+    [businesses]
+  );
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -145,13 +178,24 @@ export default function HomePage() {
 
     return businesses
       .map((business) => {
-        const name = business.business_name?.toLowerCase() || "";
-        const cat = business.category?.toLowerCase() || "";
-        const sub = business.subcategory?.toLowerCase() || "";
-        const city = business.city?.toLowerCase() || "";
-        const area = business.area?.toLowerCase() || "";
+        const name =
+          business.business_name?.toLowerCase() || "";
+
+        const category =
+          business.category?.toLowerCase() || "";
+
+        const subcategory =
+          business.subcategory?.toLowerCase() || "";
+
+        const city =
+          business.city?.toLowerCase() || "";
+
+        const area =
+          business.area?.toLowerCase() || "";
+
         const description =
           business.description?.toLowerCase() || "";
+
         const services =
           business.services?.join(" ").toLowerCase() || "";
 
@@ -159,8 +203,8 @@ export default function HomePage() {
 
         if (q) {
           if (name.includes(q)) score += 100;
-          if (cat.includes(q)) score += 80;
-          if (sub.includes(q)) score += 70;
+          if (category.includes(q)) score += 80;
+          if (subcategory.includes(q)) score += 70;
           if (services.includes(q)) score += 60;
           if (city.includes(q)) score += 50;
           if (area.includes(q)) score += 40;
@@ -192,97 +236,45 @@ export default function HomePage() {
     }
 
     window.location.href = `/search${
-      params.toString() ? `?${params.toString()}` : ""
+      params.toString()
+        ? `?${params.toString()}`
+        : ""
     }`;
   }
 
   function categorySearch(category: string) {
-    window.location.href = `/search?q=${encodeURIComponent(
-      category
-    )}`;
+    window.location.href =
+      `/search?q=${encodeURIComponent(category)}`;
   }
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
-      {/* ================= HEADER ================= */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-lg font-black text-white shadow-lg shadow-slate-900/10">
-              L
-            </div>
 
-            <div>
-              <div className="text-[17px] font-black tracking-tight sm:text-lg">
-                LocalPlatform
-              </div>
+      {/* =====================================================
+          HERO
+      ====================================================== */}
 
-              <div className="hidden text-[9px] font-bold tracking-[0.18em] text-slate-400 sm:block">
-                FIND LOCAL · CHOOSE BETTER
-              </div>
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-7 md:flex">
-            <Link
-              href="/"
-              className="text-sm font-bold text-slate-950"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/search"
-              className="text-sm font-medium text-slate-500 transition hover:text-slate-950"
-            >
-              Search
-            </Link>
-
-            <Link
-              href="/list-business"
-              className="text-sm font-medium text-slate-500 transition hover:text-slate-950"
-            >
-              List Business
-            </Link>
-
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-slate-500 transition hover:text-slate-950"
-            >
-              Dashboard
-            </Link>
-
-            <Link
-              href="/login"
-              className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-900/10 transition hover:-translate-y-0.5 hover:bg-slate-800"
-            >
-              Login
-            </Link>
-          </nav>
-
-          <Link
-            href="/search"
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm md:hidden"
-          >
-            Search
-          </Link>
-        </div>
-      </header>
-
-      {/* ================= HERO ================= */}
       <section className="relative overflow-hidden bg-slate-950">
-        {/* decorative background */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl" />
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
+        {/* Background glow */}
+        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-sky-500/20 blur-3xl" />
+
+        <div className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/5 blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
+
           <div className="mx-auto max-w-5xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[10px] font-bold tracking-[0.14em] text-slate-300 sm:text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-              YOUR LOCAL BUSINESS DISCOVERY PLATFORM
+
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[10px] font-bold tracking-[0.15em] text-slate-300 sm:text-xs">
+              <span className="h-2 w-2 rounded-full bg-sky-400 shadow-lg shadow-sky-400/50" />
+              INDIA&apos;S LOCAL BUSINESS DISCOVERY PLATFORM
             </div>
 
-            <h1 className="text-[42px] font-black leading-[1.02] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+            {/* Heading */}
+            <h1 className="text-[42px] font-black leading-[1.03] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
               Find the right
               <span className="block bg-gradient-to-r from-sky-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
                 business near you.
@@ -294,13 +286,18 @@ export default function HomePage() {
               by category, service and location.
             </p>
 
-            {/* SEARCH */}
-            <div className="mx-auto mt-9 max-w-4xl rounded-[22px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/30">
-              <div className="grid gap-2 md:grid-cols-[1fr_0.72fr_auto]">
+            {/* =================================================
+                SEARCH BOX
+            ================================================== */}
+
+            <div className="mx-auto mt-9 max-w-4xl rounded-[24px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/30">
+
+              <div className="grid gap-2 md:grid-cols-[1fr_0.75fr_auto]">
+
+                {/* What */}
                 <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
-                  <span className="mr-3 text-xl text-slate-400">
-                    ⌕
-                  </span>
+
+                  <SearchIcon />
 
                   <input
                     value={query}
@@ -308,17 +305,19 @@ export default function HomePage() {
                       setQuery(e.target.value)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") search();
+                      if (e.key === "Enter") {
+                        search();
+                      }
                     }}
                     placeholder="What are you looking for?"
                     className="h-12 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
                   />
                 </div>
 
+                {/* Location */}
                 <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
-                  <span className="mr-3 text-lg text-slate-400">
-                    ◉
-                  </span>
+
+                  <LocationIcon />
 
                   <input
                     value={location}
@@ -326,7 +325,9 @@ export default function HomePage() {
                       setLocation(e.target.value)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") search();
+                      if (e.key === "Enter") {
+                        search();
+                      }
                     }}
                     placeholder="City or area"
                     className="h-12 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
@@ -342,9 +343,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* QUICK SEARCH */}
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <span className="mr-1 py-2 text-[11px] font-medium text-slate-500">
+            {/* Popular */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+
+              <span className="mr-1 text-[11px] font-medium text-slate-500">
                 Popular:
               </span>
 
@@ -358,21 +360,28 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* ================= SEARCH PREVIEW ================= */}
+      {/* =====================================================
+          SEARCH RESULTS
+      ====================================================== */}
+
       {(query || location) && (
         <section className="border-b border-slate-200 bg-slate-50">
+
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="mb-6 flex items-end justify-between gap-4">
+
+            <div className="mb-6 flex items-end justify-between">
+
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-600">
-                  Search
+                  Search Results
                 </p>
 
-                <h2 className="mt-1 text-2xl font-black tracking-tight">
+                <h2 className="mt-2 text-2xl font-black tracking-tight">
                   Matching businesses
                 </h2>
               </div>
@@ -393,9 +402,12 @@ export default function HomePage() {
               </div>
             ) : searchResults.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-                <div className="text-3xl">⌕</div>
 
-                <h3 className="mt-3 font-bold">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                  <SearchIcon />
+                </div>
+
+                <h3 className="mt-4 font-black">
                   No matching business found
                 </h3>
 
@@ -417,12 +429,18 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ================= CATEGORIES ================= */}
+      {/* =====================================================
+          CATEGORY SECTION
+      ====================================================== */}
+
       <section className="bg-white">
+
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-600">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-600">
                 Explore
               </p>
 
@@ -431,8 +449,8 @@ export default function HomePage() {
               </h2>
 
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                Start with a category and discover businesses
-                offering the services you need.
+                Find professionals and businesses for your everyday
+                needs.
               </p>
             </div>
 
@@ -444,38 +462,56 @@ export default function HomePage() {
             </Link>
           </div>
 
+          {/* Category cards */}
+
           <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+
             {categories.map((category) => (
               <button
                 key={category.name}
                 onClick={() =>
                   categorySearch(category.name)
                 }
-                className="group rounded-2xl border border-slate-200 bg-white p-4 text-left transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
+                className="group rounded-[20px] border border-slate-200 bg-white p-4 text-left shadow-sm transition duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-xl"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-base font-black text-slate-700 transition group-hover:bg-slate-950 group-hover:text-white">
+
+                {/* Colourful icon */}
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl transition duration-300 group-hover:scale-110"
+                  style={{
+                    backgroundColor: category.bg,
+                    color: category.color,
+                  }}
+                >
                   {category.icon}
                 </div>
 
-                <h3 className="mt-4 line-clamp-1 text-xs font-black text-slate-900">
+                <h3 className="mt-4 line-clamp-2 min-h-[32px] text-xs font-black text-slate-900">
                   {category.name}
                 </h3>
 
-                <p className="mt-1 text-[10px] font-medium text-slate-400">
+                <p className="mt-1 line-clamp-2 text-[10px] leading-4 font-medium text-slate-400">
                   {category.label}
                 </p>
+
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ================= FEATURED ================= */}
+      {/* =====================================================
+          FEATURED BUSINESSES
+      ====================================================== */}
+
       <section className="border-y border-slate-200 bg-slate-50">
+
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+
           <div className="flex items-end justify-between gap-4">
+
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-600">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-600">
                 Discover
               </p>
 
@@ -498,17 +534,21 @@ export default function HomePage() {
 
           {loading ? (
             <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
+
+              {Array.from({ length: 6 }).map((_, index) => (
                 <div
-                  key={i}
-                  className="h-[360px] animate-pulse rounded-2xl bg-white"
+                  key={index}
+                  className="h-[370px] animate-pulse rounded-[22px] bg-white"
                 />
               ))}
+
             </div>
           ) : featuredBusinesses.length === 0 ? (
+
             <div className="mt-9 rounded-3xl border border-slate-200 bg-white px-6 py-14 text-center">
-              <div className="text-4xl text-slate-300">
-                ◫
+
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+                <BuildingIcon />
               </div>
 
               <h3 className="mt-4 text-lg font-black">
@@ -526,29 +566,41 @@ export default function HomePage() {
               >
                 List Your Business
               </Link>
+
             </div>
           ) : (
+
             <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
               {featuredBusinesses.map((business) => (
                 <BusinessCard
                   key={business.id}
                   business={business}
                 />
               ))}
+
             </div>
           )}
         </div>
       </section>
 
-      {/* ================= OWNER CTA ================= */}
+      {/* =====================================================
+          BUSINESS OWNER CTA
+      ====================================================== */}
+
       <section className="bg-white">
+
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+
           <div className="relative overflow-hidden rounded-[30px] bg-slate-950 px-7 py-10 sm:px-10 lg:px-14 lg:py-14">
-            <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
+
+            <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-sky-500/20 blur-3xl" />
 
             <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+
               <div className="max-w-2xl">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-400">
+
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-400">
                   For Business Owners
                 </p>
 
@@ -561,6 +613,7 @@ export default function HomePage() {
                   services and location, and make your business
                   easier to discover.
                 </p>
+
               </div>
 
               <Link
@@ -569,14 +622,20 @@ export default function HomePage() {
               >
                 List Your Business →
               </Link>
+
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= FOOTER ================= */}
+      {/* =====================================================
+          FOOTER
+      ====================================================== */}
+
       <footer className="border-t border-slate-200 bg-white">
+
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+
           <div>
             <div className="font-black">
               LocalPlatform
@@ -588,7 +647,11 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap gap-5 text-xs font-semibold text-slate-500">
-            <Link href="/" className="hover:text-slate-950">
+
+            <Link
+              href="/"
+              className="hover:text-slate-950"
+            >
               Home
             </Link>
 
@@ -619,18 +682,22 @@ export default function HomePage() {
             >
               Login
             </Link>
+
           </div>
         </div>
 
         <div className="border-t border-slate-100 py-4 text-center text-[10px] text-slate-400">
           © {new Date().getFullYear()} LocalPlatform. All rights reserved.
         </div>
+
       </footer>
     </main>
   );
 }
 
-/* ================= BUSINESS CARD ================= */
+/* =========================================================
+   BUSINESS CARD
+========================================================= */
 
 function BusinessCard({
   business,
@@ -639,8 +706,11 @@ function BusinessCard({
 }) {
   return (
     <article className="group overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-2xl">
+
       <Link href={`/business/${business.id}`}>
+
         <div className="relative h-52 overflow-hidden bg-slate-100">
+
           {business.image_url ? (
             <img
               src={business.image_url}
@@ -649,8 +719,8 @@ function BusinessCard({
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl font-black text-slate-300 shadow-sm">
-                L
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
+                <BuildingIcon />
               </div>
             </div>
           )}
@@ -660,10 +730,12 @@ function BusinessCard({
           <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black text-slate-800 shadow-lg">
             {business.category}
           </div>
+
         </div>
       </Link>
 
       <div className="p-5">
+
         <Link href={`/business/${business.id}`}>
           <h3 className="line-clamp-1 text-base font-black tracking-tight text-slate-950 transition group-hover:text-sky-600">
             {business.business_name}
@@ -677,7 +749,8 @@ function BusinessCard({
         )}
 
         <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
-          <span className="mt-0.5">◉</span>
+
+          <LocationIcon small />
 
           <span className="line-clamp-1">
             {[
@@ -688,6 +761,7 @@ function BusinessCard({
               .filter(Boolean)
               .join(", ")}
           </span>
+
         </div>
 
         {(business.short_description ||
@@ -701,6 +775,7 @@ function BusinessCard({
         {business.services &&
           business.services.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-1.5">
+
               {business.services
                 .slice(0, 3)
                 .map((service) => (
@@ -711,10 +786,12 @@ function BusinessCard({
                     {service}
                   </span>
                 ))}
+
             </div>
           )}
 
         <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+
           <span className="text-xs font-black text-slate-950">
             View Business
           </span>
@@ -722,8 +799,222 @@ function BusinessCard({
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold transition group-hover:bg-slate-950 group-hover:text-white">
             →
           </span>
+
         </div>
+
       </div>
     </article>
+  );
+}
+
+/* =========================================================
+   SVG ICONS
+========================================================= */
+
+function BuildingIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 21h18" />
+      <path d="M5 21V5l7-3 7 3v16" />
+      <path d="M9 21v-4h6v4" />
+      <path d="M8 8h1" />
+      <path d="M15 8h1" />
+      <path d="M8 12h1" />
+      <path d="M15 12h1" />
+    </svg>
+  );
+}
+
+function InteriorIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18" />
+      <path d="M9 9v12" />
+      <path d="M14 14h4" />
+      <path d="M14 17h3" />
+    </svg>
+  );
+}
+
+function ConstructionIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 21h18" />
+      <path d="M5 21V8l7-5 7 5v13" />
+      <path d="M8 21v-5h8v5" />
+      <path d="M8 10h2" />
+      <path d="M14 10h2" />
+    </svg>
+  );
+}
+
+function DoctorIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M8 3v6a4 4 0 0 0 8 0V3" />
+      <path d="M6 3h4" />
+      <path d="M14 3h4" />
+      <path d="M12 13v4" />
+      <path d="M9 20h6" />
+      <path d="M10 17h4" />
+    </svg>
+  );
+}
+
+function RestaurantIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 3v7" />
+      <path d="M4 3v4a3 3 0 0 0 6 0V3" />
+      <path d="M7 10v11" />
+      <path d="M17 3v18" />
+      <path d="M17 3c3 2 3 7 0 9" />
+    </svg>
+  );
+}
+
+function SalonIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="6" cy="7" r="3" />
+      <circle cx="6" cy="17" r="3" />
+      <path d="m8 9 11 11" />
+      <path d="m8 15 11-11" />
+    </svg>
+  );
+}
+
+function ElectricIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M13.2 2 4 13h6l-1.2 9L18 11h-6z" />
+    </svg>
+  );
+}
+
+function PropertyIcon() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 21h18" />
+      <path d="M5 21V9l7-6 7 6v12" />
+      <path d="M9 21v-6h6v6" />
+      <path d="M9 10h1" />
+      <path d="M14 10h1" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      className="mr-3 shrink-0 text-slate-400"
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-4-4" />
+    </svg>
+  );
+}
+
+function LocationIcon({
+  small = false,
+}: {
+  small?: boolean;
+}) {
+  return (
+    <svg
+      className={`shrink-0 ${
+        small
+          ? "text-slate-400"
+          : "mr-3 text-slate-400"
+      }`}
+      width={small ? "15" : "18"}
+      height={small ? "15" : "18"}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </svg>
   );
 }
