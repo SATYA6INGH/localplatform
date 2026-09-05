@@ -5,7 +5,9 @@ import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const SUPABASE_URL = "https://ckuiskbegrlrethnlhzq.supabase.co";
+const SUPABASE_URL =
+  "https://ckuiskbegrlrethnlhzq.supabase.co";
+
 const SUPABASE_KEY =
   "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL";
 
@@ -24,7 +26,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Bungalow Design",
     "Farm House Design",
     "Duplex Design",
-    "Apartment Design",
     "2D Floor Plan",
     "Building Plan",
     "Working Drawing",
@@ -60,7 +61,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Residential Construction",
     "Commercial Construction",
     "Renovation",
-    "Building Construction",
     "Civil Work",
     "RCC Work",
     "Brick Work",
@@ -71,7 +71,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
   Doctor: [
     "General Consultation",
     "Health Checkup",
-    "Fever Treatment",
     "Diabetes Consultation",
     "Blood Pressure Consultation",
     "Preventive Healthcare",
@@ -92,7 +91,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Takeaway",
     "Home Delivery",
     "North Indian Food",
-    "South Indian Food",
     "Chinese Food",
     "Fast Food",
     "Vegetarian Food",
@@ -107,7 +105,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Manicure",
     "Pedicure",
     "Bridal Makeup",
-    "Party Makeup",
     "Hair Spa",
   ],
 
@@ -126,7 +123,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Pipe Repair",
     "Bathroom Plumbing",
     "Kitchen Plumbing",
-    "Water Tank Installation",
     "Tap Repair",
     "Drainage Repair",
     "Leakage Repair",
@@ -163,7 +159,6 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Product Photography",
     "Birthday Photography",
     "Video Shooting",
-    "Drone Photography",
   ],
 
   Gym: [
@@ -178,10 +173,10 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
 
   "Coaching Institute": [
     "School Coaching",
-    "Competitive Exam Preparation",
     "Maths Coaching",
     "Science Coaching",
     "English Coaching",
+    "Competitive Exam Preparation",
     "Online Classes",
     "Test Series",
   ],
@@ -190,46 +185,119 @@ const CATEGORY_SERVICES: Record<string, string[]> = {
     "Room Booking",
     "Family Rooms",
     "AC Rooms",
-    "Non AC Rooms",
     "Restaurant",
     "Conference Hall",
     "Event Booking",
   ],
+
+  Other: [],
 };
 
-const CATEGORIES = [
-  "Architect",
-  "Interior Designer",
-  "Construction",
-  "Doctor",
-  "Dentist",
-  "Restaurant",
-  "Salon",
-  "Electrician",
-  "Plumber",
-  "Real Estate",
-  "Auto Repair",
-  "Photographer",
-  "Gym",
-  "Coaching Institute",
-  "Hotel",
-  "Other",
-];
+const CATEGORIES = Object.keys(CATEGORY_SERVICES);
 
-type AIResult = {
-  description?: string;
-  short_description?: string;
-  subcategory?: string;
-  services?: string[];
-  seo_keywords?: string[];
-  highlights?: string[];
-};
+function createAutomaticListing(
+  name: string,
+  category: string,
+  city: string,
+  ownerText: string,
+  selectedServices: string[]
+) {
+  const cleanName = name.trim();
+  const cleanCity = city.trim() || "your city";
+
+  const services =
+    selectedServices.length > 0
+      ? selectedServices
+      : (CATEGORY_SERVICES[category] || []).slice(0, 8);
+
+  const descriptions: Record<string, string> = {
+    Architect: `${cleanName} provides architectural planning and design services in ${cleanCity}. Services may include house plans, floor plans, elevations, working drawings and 3D visualisation for residential and other building projects.`,
+
+    "Interior Designer": `${cleanName} provides interior design services in ${cleanCity}. The business can assist customers with home interiors, kitchen design, bedroom design, false ceilings, furniture planning and 3D interior visualisation.`,
+
+    Construction: `${cleanName} provides construction and civil work services in ${cleanCity}. Services may include residential construction, commercial construction, renovation, RCC work, brick work, plaster work and waterproofing.`,
+
+    Doctor: `${cleanName} provides healthcare consultation services in ${cleanCity}. Customers can contact the business for general consultation and relevant healthcare services.`,
+
+    Dentist: `${cleanName} provides dental care services in ${cleanCity}. Services may include dental consultation, teeth cleaning, fillings, root canal treatment, braces and other dental procedures.`,
+
+    Restaurant: `${cleanName} is a local food and dining business serving customers in ${cleanCity}. Customers can explore available dining, takeaway, delivery and food services.`,
+
+    Salon: `${cleanName} provides salon and personal grooming services in ${cleanCity}, including commonly offered hair, beauty and grooming services.`,
+
+    Electrician: `${cleanName} provides electrical services in ${cleanCity}, including electrical repair, installation, wiring and maintenance services.`,
+
+    Plumber: `${cleanName} provides plumbing services in ${cleanCity}, including repair, installation, leakage and plumbing maintenance work.`,
+
+    "Real Estate": `${cleanName} provides real estate services in ${cleanCity}, helping customers with property-related requirements such as sale, purchase and rental.`,
+
+    "Auto Repair": `${cleanName} provides vehicle repair and maintenance services in ${cleanCity}. Customers can contact the business for servicing, repair and common automotive maintenance.`,
+
+    Photographer: `${cleanName} provides photography and visual media services in ${cleanCity}, covering events, portraits, weddings and other photography requirements.`,
+
+    Gym: `${cleanName} provides fitness and training services in ${cleanCity}, helping customers with fitness, strength training and personal training requirements.`,
+
+    "Coaching Institute": `${cleanName} provides educational coaching and learning support in ${cleanCity}, with services for students and competitive examination preparation.`,
+
+    Hotel: `${cleanName} provides accommodation and hospitality services in ${cleanCity}, with options for rooms, stays and related hospitality requirements.`,
+
+    Other: `${cleanName} provides ${category.toLowerCase()} services in ${cleanCity}. Customers can contact the business for its available products and services.`,
+  };
+
+  const baseDescription =
+    descriptions[category] ||
+    `${cleanName} provides ${category.toLowerCase()} services in ${cleanCity}. Customers can contact the business for its available products and services.`;
+
+  const ownerDescription = ownerText.trim();
+
+  const description = ownerDescription
+    ? `${baseDescription} ${ownerDescription}`
+    : baseDescription;
+
+  const subcategoryMap: Record<string, string> = {
+    Architect: "Architectural Design & Planning",
+    "Interior Designer": "Interior Design & Space Planning",
+    Construction: "Construction & Civil Work",
+    Doctor: "Healthcare Consultation",
+    Dentist: "Dental Care",
+    Restaurant: "Food & Dining",
+    Salon: "Beauty & Grooming",
+    Electrician: "Electrical Services",
+    Plumber: "Plumbing Services",
+    "Real Estate": "Property Services",
+    "Auto Repair": "Vehicle Repair & Maintenance",
+    Photographer: "Photography Services",
+    Gym: "Fitness & Training",
+    "Coaching Institute": "Education & Coaching",
+    Hotel: "Accommodation & Hospitality",
+    Other: category,
+  };
+
+  return {
+    description,
+    shortDescription: `${cleanName} - ${category} services in ${cleanCity}.`,
+    subcategory: subcategoryMap[category] || category,
+    services,
+    keywords: [
+      category.toLowerCase(),
+      `${category.toLowerCase()} in ${cleanCity.toLowerCase()}`,
+      `${category.toLowerCase()} near me`,
+      `${category.toLowerCase()} services`,
+      `local ${category.toLowerCase()}`,
+    ],
+    highlights: [
+      `Local ${category.toLowerCase()} services`,
+      `Serving customers in ${cleanCity}`,
+      "Business information available on LocalPlatform",
+    ],
+  };
+}
 
 export default function ListBusinessPage() {
   const router = useRouter();
 
-  const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
+  const [step, setStep] = useState(1);
 
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
@@ -240,7 +308,8 @@ export default function ListBusinessPage() {
   const [shortDescription, setShortDescription] = useState("");
 
   const [services, setServices] = useState<string[]>([]);
-  const [customService, setCustomService] = useState("");
+  const [seoKeywords, setSeoKeywords] = useState<string[]>([]);
+  const [highlights, setHighlights] = useState<string[]>([]);
 
   const [address, setAddress] = useState("");
   const [area, setArea] = useState("");
@@ -248,25 +317,25 @@ export default function ListBusinessPage() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [pincode, setPincode] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
 
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [mapsUrl, setMapsUrl] = useState("");
 
   const [phone, setPhone] = useState("");
 
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  const [aiLoading, setAiLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkUser = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -279,7 +348,7 @@ export default function ListBusinessPage() {
       setUserId(session.user.id);
     };
 
-    checkAuth();
+    checkUser();
   }, [router]);
 
   const availableServices = useMemo(() => {
@@ -287,31 +356,19 @@ export default function ListBusinessPage() {
   }, [category]);
 
   const toggleService = (service: string) => {
-    setServices((prev) =>
-      prev.includes(service)
-        ? prev.filter((item) => item !== service)
-        : [...prev, service]
+    setServices((old) =>
+      old.includes(service)
+        ? old.filter((item) => item !== service)
+        : [...old, service]
     );
   };
 
-  const addCustomService = () => {
-    const value = customService.trim();
-
-    if (!value) return;
-
-    if (!services.includes(value)) {
-      setServices((prev) => [...prev, value]);
-    }
-
-    setCustomService("");
-  };
-
-  const generateAIListing = async () => {
+  const generateListing = () => {
     setError("");
     setMessage("");
 
     if (!businessName.trim()) {
-      setError("Pehle Business Name bharo.");
+      setError("Business Name bharo.");
       setStep(1);
       return;
     }
@@ -322,60 +379,36 @@ export default function ListBusinessPage() {
       return;
     }
 
-    setAiLoading(true);
+    setGenerating(true);
 
-    try {
-      const response = await fetch("/api/ai/business-listing", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          businessName,
-          category,
-          subcategory,
-          city,
-          area,
-          services,
-          ownerInput,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "AI listing generate nahi hui.");
-      }
-
-      const data: AIResult = result.data;
-
-      setDescription(data.description || "");
-      setShortDescription(data.short_description || "");
-      setSubcategory(data.subcategory || "");
-
-      if (Array.isArray(data.services)) {
-        setServices(data.services);
-      }
-
-      setMessage("AI ne aapki business listing ready kar di.");
-      setStep(2);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "AI listing generate nahi ho saki."
+    setTimeout(() => {
+      const result = createAutomaticListing(
+        businessName,
+        category,
+        city,
+        ownerInput,
+        services
       );
-    } finally {
-      setAiLoading(false);
-    }
+
+      setDescription(result.description);
+      setShortDescription(result.shortDescription);
+      setSubcategory(result.subcategory);
+      setServices(result.services);
+      setSeoKeywords(result.keywords);
+      setHighlights(result.highlights);
+
+      setGenerating(false);
+      setMessage("✓ Aapki listing automatically ready ho gayi.");
+      setStep(2);
+    }, 500);
   };
 
-  const useCurrentLocation = () => {
+  const detectLocation = () => {
     setError("");
     setMessage("");
 
     if (!navigator.geolocation) {
-      setError("Aapke browser me location support nahi hai.");
+      setError("Browser location support nahi karta.");
       return;
     }
 
@@ -388,26 +421,16 @@ export default function ListBusinessPage() {
 
         setLatitude(lat);
         setLongitude(lng);
+        setMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
 
-        const url = `https://www.google.com/maps?q=${lat},${lng}`;
-        setMapsUrl(url);
-
-        setMessage(
-          "Location detect ho gayi. Address details neeche fill/verify kar sakte hain."
-        );
-
+        setMessage("✓ Current location detect ho gayi.");
         setLocationLoading(false);
       },
-      (err) => {
+      () => {
         setLocationLoading(false);
-
-        if (err.code === 1) {
-          setError(
-            "Location permission denied hai. Browser me location permission Allow karo."
-          );
-        } else {
-          setError("Location detect nahi ho saki.");
-        }
+        setError(
+          "Location nahi mili. Browser me Location Permission Allow karo."
+        );
       },
       {
         enableHighAccuracy: true,
@@ -417,13 +440,13 @@ export default function ListBusinessPage() {
     );
   };
 
-  const handleImage = (file: File | null) => {
-    setError("");
-
+  const handleImage = (file: File | undefined) => {
     if (!file) return;
 
+    setError("");
+
     if (!file.type.startsWith("image/")) {
-      setError("Sirf image file upload karo.");
+      setError("Sirf image upload karo.");
       return;
     }
 
@@ -459,7 +482,7 @@ export default function ListBusinessPage() {
     }
 
     if (!userId) {
-      setError("Login session nahi mila. Dobara login karo.");
+      setError("Login session nahi mila.");
       return;
     }
 
@@ -470,25 +493,21 @@ export default function ListBusinessPage() {
 
       if (image) {
         const extension = image.name.split(".").pop() || "jpg";
-
-        const filePath = `${userId}/${Date.now()}.${extension}`;
+        const path = `${userId}/${Date.now()}.${extension}`;
 
         const { error: uploadError } = await supabase.storage
           .from("business-images")
-          .upload(filePath, image, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+          .upload(path, image);
 
         if (uploadError) {
           throw uploadError;
         }
 
-        const { data: publicUrlData } = supabase.storage
+        const { data } = supabase.storage
           .from("business-images")
-          .getPublicUrl(filePath);
+          .getPublicUrl(path);
 
-        imageUrl = publicUrlData.publicUrl;
+        imageUrl = data.publicUrl;
       }
 
       const { error: insertError } = await supabase
@@ -502,15 +521,14 @@ export default function ListBusinessPage() {
 
           description: description.trim() || null,
           short_description: shortDescription.trim() || null,
+          seo_keywords: seoKeywords,
+          highlights,
 
-          seo_keywords: [],
-          highlights: [],
-
-          city: city.trim(),
-          state: state.trim() || null,
           address: address.trim() || null,
           area: area.trim() || null,
           landmark: landmark.trim() || null,
+          city: city.trim(),
+          state: state.trim() || null,
           pincode: pincode.trim() || null,
 
           latitude,
@@ -527,11 +545,11 @@ export default function ListBusinessPage() {
         throw insertError;
       }
 
-      setMessage("Business successfully listed.");
+      setMessage("✓ Business successfully listed.");
 
       setTimeout(() => {
         router.push("/dashboard");
-      }, 700);
+      }, 800);
     } catch (err) {
       console.error(err);
 
@@ -545,156 +563,95 @@ export default function ListBusinessPage() {
     }
   };
 
-  const nextStep = () => {
-    setError("");
-
-    if (step === 1) {
-      if (!businessName.trim()) {
-        setError("Business Name bharo.");
-        return;
-      }
-
-      if (!category) {
-        setError("Category select karo.");
-        return;
-      }
-
-      setStep(2);
-      return;
-    }
-
-    if (step === 2) {
-      setStep(3);
-      return;
-    }
-
-    if (step === 3) {
-      setStep(4);
-      return;
-    }
-
-    if (step === 4) {
-      setStep(5);
-    }
-  };
-
-  const previousStep = () => {
-    setError("");
-    setStep((prev) => Math.max(1, prev - 1));
-  };
-
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+
         <div className="mb-8">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-              AI POWERED
-            </span>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
+            FREE AI ASSISTANT
+          </span>
 
-            <span className="text-sm text-slate-500">
-              Premium Business Listing
-            </span>
-          </div>
-
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
             Apna Business List Karo
           </h1>
 
-          <p className="mt-2 max-w-2xl text-slate-600">
-            Sirf basic information do. AI aapki professional business
-            profile automatically prepare karega.
+          <p className="mt-2 text-slate-600">
+            Kam typing karo — LocalPlatform automatically aapki listing
+            prepare karega.
           </p>
         </div>
 
-        {/* Progress */}
-        <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="grid grid-cols-5 gap-1">
-            {[
-              ["1", "Business"],
-              ["2", "AI Profile"],
-              ["3", "Services"],
-              ["4", "Location"],
-              ["5", "Publish"],
-            ].map(([number, label]) => {
-              const active = Number(number) === step;
-              const completed = Number(number) < step;
+        <div className="mb-6 grid grid-cols-5 gap-1 rounded-2xl bg-white p-2 shadow-sm">
+          {["Business", "Profile", "Services", "Location", "Publish"].map(
+            (item, index) => {
+              const number = index + 1;
 
               return (
                 <button
-                  key={number}
+                  key={item}
+                  type="button"
                   onClick={() => {
-                    if (Number(number) <= step) {
-                      setStep(Number(number));
+                    if (number <= step) {
+                      setStep(number);
                     }
                   }}
-                  className={`rounded-xl px-2 py-3 text-center transition ${
-                    active
+                  className={`rounded-xl px-2 py-3 text-xs font-bold sm:text-sm ${
+                    step === number
                       ? "bg-blue-600 text-white"
-                      : completed
+                      : number < step
                         ? "bg-blue-50 text-blue-700"
                         : "text-slate-400"
                   }`}
                 >
-                  <div className="text-xs font-bold sm:text-sm">
-                    {number}
-                  </div>
-
-                  <div className="mt-1 text-[10px] font-semibold sm:text-xs">
-                    {label}
-                  </div>
+                  {number}. {item}
                 </button>
               );
-            })}
-          </div>
+            }
+          )}
         </div>
 
         {error && (
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mb-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+          <div className="mb-5 rounded-xl bg-green-50 p-4 text-sm font-semibold text-green-700">
             {message}
           </div>
         )}
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-          {/* STEP 1 */}
+        <div className="rounded-3xl bg-white p-5 shadow-sm sm:p-8">
+
           {step === 1 && (
-            <section>
-              <div className="mb-7">
-                <p className="text-sm font-bold text-blue-600">
-                  STEP 1
-                </p>
+            <>
+              <h2 className="text-2xl font-black text-slate-900">
+                Business Information
+              </h2>
 
-                <h2 className="mt-1 text-2xl font-black text-slate-900">
-                  Business ke baare me batayein
-                </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Sirf basic details do.
+              </p>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Sirf basic information. Baaki AI sambhal lega.
-                </p>
-              </div>
+              <div className="mt-7 grid gap-5 md:grid-cols-2">
 
-              <div className="grid gap-5 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold">
                     Business Name *
                   </label>
 
                   <input
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="Example: Sunlight Architects"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    placeholder="Sunlight Architects"
+                    className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold">
                     Category *
                   </label>
 
@@ -705,7 +662,7 @@ export default function ListBusinessPage() {
                       setServices([]);
                       setSubcategory("");
                     }}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border bg-white px-4 py-3"
                   >
                     <option value="">Select Category</option>
 
@@ -718,8 +675,8 @@ export default function ListBusinessPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Phone Number
+                  <label className="mb-2 block text-sm font-bold">
+                    Phone
                   </label>
 
                   <input
@@ -727,83 +684,69 @@ export default function ListBusinessPage() {
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="9876543210"
                     inputMode="tel"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border px-4 py-3"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-bold">
+                    City
+                  </label>
+
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Lucknow"
+                    className="w-full rounded-xl border px-4 py-3"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Aap apne business ke baare me simple language me likhein
+                  <label className="mb-2 block text-sm font-bold">
+                    Business ke baare me 1-2 line
                   </label>
 
                   <textarea
                     value={ownerInput}
                     onChange={(e) => setOwnerInput(e.target.value)}
-                    rows={5}
-                    placeholder="Example: Hum Lucknow me house planning aur 3D elevation ka kaam karte hain. Residential projects ke liye design aur working drawing provide karte hain."
-                    className="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    rows={4}
+                    placeholder="Hum Lucknow me house planning aur 3D elevation ka kaam karte hain..."
+                    className="w-full resize-none rounded-xl border px-4 py-3"
                   />
 
                   <p className="mt-2 text-xs text-slate-500">
-                    Perfect English likhne ki zarurat nahi. Hindi/Hinglish me
-                    bhi likh sakte ho.
+                    Hindi/Hinglish me bhi likh sakte ho.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-7 rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl text-white">
-                    ✨
-                  </div>
-
-                  <div>
-                    <h3 className="font-black text-slate-900">
-                      AI Listing Assistant
-                    </h3>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      AI business category ke according description,
-                      subcategory aur relevant services automatically
-                      suggest karega.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={generateAIListing}
-                  disabled={aiLoading}
-                  className="mt-5 w-full rounded-xl bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {aiLoading
-                    ? "AI Listing Bana Raha Hai..."
-                    : "✨ AI Se Meri Listing Banao"}
-                </button>
-              </div>
-            </section>
+              <button
+                type="button"
+                onClick={generateListing}
+                disabled={generating}
+                className="mt-7 w-full rounded-xl bg-blue-600 px-5 py-4 font-black text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                {generating
+                  ? "Listing Prepare Ho Rahi Hai..."
+                  : "✨ Automatically Meri Listing Banao"}
+              </button>
+            </>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
-            <section>
-              <div className="mb-7">
-                <p className="text-sm font-bold text-blue-600">
-                  STEP 2
-                </p>
+            <>
+              <h2 className="text-2xl font-black text-slate-900">
+                Business Profile
+              </h2>
 
-                <h2 className="mt-1 text-2xl font-black text-slate-900">
-                  AI Profile
-                </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Content ko publish se pehle edit kar sakte ho.
+              </p>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  AI generated content ko publish se pehle edit kar sakte
-                  hain.
-                </p>
-              </div>
+              <div className="mt-6 space-y-5">
 
-              <div className="space-y-5">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold">
                     Short Description
                   </label>
 
@@ -812,179 +755,105 @@ export default function ListBusinessPage() {
                     onChange={(e) =>
                       setShortDescription(e.target.value)
                     }
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border px-4 py-3"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Business Description
+                  <label className="mb-2 block text-sm font-bold">
+                    Description
                   </label>
 
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    rows={9}
-                    className="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 leading-7 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    rows={8}
+                    className="w-full resize-none rounded-xl border px-4 py-3 leading-7"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold">
                     Subcategory
                   </label>
 
                   <input
                     value={subcategory}
                     onChange={(e) => setSubcategory(e.target.value)}
-                    placeholder="AI suggested subcategory"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border px-4 py-3"
                   />
                 </div>
+
               </div>
-            </section>
+            </>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
-            <section>
-              <div className="mb-7">
-                <p className="text-sm font-bold text-blue-600">
-                  STEP 3
-                </p>
+            <>
+              <h2 className="text-2xl font-black text-slate-900">
+                Services
+              </h2>
 
-                <h2 className="mt-1 text-2xl font-black text-slate-900">
-                  Services
-                </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Category ke according services automatically suggest ki gayi
+                hain.
+              </p>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  AI ke suggested services select/edit kar sakte hain.
-                </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {availableServices.map((service) => {
+                  const selected = services.includes(service);
+
+                  return (
+                    <button
+                      key={service}
+                      type="button"
+                      onClick={() => toggleService(service)}
+                      className={`rounded-full border px-4 py-2 text-sm font-semibold ${
+                        selected
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-slate-300 bg-white text-slate-700"
+                      }`}
+                    >
+                      {selected ? "✓ " : "+ "}
+                      {service}
+                    </button>
+                  );
+                })}
               </div>
-
-              {availableServices.length > 0 && (
-                <div className="mb-7">
-                  <h3 className="mb-3 text-sm font-black text-slate-800">
-                    Recommended Services
-                  </h3>
-
-                  <div className="flex flex-wrap gap-2">
-                    {availableServices.map((service) => {
-                      const selected = services.includes(service);
-
-                      return (
-                        <button
-                          key={service}
-                          onClick={() => toggleService(service)}
-                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                            selected
-                              ? "border-blue-600 bg-blue-600 text-white"
-                              : "border-slate-300 bg-white text-slate-700 hover:border-blue-400"
-                          }`}
-                        >
-                          {selected ? "✓ " : "+ "}
-                          {service}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-2xl bg-slate-50 p-5">
-                <h3 className="mb-3 text-sm font-black text-slate-800">
-                  Add Your Own Service
-                </h3>
-
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <input
-                    value={customService}
-                    onChange={(e) => setCustomService(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCustomService();
-                      }
-                    }}
-                    placeholder="Example: 3D Walkthrough"
-                    className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
-                  />
-
-                  <button
-                    onClick={addCustomService}
-                    className="rounded-xl bg-slate-900 px-5 py-3 font-bold text-white"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-
-              {services.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="mb-3 text-sm font-black text-slate-800">
-                    Selected Services ({services.length})
-                  </h3>
-
-                  <div className="flex flex-wrap gap-2">
-                    {services.map((service) => (
-                      <span
-                        key={service}
-                        className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700"
-                      >
-                        {service}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
+            </>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
-            <section>
-              <div className="mb-7">
-                <p className="text-sm font-bold text-blue-600">
-                  STEP 4
-                </p>
-
-                <h2 className="mt-1 text-2xl font-black text-slate-900">
-                  Business Location
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Customers ko aapka exact business location dikhayega.
-                </p>
-              </div>
+            <>
+              <h2 className="text-2xl font-black text-slate-900">
+                Business Location
+              </h2>
 
               <button
-                onClick={useCurrentLocation}
+                type="button"
+                onClick={detectLocation}
                 disabled={locationLoading}
-                className="mb-7 flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-blue-600 bg-blue-50 px-5 py-4 font-black text-blue-700 transition hover:bg-blue-100 disabled:opacity-60"
+                className="mt-6 w-full rounded-2xl border-2 border-blue-600 bg-blue-50 px-5 py-4 font-black text-blue-700 disabled:opacity-60"
               >
-                <span className="text-xl">📍</span>
-
+                📍{" "}
                 {locationLoading
                   ? "Location Detect Ho Rahi Hai..."
                   : "Use My Current Location"}
               </button>
 
               {latitude !== null && longitude !== null && (
-                <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm">
-                  <p className="font-bold text-green-800">
-                    ✓ Location detected
-                  </p>
-
-                  <p className="mt-1 text-green-700">
-                    Latitude: {latitude.toFixed(6)} | Longitude:{" "}
-                    {longitude.toFixed(6)}
-                  </p>
+                <div className="mt-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+                  ✓ Location detected
+                  <div className="mt-1 text-xs">
+                    {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                  </div>
                 </div>
               )}
 
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold">
                     Complete Address
                   </label>
 
@@ -992,245 +861,170 @@ export default function ListBusinessPage() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     rows={3}
-                    placeholder="House/Shop No., Street, Road..."
-                    className="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full resize-none rounded-xl border px-4 py-3"
                   />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Area / Locality
-                  </label>
+                <input
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  placeholder="Area / Locality"
+                  className="rounded-xl border px-4 py-3"
+                />
 
-                  <input
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    placeholder="Gomti Nagar"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
+                <input
+                  value={landmark}
+                  onChange={(e) => setLandmark(e.target.value)}
+                  placeholder="Landmark"
+                  className="rounded-xl border px-4 py-3"
+                />
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Landmark
-                  </label>
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City *"
+                  className="rounded-xl border px-4 py-3"
+                />
 
-                  <input
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    placeholder="Near..."
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
+                <input
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  placeholder="State"
+                  className="rounded-xl border px-4 py-3"
+                />
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    City *
-                  </label>
+                <input
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value)}
+                  placeholder="Pincode"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="rounded-xl border px-4 py-3"
+                />
 
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Lucknow"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    State
-                  </label>
-
-                  <input
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    placeholder="Uttar Pradesh"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Pincode
-                  </label>
-
-                  <input
-                    value={pincode}
-                    onChange={(e) => setPincode(e.target.value)}
-                    placeholder="226010"
-                    inputMode="numeric"
-                    maxLength={6}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Google Maps Location
-                  </label>
-
-                  <input
-                    value={mapsUrl}
-                    onChange={(e) => setMapsUrl(e.target.value)}
-                    placeholder="Automatically generated"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-                  />
-                </div>
+                <input
+                  value={mapsUrl}
+                  onChange={(e) => setMapsUrl(e.target.value)}
+                  placeholder="Google Maps Location"
+                  className="rounded-xl border px-4 py-3"
+                />
               </div>
-            </section>
+            </>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && (
-            <section>
-              <div className="mb-7">
-                <p className="text-sm font-bold text-blue-600">
-                  STEP 5
-                </p>
+            <>
+              <h2 className="text-2xl font-black text-slate-900">
+                Photo & Publish
+              </h2>
 
-                <h2 className="mt-1 text-2xl font-black text-slate-900">
-                  Photo & Publish
-                </h2>
+              <label className="mt-6 flex min-h-52 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-slate-50">
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Final details check karke business publish karo.
-                </p>
-              </div>
-
-              <div className="mb-7">
-                <label className="mb-3 block text-sm font-bold text-slate-700">
-                  Business Photo / Logo
-                </label>
-
-                <label className="flex min-h-52 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-blue-400">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Business preview"
-                      className="h-52 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <div className="text-4xl">📷</div>
-
-                      <p className="mt-2 font-bold text-slate-700">
-                        Upload Business Photo
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-500">
-                        JPG, PNG • Maximum 5 MB
-                      </p>
-                    </div>
-                  )}
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) =>
-                      handleImage(e.target.files?.[0] || null)
-                    }
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Business preview"
+                    className="h-52 w-full object-cover"
                   />
-                </label>
-              </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-4xl">📷</div>
 
-              {/* Preview */}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <p className="mb-4 text-xs font-black uppercase tracking-wider text-slate-500">
-                  Listing Preview
-                </p>
+                    <p className="mt-2 font-bold">
+                      Upload Business Photo
+                    </p>
 
-                <h3 className="text-2xl font-black text-slate-900">
-                  {businessName || "Business Name"}
-                </h3>
-
-                <p className="mt-1 font-semibold text-blue-600">
-                  {subcategory || category || "Category"}
-                </p>
-
-                {shortDescription && (
-                  <p className="mt-4 text-sm font-medium text-slate-700">
-                    {shortDescription}
-                  </p>
-                )}
-
-                {description && (
-                  <p className="mt-3 text-sm leading-6 text-slate-600">
-                    {description}
-                  </p>
-                )}
-
-                {services.length > 0 && (
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {services.slice(0, 8).map((service) => (
-                      <span
-                        key={service}
-                        className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm"
-                      >
-                        {service}
-                      </span>
-                    ))}
+                    <p className="text-xs text-slate-500">
+                      JPG / PNG • Maximum 5 MB
+                    </p>
                   </div>
                 )}
 
-                <div className="mt-5 text-sm text-slate-600">
-                  📍 {[area, city, state, pincode]
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleImage(e.target.files?.[0])
+                  }
+                />
+              </label>
+
+              <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+                <h3 className="text-xl font-black text-slate-900">
+                  {businessName}
+                </h3>
+
+                <p className="mt-1 font-semibold text-blue-600">
+                  {subcategory || category}
+                </p>
+
+                <p className="mt-4 text-sm leading-6 text-slate-600">
+                  {description}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {services.slice(0, 10).map((service) => (
+                    <span
+                      key={service}
+                      className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="mt-5 text-sm text-slate-600">
+                  📍{" "}
+                  {[area, city, state, pincode]
                     .filter(Boolean)
                     .join(", ")}
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
-                <p className="font-black text-green-800">
-                  ✓ Ready to Publish
-                </p>
-
-                <p className="mt-1 text-sm leading-6 text-green-700">
-                  Aapki listing LocalPlatform par customers ke liye
-                  available ho jayegi.
                 </p>
               </div>
-            </section>
-          )}
 
-          {/* Navigation */}
-          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-between">
-            {step > 1 ? (
               <button
-                onClick={previousStep}
-                disabled={saving}
-                className="rounded-xl border border-slate-300 px-6 py-3 font-bold text-slate-700 hover:bg-slate-50"
-              >
-                ← Back
-              </button>
-            ) : (
-              <Link
-                href="/dashboard"
-                className="rounded-xl border border-slate-300 px-6 py-3 text-center font-bold text-slate-700 hover:bg-slate-50"
-              >
-                Cancel
-              </Link>
-            )}
-
-            {step < 5 ? (
-              <button
-                onClick={nextStep}
-                className="rounded-xl bg-slate-900 px-7 py-3 font-bold text-white hover:bg-slate-800"
-              >
-                Continue →
-              </button>
-            ) : (
-              <button
+                type="button"
                 onClick={publishBusiness}
                 disabled={saving}
-                className="rounded-xl bg-blue-600 px-7 py-3 font-black text-white shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-7 w-full rounded-xl bg-blue-600 px-5 py-4 font-black text-white hover:bg-blue-700 disabled:opacity-60"
               >
                 {saving
                   ? "Publishing..."
                   : "🚀 Publish Business"}
               </button>
-            )}
-          </div>
+            </>
+          )}
+
+          {step < 5 && (
+            <div className="mt-8 flex justify-between border-t pt-6">
+
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                  className="rounded-xl border px-6 py-3 font-bold text-slate-700"
+                >
+                  ← Back
+                </button>
+              ) : (
+                <Link
+                  href="/dashboard"
+                  className="rounded-xl border px-6 py-3 font-bold text-slate-700"
+                >
+                  Cancel
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setStep(step + 1)}
+                className="rounded-xl bg-slate-900 px-7 py-3 font-bold text-white"
+              >
+                Continue →
+              </button>
+            </div>
+          )}
+
         </div>
       </div>
     </main>
