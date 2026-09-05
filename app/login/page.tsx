@@ -28,6 +28,8 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    if (loading) return;
+
     setLoading(true);
     setMessage("");
     setErrorMessage("");
@@ -90,7 +92,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (!data.session || !data.user) {
+      if (!data.user || !data.session) {
         setErrorMessage(
           "Login successful, but session was not created. Please try again."
         );
@@ -107,28 +109,28 @@ export default function LoginPage() {
         .eq("user_id", data.user.id)
         .maybeSingle();
 
-      if (adminError) {
-        console.error("ADMIN CHECK ERROR:", adminError);
+      console.log("LOGIN USER ID:", data.user.id);
+      console.log("ADMIN DATA:", admin);
+      console.log("ADMIN ERROR:", adminError);
 
-        setErrorMessage(
-          "Login successful, but admin verification failed. Please try again."
-        );
-
-        setLoading(false);
+      // =========================
+      // ADMIN LOGIN
+      // =========================
+      if (admin) {
+        window.location.replace("/admin");
         return;
       }
 
       // =========================
-      // REDIRECT
+      // NORMAL USER LOGIN
       // =========================
-      if (admin) {
-        window.location.assign("/admin");
-      } else {
-        window.location.assign("/list-business");
+      if (!admin) {
+        window.location.replace("/list-business");
+        return;
       }
-
-      return;
     } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
       setErrorMessage(
         error instanceof Error
           ? error.message
@@ -171,7 +173,7 @@ export default function LoginPage() {
       <section className="flex min-h-[calc(100vh-82px)] items-center justify-center px-5 py-12">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
-            {/* TITLE */}
+            {/* LOGO */}
             <div className="text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-extrabold text-white">
                 L
@@ -231,12 +233,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  autoComplete={isSignup ? "new-password" : "current-password"}
+                  autoComplete={
+                    isSignup ? "new-password" : "current-password"
+                  }
                   className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
-              {/* SUBMIT */}
+              {/* SUBMIT BUTTON */}
               <button
                 type="submit"
                 disabled={loading}
@@ -250,7 +254,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* SIGNUP / LOGIN SWITCH */}
+            {/* SWITCH LOGIN / SIGNUP */}
             <div className="mt-7 text-center text-sm text-slate-500">
               {isSignup
                 ? "Already have an account?"
