@@ -28,13 +28,19 @@ export default function ListBusinessPage() {
 
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
+  const [address, setAddress] = useState("");
+  const [area, setArea] = useState("");
+  const [landmark, setLandmark] = useState("");
   const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [pincode, setPincode] = useState("");
   const [phone, setPhone] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
 
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
-
-  const [userId, setUserId] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,7 +65,6 @@ export default function ListBusinessPage() {
           return;
         }
 
-        setUserId(session.user.id);
         setLoading(false);
       } catch {
         if (mounted) {
@@ -82,7 +87,6 @@ export default function ListBusinessPage() {
         return;
       }
 
-      setUserId(session.user.id);
       setLoading(false);
     });
 
@@ -130,8 +134,63 @@ export default function ListBusinessPage() {
         throw new Error("Category भरें।");
       }
 
+      if (!address.trim()) {
+        throw new Error("Complete Address भरें।");
+      }
+
       if (!city.trim()) {
         throw new Error("City भरें।");
+      }
+
+      if (!state.trim()) {
+        throw new Error("State भरें।");
+      }
+
+      if (!pincode.trim()) {
+        throw new Error("Pincode भरें।");
+      }
+
+      if (!phone.trim()) {
+        throw new Error("Phone Number भरें।");
+      }
+
+      if (pincode.trim().length !== 6 || !/^\d{6}$/.test(pincode.trim())) {
+        throw new Error("Pincode 6 digit का होना चाहिए।");
+      }
+
+      if (mapsUrl.trim()) {
+        try {
+          new URL(mapsUrl.trim());
+        } catch {
+          throw new Error("Google Maps URL सही डालें।");
+        }
+      }
+
+      let parsedLatitude: number | null = null;
+      let parsedLongitude: number | null = null;
+
+      if (latitude.trim()) {
+        parsedLatitude = Number(latitude.trim());
+
+        if (
+          Number.isNaN(parsedLatitude) ||
+          parsedLatitude < -90 ||
+          parsedLatitude > 90
+        ) {
+          throw new Error("Latitude -90 से 90 के बीच होना चाहिए।");
+        }
+      }
+
+      if (longitude.trim()) {
+        parsedLongitude = Number(longitude.trim());
+
+        if (
+          Number.isNaN(parsedLongitude) ||
+          parsedLongitude < -180 ||
+          parsedLongitude > 180
+        ) {
+          throw new Error("Longitude -180 से 180 के बीच होना चाहिए।");
+        }
       }
 
       const {
@@ -144,9 +203,6 @@ export default function ListBusinessPage() {
         );
       }
 
-      const currentUserId = user.id;
-      setUserId(currentUserId);
-
       let imageUrl = "";
 
       if (image) {
@@ -154,7 +210,7 @@ export default function ListBusinessPage() {
           image.name.split(".").pop()?.toLowerCase() || "jpg";
 
         const fileName = `${crypto.randomUUID()}.${fileExtension}`;
-        const filePath = `${currentUserId}/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("business-images")
@@ -179,9 +235,17 @@ export default function ListBusinessPage() {
         .insert({
           business_name: businessName.trim(),
           category: category.trim(),
+          address: address.trim(),
+          area: area.trim(),
+          landmark: landmark.trim(),
           city: city.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
           phone: phone.trim(),
-          owner_id: currentUserId,
+          maps_url: mapsUrl.trim() || null,
+          latitude: parsedLatitude,
+          longitude: parsedLongitude,
+          owner_id: user.id,
           image_url: imageUrl || null,
         });
 
@@ -193,8 +257,16 @@ export default function ListBusinessPage() {
 
       setBusinessName("");
       setCategory("");
+      setAddress("");
+      setArea("");
+      setLandmark("");
       setCity("");
+      setState("");
+      setPincode("");
       setPhone("");
+      setMapsUrl("");
+      setLatitude("");
+      setLongitude("");
       setImage(null);
       setImagePreview("");
 
@@ -217,7 +289,7 @@ export default function ListBusinessPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
         <p className="text-gray-600">Loading...</p>
       </main>
     );
@@ -225,26 +297,27 @@ export default function ListBusinessPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link
             href="/"
-            className="text-2xl font-bold text-blue-600"
+            className="text-xl font-bold text-blue-600 sm:text-2xl"
           >
             LocalPlatform
           </Link>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <Link
               href="/dashboard"
-              className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100 sm:px-4"
             >
               Dashboard
             </Link>
 
             <button
+              type="button"
               onClick={handleLogout}
-              className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100 sm:px-4"
             >
               Logout
             </button>
@@ -252,19 +325,21 @@ export default function ListBusinessPage() {
         </div>
       </header>
 
-      <section className="max-w-2xl mx-auto px-6 py-10">
-        <div className="bg-white border rounded-2xl p-6 md:p-8 shadow-sm">
-          <h1 className="text-3xl font-bold text-gray-900">
+      <section className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+        <div className="rounded-2xl border bg-white p-5 shadow-sm sm:rounded-3xl sm:p-8">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             List Your Business
           </h1>
 
-          <p className="text-gray-600 mt-2 mb-8">
-            अपने business की जानकारी भरें।
+          <p className="mt-2 text-sm text-gray-600 sm:text-base">
+            अपने business की पूरी जानकारी भरें ताकि customers आपको आसानी से
+            खोज सकें।
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            {/* PHOTO */}
             <div>
-              <label className="block font-semibold text-gray-800 mb-2">
+              <label className="mb-2 block font-semibold text-gray-800">
                 Business Photo / Logo
               </label>
 
@@ -272,10 +347,10 @@ export default function ListBusinessPage() {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
-                className="w-full border border-gray-300 rounded-lg p-3"
+                className="w-full rounded-xl border border-gray-300 p-3"
               />
 
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="mt-1 text-sm text-gray-500">
                 JPG, PNG या WebP — अधिकतम 5 MB
               </p>
 
@@ -284,84 +359,250 @@ export default function ListBusinessPage() {
                   <img
                     src={imagePreview}
                     alt="Business preview"
-                    className="w-40 h-40 object-cover rounded-xl border"
+                    className="h-40 w-40 rounded-xl border object-cover"
                   />
                 </div>
               )}
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                Business Name
-              </label>
+            {/* BUSINESS BASIC INFO */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                Business Information
+              </h2>
 
-              <input
-                type="text"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="जैसे ABC Architects"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3"
-              />
+              <div className="mt-5 space-y-5">
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Business Name *
+                  </label>
+
+                  <input
+                    type="text"
+                    required
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="जैसे ABC Architects"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Category *
+                  </label>
+
+                  <input
+                    type="text"
+                    required
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="जैसे Architect, Restaurant, Doctor"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Phone Number *
+                  </label>
+
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="जैसे 9876543210"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                Category
-              </label>
+            {/* ADDRESS */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                Business Address
+              </h2>
 
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="जैसे Architect"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3"
-              />
+              <p className="mt-1 text-sm text-gray-500">
+                पूरा address डालें ताकि customer सही location तक पहुँच सके।
+              </p>
+
+              <div className="mt-5 space-y-5">
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Complete Address *
+                  </label>
+
+                  <textarea
+                    required
+                    rows={3}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="House/Shop No., Building, Road, Street..."
+                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Area / Locality
+                  </label>
+
+                  <input
+                    type="text"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    placeholder="जैसे Gomti Nagar"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Landmark
+                  </label>
+
+                  <input
+                    type="text"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    placeholder="जैसे Near Phoenix Mall"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block font-semibold text-gray-800">
+                      City *
+                    </label>
+
+                    <input
+                      type="text"
+                      required
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Lucknow"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-semibold text-gray-800">
+                      State *
+                    </label>
+
+                    <input
+                      type="text"
+                      required
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      placeholder="Uttar Pradesh"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Pincode *
+                  </label>
+
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    required
+                    value={pincode}
+                    onChange={(e) =>
+                      setPincode(e.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="226010"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                City
-              </label>
+            {/* GOOGLE MAPS */}
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                Google Maps Location
+              </h2>
 
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="जैसे Lucknow"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3"
-              />
+              <p className="mt-1 text-sm text-gray-500">
+                Google Maps से location का link paste करें।
+              </p>
+
+              <div className="mt-5 space-y-5">
+                <div>
+                  <label className="mb-2 block font-semibold text-gray-800">
+                    Google Maps URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={mapsUrl}
+                    onChange={(e) => setMapsUrl(e.target.value)}
+                    placeholder="https://maps.google.com/..."
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block font-semibold text-gray-800">
+                      Latitude
+                    </label>
+
+                    <input
+                      type="number"
+                      step="any"
+                      value={latitude}
+                      onChange={(e) => setLatitude(e.target.value)}
+                      placeholder="26.8467"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-semibold text-gray-800">
+                      Longitude
+                    </label>
+
+                    <input
+                      type="number"
+                      step="any"
+                      value={longitude}
+                      onChange={(e) => setLongitude(e.target.value)}
+                      placeholder="80.9462"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-800 mb-2">
-                Phone
-              </label>
-
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="जैसे 9005798632"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3"
-              />
-            </div>
-
+            {/* MESSAGES */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
                 {error}
               </div>
             )}
 
             {message && (
-              <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3">
+              <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
                 {message}
               </div>
             )}
 
+            {/* SUBMIT */}
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+              className="w-full rounded-xl bg-blue-600 px-5 py-4 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? "Saving..." : "List My Business"}
             </button>
