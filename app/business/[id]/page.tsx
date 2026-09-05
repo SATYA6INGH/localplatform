@@ -1,520 +1,655 @@
+"use client";
+import BusinessGallery from "./BusinessGallery";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
 
-const SUPABASE_URL =
-  "https://ckuiskbegrlrethnlhzq.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: "localplatform-auth",
+    },
+  }
+);
 
 type Business = {
   id: string;
   business_name: string;
   category: string;
-  subcategory: string | null;
-  services: string[] | null;
-  description: string | null;
-  short_description: string | null;
-  highlights: string[] | null;
-  seo_keywords: string[] | null;
   city: string;
-  state: string | null;
-  address: string | null;
-  area: string | null;
-  landmark: string | null;
-  pincode: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  maps_url: string | null;
   phone: string | null;
-  image_url: string | null;
+  image_url?: string | null;
 };
 
-async function getBusiness(id: string): Promise<Business | null> {
-  const { data, error } = await supabase
-    .from("businesses")
-    .select(`
-      id,
-      business_name,
-      category,
-      subcategory,
-      services,
-      description,
-      short_description,
-      highlights,
-      seo_keywords,
-      city,
-      state,
-      address,
-      area,
-      landmark,
-      pincode,
-      latitude,
-      longitude,
-      maps_url,
-      phone,
-      image_url
-    `)
-    .eq("id", id)
-    .maybeSingle();
+type Review = {
+  id: string;
+  reviewer_name: string;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+  user_id: string | null;
+};
 
-  if (error) {
-    console.error("Business detail error:", error);
-    return null;
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export default function BusinessDetails({ params }: Props) {
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  const [user, setUser] = useState<any>(null);
+
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewerName, setReviewerName] = useState("");
+
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const [businessId, setBusinessId] = useState("");
+
+  useEffect(() => {
+    async function loadPage() {
+      const { id } = await params;
+
+      setBusinessId(id);
+
+      const { data: businessData } = await supabase
+        .from("businesses")
+        .select(
+          "id, business_name, category, city, phone, image_url"
+        )
+        .eq("id", id)
+        .maybeSingle();
+
+      if (businessData) {
+        setBusiness(businessData);
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setUser(user);
+
+      if (user) {
+        const metadataName =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          "";
+
+        setReviewerName(metadataName);
+      }
+
+      await loadReviews(id);
+
+      setLoading(false);
+    }
+
+    loadPage();
+  }, []);
+
+  async function loadReviews(id: string) {
+    setReviewsLoading(true);
+
+    const { data, error } = await supabase
+      .from("business_reviews")
+      .select(
+        "id, reviewer_name, rating, review_text, created_at, user_id"
+      )
+      .eq("business_id", id)
+      .order("created_at", { ascending: false });
+
+    if (!error) {
+      setReviews(data || []);
+    }
+
+    setReviewsLoading(false);
   }
 
-  return data as Business | null;
-}
+  async function submitReview() {
+    setMessage("");
+    setError("");
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  const { id } = await params;
-  const business = await getBusiness(id);
+    if (!user) {
+      setError("Review देने के लिए पहले Login करें।");
+      return;
+    }
+
+    if (!reviewerName.trim()) {
+      setError("अपना नाम भरें।");
+      return;
+    }
+
+    if (!reviewText.trim()) {
+      setError("Review लिखें।");
+      return;
+    }
+
+    if (reviewText.trim().length < 5) {
+      setError("Review कम से कम 5 characters का होना चाहिए।");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const { data: existingReview } = await supabase
+        .from("business_reviews")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingReview) {
+        throw new Error(
+          "आप इस business को पहले ही review दे चुके हैं।"
+        );
+      }
+
+      const { error: insertError } = await supabase
+        .from("business_reviews")
+        .insert({
+          business_id: businessId,
+          user_id: user.id,
+          reviewer_name: reviewerName.trim(),
+          rating,
+          review_text: reviewText.trim(),
+        });
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+
+      setReviewText("");
+      setRating(5);
+
+      setMessage("⭐ आपका review successfully submit हो गया।");
+
+      await loadReviews(businessId);
+    } catch (err: any) {
+      setError(
+        err?.message || "Review submit नहीं हो पाया।"
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="rounded-2xl bg-white px-8 py-6 shadow">
+          Loading business...
+        </div>
+      </main>
+    );
+  }
 
   if (!business) {
-    return {
-      title: "Business Not Found | LocalPlatform",
-    };
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+        <div className="w-full max-w-md rounded-2xl bg-white p-10 text-center shadow-lg">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Business Not Found
+          </h1>
+
+          <p className="mt-3 text-gray-500">
+            यह business नहीं मिला।
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/"
+              className="rounded-xl bg-blue-700 px-6 py-3 font-semibold text-white"
+            >
+              🏠 Home
+            </Link>
+
+            <Link
+              href="/search"
+              className="rounded-xl bg-black px-6 py-3 font-semibold text-white"
+            >
+              ← Back to Search
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
   }
 
-  const location = [business.area, business.city, business.state]
-    .filter(Boolean)
-    .join(", ");
+  const phone = business.phone?.replace(/\D/g, "") || "";
 
-  return {
-    title: `${business.business_name} - ${business.category} in ${location}`,
-    description:
-      business.short_description ||
-      business.description ||
-      `Find ${business.business_name}, ${business.category} in ${location} on LocalPlatform.`,
-    alternates: {
-      canonical: `/business/${business.id}`,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-    openGraph: {
-      title: business.business_name,
-      description:
-        business.short_description ||
-        business.description ||
-        `${business.category} in ${location}`,
-      images: business.image_url
-        ? [{ url: business.image_url }]
-        : undefined,
-    },
-  };
-}
+  const whatsappNumber = phone.startsWith("91")
+    ? phone
+    : `91${phone}`;
 
-export default async function BusinessPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const business = await getBusiness(id);
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) /
+        reviews.length
+      : 0;
 
-  if (!business) {
-    notFound();
+  const roundedAverage = Math.round(averageRating * 10) / 10;
+
+  function renderStars(value: number) {
+    return (
+      <span className="tracking-wide">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span
+            key={star}
+            className={
+              star <= Math.round(value)
+                ? "text-yellow-500"
+                : "text-gray-300"
+            }
+          >
+            ★
+          </span>
+        ))}
+      </span>
+    );
   }
-
-  const services = Array.isArray(business.services)
-    ? business.services
-    : [];
-
-  const highlights = Array.isArray(business.highlights)
-    ? business.highlights
-    : [];
-
-  const keywords = Array.isArray(business.seo_keywords)
-    ? business.seo_keywords
-    : [];
-
-  const fullAddress = [
-    business.address,
-    business.area,
-    business.landmark,
-    business.city,
-    business.state,
-    business.pincode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  const mapsLink =
-    business.maps_url ||
-    (business.latitude !== null &&
-    business.longitude !== null
-      ? `https://www.google.com/maps?q=${business.latitude},${business.longitude}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          fullAddress || `${business.business_name}, ${business.city}`
-        )}`);
-
-  const whatsappNumber = business.phone
-    ? business.phone.replace(/\D/g, "")
-    : "";
-
-  const whatsappLink = whatsappNumber
-    ? `https://wa.me/91${whatsappNumber}?text=${encodeURIComponent(
-        `Hello ${business.business_name}, I found your business on LocalPlatform.`
-      )}`
-    : "";
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: business.business_name,
-    description:
-      business.description ||
-      business.short_description ||
-      undefined,
-    image: business.image_url || undefined,
-    telephone: business.phone || undefined,
-    url: `https://localplatform.in/business/${business.id}`,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: business.address || undefined,
-      addressLocality: business.area || business.city,
-      addressRegion: business.state || undefined,
-      postalCode: business.pincode || undefined,
-      addressCountry: "IN",
-    },
-    geo:
-      business.latitude !== null &&
-      business.longitude !== null
-        ? {
-            "@type": "GeoCoordinates",
-            latitude: business.latitude,
-            longitude: business.longitude,
-          }
-        : undefined,
-    areaServed: business.city,
-    keywords: keywords.join(", "),
-  };
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-gray-50">
+      {/* HEADER */}
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
+          <Link
+            href="/"
+            className="font-semibold text-gray-700 hover:text-black"
+          >
+            🏠 Home
+          </Link>
 
-      {/* HERO */}
-      <section className="bg-slate-950 text-white">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <Link
+            href="/search"
+            className="font-semibold text-gray-700 hover:text-black"
+          >
+            ← Back to Search
+          </Link>
 
-          <div className="overflow-hidden rounded-3xl bg-slate-900 shadow-2xl">
+          <Link
+            href="/list-business"
+            className="rounded-xl bg-black px-5 py-3 font-semibold text-white"
+          >
+            List Your Business
+          </Link>
+        </div>
+      </header>
 
-            {business.image_url ? (
-              <div className="relative h-64 sm:h-80 lg:h-96">
+      {/* MAIN */}
+      <section className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
+        <div className="overflow-hidden rounded-3xl bg-white shadow-xl">
+
+          {/* HERO */}
+          <div className="bg-blue-700 px-6 py-10 text-white md:px-8 md:py-14">
+            {business.image_url && (
+              <div className="mb-6">
                 <img
                   src={business.image_url}
-                  alt={business.business_name}
-                  className="h-full w-full object-cover"
+                  alt={`${business.business_name} - ${business.category}`}
+                  className="h-32 w-32 rounded-2xl border-4 border-white/30 object-cover"
                 />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-black">
-                      {business.category}
-                    </span>
-
-                    {business.subcategory && (
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold backdrop-blur">
-                        {business.subcategory}
-                      </span>
-                    )}
-                  </div>
-
-                  <h1 className="mt-3 text-3xl font-black sm:text-4xl">
-                    {business.business_name}
-                  </h1>
-
-                  <p className="mt-2 text-sm text-slate-200 sm:text-base">
-                    📍 {[business.area, business.city, business.pincode]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-7 sm:p-10">
-                <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-black">
-                  {business.category}
-                </span>
-
-                <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-                  {business.business_name}
-                </h1>
-
-                <p className="mt-2 text-slate-300">
-                  📍 {[business.area, business.city, business.pincode]
-                    .filter(Boolean)
-                    .join(", ")}
-                </p>
               </div>
             )}
 
-            {/* ACTIONS */}
-            <div className="grid gap-3 p-5 sm:grid-cols-3 sm:p-6">
+            <div className="mb-5 inline-block rounded-full bg-white/20 px-4 py-2 text-sm font-semibold">
+              {business.category}
+            </div>
 
-              {business.phone ? (
+            <h1 className="text-3xl font-bold md:text-5xl">
+              {business.business_name}
+            </h1>
+
+            <p className="mt-4 text-lg text-blue-100">
+              📍 {business.city}
+            </p>
+
+            {/* RATING SUMMARY */}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="rounded-xl bg-white px-4 py-3 text-gray-900">
+                <span className="text-2xl font-bold">
+                  {roundedAverage || "New"}
+                </span>
+
+                {reviews.length > 0 && (
+                  <span className="ml-2">
+                    {renderStars(roundedAverage)}
+                  </span>
+                )}
+              </div>
+
+              <div className="text-blue-100">
+                {reviews.length === 0
+                  ? "No reviews yet"
+                  : `${reviews.length} ${
+                      reviews.length === 1 ? "review" : "reviews"
+                    }`}
+              </div>
+            </div>
+          </div>
+
+          {/* DETAILS */}
+          <div className="p-6 md:p-10">
+
+            {/* CONTACT */}
+            <h2 className="text-2xl font-bold text-gray-900">
+              Contact Business
+            </h2>
+
+            <div className="mt-6 rounded-2xl bg-gray-50 p-6">
+              <p className="text-sm text-gray-500">
+                Phone Number
+              </p>
+
+              <p className="mt-2 text-2xl font-bold text-gray-900">
+                {business.phone || "Phone not available"}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {phone && (
                 <a
                   href={`tel:${business.phone}`}
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-center font-black hover:bg-blue-700"
+                  className="rounded-xl bg-black px-6 py-4 text-center font-bold text-white"
                 >
                   📞 Call Now
                 </a>
-              ) : (
-                <div className="rounded-xl bg-slate-800 px-5 py-3 text-center font-bold text-slate-500">
-                  📞 Call
-                </div>
               )}
 
-              {whatsappLink ? (
+              {phone && (
                 <a
-                  href={whatsappLink}
+                  href={`https://wa.me/${whatsappNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-xl bg-green-600 px-5 py-3 text-center font-black hover:bg-green-700"
+                  className="rounded-xl bg-green-600 px-6 py-4 text-center font-bold text-white"
                 >
                   💬 WhatsApp
                 </a>
-              ) : (
-                <div className="rounded-xl bg-slate-800 px-5 py-3 text-center font-bold text-slate-500">
-                  💬 WhatsApp
-                </div>
               )}
-
-              <a
-                href={mapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl bg-white px-5 py-3 text-center font-black text-slate-900 hover:bg-slate-100"
-              >
-                🗺️ Get Directions
-              </a>
-
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* CONTENT */}
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+            {/* REVIEWS */}
+            <div className="mt-12 border-t pt-10">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+                    Customer Reviews
+                  </p>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+                  <h2 className="mt-1 text-3xl font-bold text-gray-900">
+                    Ratings & Reviews
+                  </h2>
 
-          {/* MAIN */}
-          <div className="space-y-6 lg:col-span-2">
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="text-3xl font-bold">
+                      {roundedAverage || "—"}
+                    </span>
 
-            {/* ABOUT */}
-            <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-2xl font-black text-slate-900">
-                About {business.business_name}
-              </h2>
+                    {reviews.length > 0 &&
+                      renderStars(roundedAverage)}
 
-              <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600 sm:text-base">
-                {business.description ||
-                  business.short_description ||
-                  `${business.business_name} provides ${business.category.toLowerCase()} services in ${business.city}.`}
-              </p>
-            </section>
-
-            {/* SERVICES */}
-            {services.length > 0 && (
-              <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                <h2 className="text-2xl font-black text-slate-900">
-                  Services
-                </h2>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {services.map((service) => (
-                    <div
-                      key={service}
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-700"
-                    >
-                      ✓ {service}
-                    </div>
-                  ))}
+                    <span className="text-gray-500">
+                      {reviews.length} reviews
+                    </span>
+                  </div>
                 </div>
-              </section>
-            )}
+              </div>
 
-            {/* HIGHLIGHTS */}
-            {highlights.length > 0 && (
-              <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                <h2 className="text-2xl font-black text-slate-900">
-                  Business Highlights
-                </h2>
+              {/* REVIEW FORM */}
+              <div className="mt-8 rounded-2xl border bg-gray-50 p-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Write a Review
+                </h3>
 
-                <div className="mt-5 space-y-3">
-                  {highlights.map((highlight) => (
-                    <div
-                      key={highlight}
-                      className="flex gap-3 rounded-xl bg-blue-50 p-4"
+                {!user ? (
+                  <div className="mt-5 rounded-xl bg-white p-5">
+                    <p className="text-gray-600">
+                      Review देने के लिए Login करना जरूरी है।
+                    </p>
+
+                    <Link
+                      href="/login"
+                      className="mt-4 inline-block rounded-xl bg-black px-6 py-3 font-semibold text-white"
                     >
-                      <span className="font-black text-blue-600">
-                        ✓
-                      </span>
+                      Login to Review
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    {/* NAME */}
+                    <div className="mt-5">
+                      <label className="mb-2 block text-sm font-semibold text-gray-700">
+                        Your Name
+                      </label>
 
-                      <span className="text-sm font-semibold text-slate-700">
-                        {highlight}
-                      </span>
+                      <input
+                        value={reviewerName}
+                        onChange={(e) =>
+                          setReviewerName(e.target.value)
+                        }
+                        placeholder="अपना नाम"
+                        className="w-full rounded-xl border bg-white px-4 py-3 outline-none focus:border-blue-600"
+                      />
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* ADDRESS */}
-            <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-2xl font-black text-slate-900">
-                Complete Address
-              </h2>
+                    {/* STAR SELECT */}
+                    <div className="mt-5">
+                      <label className="mb-2 block text-sm font-semibold text-gray-700">
+                        Your Rating
+                      </label>
 
-              <p className="mt-4 text-sm leading-7 text-slate-600">
-                {fullAddress || "Address not available"}
-              </p>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            className={`text-4xl transition ${
+                              star <= rating
+                                ? "text-yellow-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-              <a
-                href={mapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex rounded-xl bg-slate-900 px-5 py-3 font-bold text-white"
-              >
-                🗺️ Open in Google Maps
-              </a>
-            </section>
+                    {/* REVIEW */}
+                    <div className="mt-5">
+                      <label className="mb-2 block text-sm font-semibold text-gray-700">
+                        Your Review
+                      </label>
 
-          </div>
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) =>
+                          setReviewText(e.target.value)
+                        }
+                        rows={4}
+                        placeholder="इस business के बारे में अपना experience लिखें..."
+                        className="w-full resize-none rounded-xl border bg-white px-4 py-3 outline-none focus:border-blue-600"
+                      />
+                    </div>
 
-          {/* SIDEBAR */}
-          <aside className="space-y-6">
+                    {error && (
+                      <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">
+                        {error}
+                      </div>
+                    )}
 
-            {/* BUSINESS INFO */}
-            <section className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-black text-slate-900">
+                    {message && (
+                      <div className="mt-4 rounded-xl bg-green-50 p-4 text-sm font-medium text-green-700">
+                        {message}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={submitReview}
+                      disabled={submitting}
+                      className="mt-5 w-full rounded-xl bg-blue-700 px-6 py-4 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {submitting
+                        ? "Submitting..."
+                        : "⭐ Submit Review"}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* REVIEW LIST */}
+              <BusinessGallery businessId={business.id} />
+              <div className="mt-8">
+                {reviewsLoading ? (
+                  <div className="rounded-2xl bg-gray-50 p-6 text-gray-500">
+                    Reviews loading...
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed p-8 text-center">
+                    <div className="text-4xl">⭐</div>
+
+                    <h3 className="mt-3 text-lg font-bold text-gray-900">
+                      No reviews yet
+                    </h3>
+
+                    <p className="mt-2 text-gray-500">
+                      इस business के लिए पहला review आप दें।
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="rounded-2xl border bg-white p-5"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-bold text-gray-900">
+                              {review.reviewer_name}
+                            </p>
+
+                            <div className="mt-1">
+                              {renderStars(review.rating)}
+                            </div>
+                          </div>
+
+                          <p className="text-sm text-gray-400">
+                            {new Date(
+                              review.created_at
+                            ).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+
+                        {review.review_text && (
+                          <p className="mt-4 leading-7 text-gray-600">
+                            {review.review_text}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* BUSINESS INFORMATION */}
+            <div className="mt-12 border-t pt-10">
+              <h2 className="text-2xl font-bold text-gray-900">
                 Business Information
               </h2>
 
-              <div className="mt-5 space-y-4 text-sm">
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl bg-gray-50 p-5">
+                  <p className="text-sm text-gray-500">
+                    Business
+                  </p>
 
-                <div>
-                  <p className="text-xs font-bold uppercase text-slate-400">
+                  <p className="mt-1 font-semibold">
+                    {business.business_name}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-gray-50 p-5">
+                  <p className="text-sm text-gray-500">
                     Category
                   </p>
 
-                  <p className="mt-1 font-bold text-slate-800">
+                  <p className="mt-1 font-semibold">
                     {business.category}
                   </p>
                 </div>
 
-                {business.subcategory && (
-                  <div>
-                    <p className="text-xs font-bold uppercase text-slate-400">
-                      Subcategory
-                    </p>
-
-                    <p className="mt-1 font-bold text-slate-800">
-                      {business.subcategory}
-                    </p>
-                  </div>
-                )}
-
-                {business.phone && (
-                  <div>
-                    <p className="text-xs font-bold uppercase text-slate-400">
-                      Phone
-                    </p>
-
-                    <a
-                      href={`tel:${business.phone}`}
-                      className="mt-1 block font-bold text-blue-600"
-                    >
-                      {business.phone}
-                    </a>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-xs font-bold uppercase text-slate-400">
+                <div className="rounded-xl bg-gray-50 p-5">
+                  <p className="text-sm text-gray-500">
                     Location
                   </p>
 
-                  <p className="mt-1 font-bold text-slate-800">
+                  <p className="mt-1 font-semibold">
                     {business.city}
                   </p>
                 </div>
-
               </div>
-            </section>
+            </div>
 
-            {/* MAP */}
-            <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
-              <div className="bg-slate-900 p-5 text-white">
-                <h2 className="font-black">
-                  Find This Business
-                </h2>
+            {/* SEO */}
+            <div className="mt-10 border-t pt-8">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {business.category} in {business.city}
+              </h2>
 
-                <p className="mt-1 text-xs text-slate-300">
-                  Open the exact location in Google Maps.
-                </p>
-              </div>
+              <p className="mt-3 leading-7 text-gray-600">
+                {business.business_name} is a local{" "}
+                {business.category} business located in{" "}
+                {business.city}. Find business information,
+                customer reviews, ratings and contact details
+                on LocalPlatform.
+              </p>
+            </div>
 
-              <a
-                href={mapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-6 text-center"
+            {/* NAVIGATION */}
+            <div className="mt-10 flex flex-col gap-3 border-t pt-8 sm:flex-row">
+              <Link
+                href="/"
+                className="flex-1 rounded-xl border border-gray-300 px-6 py-4 text-center font-semibold text-gray-800"
               >
-                <div className="rounded-2xl bg-slate-100 p-8">
-                  <div className="text-5xl">📍</div>
+                🏠 Go to Home
+              </Link>
 
-                  <p className="mt-3 font-black text-slate-900">
-                    View on Google Maps
-                  </p>
+              <Link
+                href="/search"
+                className="flex-1 rounded-xl bg-black px-6 py-4 text-center font-semibold text-white"
+              >
+                🔍 Search More Businesses
+              </Link>
 
-                  <p className="mt-1 text-xs text-slate-500">
-                    Get directions to this business
-                  </p>
-                </div>
-              </a>
-            </section>
-
-            {/* VERIFIED */}
-            <section className="rounded-3xl border border-blue-100 bg-blue-50 p-6">
-              <div className="flex gap-3">
-                <div className="text-2xl">✓</div>
-
-                <div>
-                  <h3 className="font-black text-slate-900">
-                    LocalPlatform Listing
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Business information is published on LocalPlatform.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-          </aside>
+              <Link
+                href="/list-business"
+                className="flex-1 rounded-xl bg-blue-700 px-6 py-4 text-center font-semibold text-white"
+              >
+                ➕ List Your Business
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* SEO JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd),
-        }}
-      />
+      </section>
     </main>
   );
 }
