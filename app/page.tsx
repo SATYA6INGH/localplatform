@@ -35,70 +35,70 @@ type Business = {
   listing_expires_at?: string | null;
 };
 
-const categories = [
+type Category = {
+  name: string;
+  label: string;
+  bg: string;
+  text: string;
+  icon: React.ReactNode;
+};
+
+const categories: Category[] = [
   {
     name: "Architect",
     label: "Architecture",
-    icon: <BuildingIcon />,
     bg: "bg-blue-50",
     text: "text-blue-600",
-    border: "hover:border-blue-200",
+    icon: <BuildingIcon />,
   },
   {
     name: "Interior Designer",
-    label: "Interior & Decor",
-    icon: <InteriorIcon />,
+    label: "Interior",
     bg: "bg-violet-50",
     text: "text-violet-600",
-    border: "hover:border-violet-200",
+    icon: <InteriorIcon />,
   },
   {
     name: "Construction",
     label: "Builders",
-    icon: <ConstructionIcon />,
     bg: "bg-orange-50",
     text: "text-orange-600",
-    border: "hover:border-orange-200",
+    icon: <ConstructionIcon />,
   },
   {
     name: "Doctor",
     label: "Healthcare",
-    icon: <DoctorIcon />,
     bg: "bg-red-50",
     text: "text-red-600",
-    border: "hover:border-red-200",
+    icon: <DoctorIcon />,
   },
   {
     name: "Restaurant",
-    label: "Food & Dining",
-    icon: <RestaurantIcon />,
+    label: "Food",
     bg: "bg-rose-50",
     text: "text-rose-600",
-    border: "hover:border-rose-200",
+    icon: <RestaurantIcon />,
   },
   {
     name: "Salon",
     label: "Beauty",
-    icon: <SalonIcon />,
     bg: "bg-pink-50",
     text: "text-pink-600",
-    border: "hover:border-pink-200",
+    icon: <SalonIcon />,
   },
   {
     name: "Electrician",
     label: "Electrical",
-    icon: <ElectricIcon />,
     bg: "bg-amber-50",
     text: "text-amber-600",
-    border: "hover:border-amber-200",
+    icon: <ElectricIcon />,
   },
   {
     name: "Real Estate",
     label: "Property",
-    icon: <PropertyIcon />,
     bg: "bg-emerald-50",
     text: "text-emerald-600",
-    border: "hover:border-emerald-200",
+    icon: <PropertyIcon />,
   },
 ];
 
@@ -157,10 +157,9 @@ export default function HomePage() {
     setLoading(false);
   }
 
-  const featuredBusinesses = useMemo(
-    () => businesses.slice(0, 6),
-    [businesses]
-  );
+  const featuredBusinesses = useMemo(() => {
+    return businesses.slice(0, 6);
+  }, [businesses]);
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -172,16 +171,22 @@ export default function HomePage() {
       .map((business) => {
         const name =
           business.business_name?.toLowerCase() || "";
+
         const category =
           business.category?.toLowerCase() || "";
+
         const subcategory =
           business.subcategory?.toLowerCase() || "";
+
         const city =
           business.city?.toLowerCase() || "";
+
         const area =
           business.area?.toLowerCase() || "";
+
         const description =
           business.description?.toLowerCase() || "";
+
         const services =
           business.services?.join(" ").toLowerCase() || "";
 
@@ -202,7 +207,10 @@ export default function HomePage() {
           if (area.includes(loc)) score += 50;
         }
 
-        return { business, score };
+        return {
+          business,
+          score,
+        };
       })
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -213,7 +221,10 @@ export default function HomePage() {
   function search() {
     const params = new URLSearchParams();
 
-    if (query.trim()) params.set("q", query.trim());
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+
     if (location.trim()) {
       params.set("location", location.trim());
     }
@@ -234,53 +245,52 @@ export default function HomePage() {
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
 
       {/* =====================================================
-          PREMIUM HERO
+          HERO
       ====================================================== */}
 
       <section className="relative overflow-hidden bg-slate-950">
 
-        {/* decorative grid */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          className="pointer-events-none absolute inset-0 opacity-[0.045]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)",
-            backgroundSize: "42px 42px",
+              "linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px)",
+            backgroundSize: "38px 38px",
           }}
         />
 
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-sky-500/20 blur-[100px]" />
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[480px] w-[480px] rounded-full bg-sky-500/20 blur-[100px]" />
 
-        <div className="pointer-events-none absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-violet-500/15 blur-[100px]" />
+        <div className="pointer-events-none absolute -bottom-40 -left-40 h-[480px] w-[480px] rounded-full bg-violet-500/15 blur-[100px]" />
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
+        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
 
           <div className="mx-auto max-w-5xl text-center">
 
-            {/* badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-4 py-2 text-[10px] font-bold tracking-[0.16em] text-slate-300 shadow-xl sm:text-xs">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-sky-400" />
-              LOCAL BUSINESSES · LOCAL SERVICES · LOCAL PEOPLE
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3.5 py-2 text-[9px] font-bold tracking-[0.13em] text-slate-300 sm:px-4 sm:text-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-lg shadow-sky-400/50 sm:h-2 sm:w-2" />
+              LOCAL BUSINESS DISCOVERY
             </div>
 
-            <h1 className="text-[43px] font-black leading-[0.98] tracking-[-0.05em] text-white sm:text-6xl lg:text-7xl">
-              Discover what&apos;s
+            <h1 className="text-[40px] font-black leading-[1] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+              Find the right
               <span className="block bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400 bg-clip-text pb-2 text-transparent">
-                around you.
+                business near you.
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7 lg:text-lg">
-              Find trusted local businesses and professionals by
-              category, service, city or area.
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-slate-300 sm:mt-6 sm:text-base sm:leading-7 lg:text-lg">
+              Discover local professionals, services and businesses
+              by category, service and location.
             </p>
 
-            {/* SEARCH */}
-            <div className="mx-auto mt-9 max-w-4xl rounded-[25px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/40">
+            {/* SEARCH BOX */}
+
+            <div className="mx-auto mt-8 max-w-4xl rounded-[22px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/40 sm:mt-9 sm:rounded-[25px]">
 
               <div className="grid gap-2 md:grid-cols-[1fr_0.72fr_auto]">
 
-                <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
+                <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4">
 
                   <SearchIcon />
 
@@ -290,15 +300,17 @@ export default function HomePage() {
                       setQuery(e.target.value)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") search();
+                      if (e.key === "Enter") {
+                        search();
+                      }
                     }}
                     placeholder="Business, service or category"
-                    className="h-12 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
+                    className="h-11 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400 sm:h-12"
                   />
 
                 </div>
 
-                <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
+                <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4">
 
                   <LocationIcon />
 
@@ -308,17 +320,19 @@ export default function HomePage() {
                       setLocation(e.target.value)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") search();
+                      if (e.key === "Enter") {
+                        search();
+                      }
                     }}
                     placeholder="City or area"
-                    className="h-12 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
+                    className="h-11 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400 sm:h-12"
                   />
 
                 </div>
 
                 <button
                   onClick={search}
-                  className="h-12 rounded-2xl bg-slate-950 px-8 text-sm font-black text-white transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800"
+                  className="h-11 rounded-2xl bg-slate-950 px-7 text-sm font-black text-white transition hover:bg-slate-800 sm:h-12 sm:px-8"
                 >
                   Search
                 </button>
@@ -326,10 +340,11 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* popular */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {/* POPULAR */}
 
-              <span className="mr-1 text-[11px] font-medium text-slate-500">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:mt-5 sm:gap-2">
+
+              <span className="mr-1 text-[10px] font-medium text-slate-500 sm:text-[11px]">
                 Popular:
               </span>
 
@@ -337,13 +352,14 @@ export default function HomePage() {
                 <button
                   key={item}
                   onClick={() => categorySearch(item)}
-                  className="rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-[11px] font-semibold text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                  className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:px-3.5 sm:py-2 sm:text-[11px]"
                 >
                   {item}
                 </button>
               ))}
 
             </div>
+
           </div>
         </div>
       </section>
@@ -355,18 +371,20 @@ export default function HomePage() {
       {(query || location) && (
         <section className="border-b border-slate-200 bg-slate-50">
 
-          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
 
-            <div className="mb-6 flex items-end justify-between">
+            <div className="mb-5 flex items-end justify-between">
 
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-600">
+
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600 sm:text-[10px]">
                   Search Results
                 </p>
 
-                <h2 className="mt-2 text-2xl font-black">
+                <h2 className="mt-1.5 text-xl font-black tracking-tight sm:text-2xl">
                   Matching businesses
                 </h2>
+
               </div>
 
               <Link
@@ -381,12 +399,16 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
                 Finding businesses...
               </div>
+
             ) : searchResults.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-10">
+
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
                   <SearchIcon />
                 </div>
 
@@ -397,56 +419,68 @@ export default function HomePage() {
                 <p className="mt-1 text-xs text-slate-500">
                   Try another business, service or location.
                 </p>
+
               </div>
+
             ) : (
+
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
                 {searchResults.map((business) => (
                   <BusinessCard
                     key={business.id}
                     business={business}
                   />
                 ))}
+
               </div>
+
             )}
+
           </div>
         </section>
       )}
 
       {/* =====================================================
-          CATEGORY SECTION
+          CATEGORIES
       ====================================================== */}
 
-      <section className="relative bg-white">
+      <section className="bg-white">
 
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-end justify-between gap-3">
 
             <div>
-              <div className="mb-3 inline-flex rounded-full bg-sky-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-sky-600">
+
+              <div className="mb-2 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-sky-600 sm:px-3 sm:py-1.5 sm:text-[10px]">
                 Explore Categories
               </div>
 
-              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
+              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">
                 What are you looking for?
               </h2>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                Explore popular local categories and find the
-                right professional for your need.
+              <p className="mt-1.5 max-w-xl text-xs leading-5 text-slate-500 sm:mt-2 sm:text-sm sm:leading-6">
+                Explore popular local services and professionals.
               </p>
+
             </div>
 
             <Link
               href="/search"
-              className="text-xs font-black text-slate-900"
+              className="shrink-0 text-[10px] font-black text-slate-900 sm:text-xs"
             >
-              Explore all →
+              All →
             </Link>
 
           </div>
 
-          <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          {/* =================================================
+              COMPACT MOBILE CATEGORY GRID
+          ================================================== */}
+
+          <div className="mt-6 grid grid-cols-4 gap-2 sm:mt-9 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
 
             {categories.map((category) => (
               <button
@@ -454,25 +488,24 @@ export default function HomePage() {
                 onClick={() =>
                   categorySearch(category.name)
                 }
-                className={`group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-4 text-left shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl ${category.border}`}
+                className="group flex min-h-[86px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-1.5 py-2 shadow-sm transition duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md sm:min-h-[105px] sm:rounded-2xl sm:px-2 sm:py-3"
               >
 
-                {/* colour glow */}
-                <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-slate-100 opacity-0 blur-2xl transition group-hover:opacity-100" />
+                {/* SMALL COLOUR ICON */}
 
                 <div
-                  className={`relative flex h-12 w-12 items-center justify-center rounded-2xl ${category.bg} ${category.text} transition duration-300 group-hover:scale-110`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full ${category.bg} ${category.text} transition duration-200 group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl`}
                 >
                   {category.icon}
                 </div>
 
-                <h3 className="relative mt-4 line-clamp-2 min-h-[32px] text-xs font-black leading-4 text-slate-900">
+                <span className="mt-2 line-clamp-2 min-h-[26px] w-full text-center text-[9px] font-bold leading-3 text-slate-700 sm:mt-2.5 sm:text-[10px] sm:leading-3.5">
                   {category.name}
-                </h3>
+                </span>
 
-                <p className="relative mt-1 line-clamp-2 text-[10px] leading-4 text-slate-400">
+                <span className="hidden text-[9px] font-medium text-slate-400 sm:block">
                   {category.label}
-                </p>
+                </span>
 
               </button>
             ))}
@@ -487,31 +520,31 @@ export default function HomePage() {
 
       <section className="relative overflow-hidden border-y border-slate-200 bg-slate-50">
 
-        <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-sky-100/60 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-100/70 blur-3xl" />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="relative mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
 
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex items-end justify-between gap-3">
 
             <div>
 
-              <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-sky-600 shadow-sm">
+              <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-sky-600 shadow-sm sm:px-3 sm:py-1.5 sm:text-[10px]">
                 Discover
               </div>
 
-              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-                Featured local businesses
+              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">
+                Local businesses
               </h2>
 
-              <p className="mt-2 text-sm text-slate-500">
-                Recently listed businesses on LocalPlatform.
+              <p className="mt-1.5 text-xs text-slate-500 sm:text-sm">
+                Recently listed active businesses.
               </p>
 
             </div>
 
             <Link
               href="/search"
-              className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:border-slate-900 sm:block"
+              className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 shadow-sm sm:block"
             >
               View all
             </Link>
@@ -520,12 +553,12 @@ export default function HomePage() {
 
           {loading ? (
 
-            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-7 grid gap-4 sm:mt-9 sm:grid-cols-2 lg:grid-cols-3">
 
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-[370px] animate-pulse rounded-[24px] bg-white"
+                  className="h-[350px] animate-pulse rounded-[22px] bg-white"
                 />
               ))}
 
@@ -533,24 +566,24 @@ export default function HomePage() {
 
           ) : featuredBusinesses.length === 0 ? (
 
-            <div className="mt-9 rounded-[28px] border border-slate-200 bg-white px-6 py-16 text-center">
+            <div className="mt-7 rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center sm:mt-9 sm:rounded-[28px] sm:px-6 sm:py-16">
 
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-blue-600">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                 <BuildingIcon />
               </div>
 
-              <h3 className="mt-5 text-lg font-black">
-                Be among the first
+              <h3 className="mt-4 text-base font-black sm:text-lg">
+                Businesses coming soon
               </h3>
 
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                Your business can be one of the first businesses
-                discovered by local customers.
+              <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+                Be one of the first businesses listed on
+                LocalPlatform.
               </p>
 
               <Link
                 href="/list-business"
-                className="mt-6 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white transition hover:bg-slate-800"
+                className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white"
               >
                 List Your Business
               </Link>
@@ -559,7 +592,7 @@ export default function HomePage() {
 
           ) : (
 
-            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-7 grid gap-4 sm:mt-9 sm:grid-cols-2 lg:grid-cols-3">
 
               {featuredBusinesses.map((business) => (
                 <BusinessCard
@@ -569,6 +602,7 @@ export default function HomePage() {
               ))}
 
             </div>
+
           )}
 
         </div>
@@ -580,27 +614,25 @@ export default function HomePage() {
 
       <section className="bg-white">
 
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
 
-          <div className="relative overflow-hidden rounded-[32px] bg-slate-950 px-7 py-11 sm:px-10 lg:px-14 lg:py-14">
+          <div className="relative overflow-hidden rounded-[25px] bg-slate-950 px-6 py-9 sm:rounded-[32px] sm:px-10 sm:py-12 lg:px-14 lg:py-14">
 
-            <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-sky-500/20 blur-[80px]" />
+            <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-sky-500/20 blur-[80px]" />
 
-            <div className="pointer-events-none absolute -bottom-40 left-1/3 h-80 w-80 rounded-full bg-violet-500/10 blur-[80px]" />
-
-            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
 
               <div className="max-w-2xl">
 
-                <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-sky-400">
+                <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-sky-400 sm:text-[10px]">
                   For Business Owners
                 </div>
 
-                <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-4xl">
                   Make your business easier to discover.
                 </h2>
 
-                <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">
+                <p className="mt-3 text-xs leading-5 text-slate-300 sm:mt-4 sm:text-base sm:leading-6">
                   Create your LocalPlatform listing and connect
                   with customers searching for your services.
                 </p>
@@ -609,12 +641,13 @@ export default function HomePage() {
 
               <Link
                 href="/list-business"
-                className="shrink-0 rounded-2xl bg-white px-6 py-4 text-center text-sm font-black text-slate-950 shadow-2xl transition hover:-translate-y-1 hover:bg-slate-100"
+                className="shrink-0 rounded-xl bg-white px-5 py-3.5 text-center text-xs font-black text-slate-950 shadow-xl transition hover:-translate-y-1 hover:bg-slate-100 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-sm"
               >
                 List Your Business →
               </Link>
 
             </div>
+
           </div>
         </div>
       </section>
@@ -625,19 +658,19 @@ export default function HomePage() {
 
       <footer className="border-t border-slate-200 bg-white">
 
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 sm:px-6 sm:py-8 md:flex-row md:items-center md:justify-between lg:px-8">
 
           <div>
-            <div className="font-black">
+            <div className="text-sm font-black">
               LocalPlatform
             </div>
 
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
               Discover local businesses. Connect locally.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-5 text-xs font-semibold text-slate-500">
+          <div className="flex flex-wrap gap-4 text-[10px] font-semibold text-slate-500 sm:gap-5 sm:text-xs">
 
             <Link href="/" className="hover:text-slate-950">
               Home
@@ -672,9 +705,10 @@ export default function HomePage() {
             </Link>
 
           </div>
+
         </div>
 
-        <div className="border-t border-slate-100 py-4 text-center text-[10px] text-slate-400">
+        <div className="border-t border-slate-100 py-3 text-center text-[9px] text-slate-400 sm:py-4 sm:text-[10px]">
           © {new Date().getFullYear()} LocalPlatform. All rights reserved.
         </div>
 
@@ -693,10 +727,11 @@ function BusinessCard({
   business: Business;
 }) {
   return (
-    <article className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-2xl">
+    <article className="group overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl sm:rounded-[24px]">
 
       <Link href={`/business/${business.id}`}>
-        <div className="relative h-52 overflow-hidden bg-slate-100">
+
+        <div className="relative h-44 overflow-hidden bg-slate-100 sm:h-52">
 
           {business.image_url ? (
             <img
@@ -706,36 +741,37 @@ function BusinessCard({
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-200">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-lg">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-lg sm:h-16 sm:w-16">
                 <BuildingIcon />
               </div>
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
 
-          <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black text-slate-800 shadow-lg">
+          <div className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1.5 text-[9px] font-black text-slate-800 shadow-lg sm:left-4 sm:top-4 sm:px-3 sm:text-[10px]">
             {business.category}
           </div>
 
         </div>
       </Link>
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
 
         <Link href={`/business/${business.id}`}>
-          <h3 className="line-clamp-1 text-base font-black tracking-tight text-slate-950 transition group-hover:text-sky-600">
+          <h3 className="line-clamp-1 text-sm font-black tracking-tight text-slate-950 transition group-hover:text-sky-600 sm:text-base">
             {business.business_name}
           </h3>
         </Link>
 
         {business.subcategory && (
-          <p className="mt-1 text-xs font-bold text-sky-600">
+          <p className="mt-1 text-[10px] font-bold text-sky-600 sm:text-xs">
             {business.subcategory}
           </p>
         )}
 
-        <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
+        <div className="mt-2.5 flex items-start gap-1.5 text-[10px] text-slate-500 sm:mt-3 sm:gap-2 sm:text-xs">
+
           <LocationIcon small />
 
           <span className="line-clamp-1">
@@ -747,11 +783,12 @@ function BusinessCard({
               .filter(Boolean)
               .join(", ")}
           </span>
+
         </div>
 
         {(business.short_description ||
           business.description) && (
-          <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
+          <p className="mt-2.5 line-clamp-2 text-[10px] leading-4 text-slate-500 sm:mt-3 sm:text-xs sm:leading-5">
             {business.short_description ||
               business.description}
           </p>
@@ -759,14 +796,14 @@ function BusinessCard({
 
         {business.services &&
           business.services.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex flex-wrap gap-1 sm:mt-4 sm:gap-1.5">
 
               {business.services
                 .slice(0, 3)
                 .map((service) => (
                   <span
                     key={service}
-                    className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600"
+                    className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-semibold text-slate-600 sm:px-2.5 sm:text-[10px]"
                   >
                     {service}
                   </span>
@@ -775,13 +812,13 @@ function BusinessCard({
             </div>
           )}
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5 sm:mt-5 sm:pt-4">
 
-          <span className="text-xs font-black text-slate-950">
+          <span className="text-[10px] font-black text-slate-950 sm:text-xs">
             View Business
           </span>
 
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold transition group-hover:bg-slate-950 group-hover:text-white">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold transition group-hover:bg-slate-950 group-hover:text-white sm:h-9 sm:w-9 sm:text-sm">
             →
           </span>
 
@@ -799,8 +836,8 @@ function BusinessCard({
 function BuildingIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -822,8 +859,8 @@ function BuildingIcon() {
 function InteriorIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -843,8 +880,8 @@ function InteriorIcon() {
 function ConstructionIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -864,8 +901,8 @@ function ConstructionIcon() {
 function DoctorIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -886,8 +923,8 @@ function DoctorIcon() {
 function RestaurantIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -907,8 +944,8 @@ function RestaurantIcon() {
 function SalonIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -927,8 +964,8 @@ function SalonIcon() {
 function ElectricIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="currentColor"
     >
@@ -940,8 +977,8 @@ function ElectricIcon() {
 function PropertyIcon() {
   return (
     <svg
-      width="26"
-      height="26"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -961,9 +998,9 @@ function PropertyIcon() {
 function SearchIcon() {
   return (
     <svg
-      className="mr-3 shrink-0 text-slate-400"
-      width="19"
-      height="19"
+      className="mr-2.5 shrink-0 text-slate-400"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -987,10 +1024,10 @@ function LocationIcon({
       className={`shrink-0 ${
         small
           ? "text-slate-400"
-          : "mr-3 text-slate-400"
+          : "mr-2.5 text-slate-400"
       }`}
-      width={small ? "15" : "18"}
-      height={small ? "15" : "18"}
+      width={small ? "14" : "18"}
+      height={small ? "14" : "18"}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

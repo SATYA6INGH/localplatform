@@ -1,486 +1,884 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: "localplatform-auth",
+    },
+  }
 );
 
 type Business = {
   id: string;
   business_name: string;
   category: string;
+  subcategory?: string | null;
+  services?: string[] | null;
   city: string;
-  phone: string;
+  area?: string | null;
+  state?: string | null;
+  phone?: string | null;
+  image_url?: string | null;
+  description?: string | null;
+  short_description?: string | null;
+  highlights?: string[] | null;
+  listing_status?: string | null;
+  listing_expires_at?: string | null;
 };
 
-const categories = [
-  { name: "Restaurants", icon: "🍽️" },
-  { name: "Hotels", icon: "🏨" },
-  { name: "Beauty & Spa", icon: "💆" },
-  { name: "Home Decor", icon: "🛋️" },
-  { name: "Wedding Planning", icon: "💍" },
-  { name: "Education", icon: "🎓" },
-  { name: "Rent & Hire", icon: "🔧" },
-  { name: "Hospitals", icon: "🏥" },
-  { name: "Contractors", icon: "👷" },
-  { name: "Pet Shops", icon: "🐾" },
-  { name: "PG/Hostels", icon: "🛏️" },
-  { name: "Real Estate", icon: "🏠" },
-  { name: "Dentists", icon: "🦷" },
-  { name: "Gym", icon: "🏋️" },
-  { name: "Loans", icon: "💰" },
-  { name: "Event Organisers", icon: "🎉" },
+const popularCategories = [
+  "Architect",
+  "Interior Designer",
+  "Construction",
+  "Doctor",
+  "Dentist",
+  "Restaurant",
+  "Salon",
+  "Electrician",
+  "Plumber",
+  "Real Estate",
+  "Auto Repair",
+  "Gym",
 ];
 
-export default function Home() {
-  const [search, setSearch] = useState("");
-  const [city, setCity] = useState("");
-  const [results, setResults] = useState<Business[]>([]);
+export default function SearchPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [searched, setSearched] = useState(false);
+  const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [category, setCategory] = useState("");
+  const [city, setCity] = useState("");
+  const [area, setArea] = useState("");
   const [loading, setLoading] = useState(true);
+  const [mobileFilters, setMobileFilters] = useState(false);
 
   useEffect(() => {
-    async function loadBusinesses() {
-      const { data, error } = await supabase
-        .from("businesses")
-        .select("id, business_name, category, city, phone")
-        .order("business_name", { ascending: true });
+    const params = new URLSearchParams(window.location.search);
 
-      if (!error) {
-        setBusinesses(data || []);
-      } else {
-        console.error(error);
-      }
+    setQuery(params.get("q") || "");
+    setLocation(params.get("location") || "");
 
-      setLoading(false);
-    }
-
-    loadBusinesses();
+    fetchBusinesses();
   }, []);
 
-  const handleSearch = () => {
-    const searchText = search.trim().toLowerCase();
-    const cityText = city.trim().toLowerCase();
+  async function fetchBusinesses() {
+    setLoading(true);
 
-    const filtered = businesses.filter((business) => {
-      const name = business.business_name.toLowerCase();
-      const category = business.category.toLowerCase();
-      const businessCity = business.city.toLowerCase();
+    const now = new Date().toISOString();
 
-      const matchesSearch =
-        !searchText ||
-        name.includes(searchText) ||
-        category.includes(searchText);
+    const { data, error } = await supabase
+      .from("businesses")
+      .select(
+        `
+        id,
+        business_name,
+        category,
+        subcategory,
+        services,
+        city,
+        area,
+        state,
+        phone,
+        image_url,
+        description,
+        short_description,
+        highlights,
+        listing_status,
+        listing_expires_at
+      `
+      )
+      .eq("listing_status", "active")
+      .gt("listing_expires_at", now)
+      .order("created_at", { ascending: false });
 
-      const matchesCity =
-        !cityText || businessCity.includes(cityText);
+    if (!error && data) {
+      setBusinesses(data as Business[]);
+    }
 
-      return matchesSearch && matchesCity;
-    });
+    setLoading(false);
+  }
 
-    setResults(filtered);
-    setSearched(true);
+  const cities = useMemo(() => {
+    return Array.from(
+      new Set(
+        businesses
+          .map((business) => business.city)
+          .filter(Boolean)
+      )
+    ).sort();
+  }, [businesses]);
 
-    setTimeout(() => {
-      document
-        .getElementById("search-results")
-        ?.scrollIntoView({
-          behavior: "smooth",
-        });
-    }, 100);
-  };
+  const areas = useMemo(() => {
+    return Array.from(
+      new Set(
+        businesses
+          .map((business) => business.area)
+          .filter(Boolean) as string[]
+      )
+    ).sort();
+  }, [businesses]);
 
-  const handleCategorySearch = (category: string) => {
-    setSearch(category);
-    setCity("");
+  const categories = useMemo(() => {
+    return Array.from(
+      new Set(
+        businesses
+          .map((business) => business.category)
+          .filter(Boolean)
+      )
+    ).sort();
+  }, [businesses]);
 
-    const filtered = businesses.filter((business) =>
-      business.category
-        .toLowerCase()
-        .includes(category.toLowerCase())
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const loc = location.trim().toLowerCase();
+
+    return businesses
+      .map((business) => {
+        const name = business.business_name?.toLowerCase() || "";
+        const businessCategory =
+          business.category?.toLowerCase() || "";
+        const subcategory =
+          business.subcategory?.toLowerCase() || "";
+        const businessCity =
+          business.city?.toLowerCase() || "";
+        const businessArea =
+          business.area?.toLowerCase() || "";
+        const state =
+          business.state?.toLowerCase() || "";
+        const description =
+          business.description?.toLowerCase() || "";
+        const shortDescription =
+          business.short_description?.toLowerCase() || "";
+
+        const services =
+          business.services
+            ?.join(" ")
+            .toLowerCase() || "";
+
+        const highlights =
+          business.highlights
+            ?.join(" ")
+            .toLowerCase() || "";
+
+        const searchableText = [
+          name,
+          businessCategory,
+          subcategory,
+          businessCity,
+          businessArea,
+          state,
+          description,
+          shortDescription,
+          services,
+          highlights,
+        ].join(" ");
+
+        let score = 0;
+
+        if (q) {
+          if (name.includes(q)) score += 100;
+          if (businessCategory.includes(q)) score += 80;
+          if (subcategory.includes(q)) score += 70;
+          if (services.includes(q)) score += 60;
+          if (businessCity.includes(q)) score += 50;
+          if (businessArea.includes(q)) score += 40;
+          if (description.includes(q)) score += 30;
+          if (searchableText.includes(q)) score += 20;
+        }
+
+        if (loc) {
+          if (businessCity.includes(loc)) score += 60;
+          if (businessArea.includes(loc)) score += 50;
+          if (state.includes(loc)) score += 30;
+          if (searchableText.includes(loc)) score += 10;
+        }
+
+        if (
+          category &&
+          businessCategory !== category.toLowerCase()
+        ) {
+          return null;
+        }
+
+        if (
+          city &&
+          businessCity !== city.toLowerCase()
+        ) {
+          return null;
+        }
+
+        if (
+          area &&
+          businessArea !== area.toLowerCase()
+        ) {
+          return null;
+        }
+
+        if (!q && !loc) score = 1;
+
+        return {
+          business,
+          score,
+        };
+      })
+      .filter(Boolean)
+      .filter((item) => item!.score > 0)
+      .sort((a, b) => b!.score - a!.score)
+      .map((item) => item!.business);
+  }, [
+    businesses,
+    query,
+    location,
+    category,
+    city,
+    area,
+  ]);
+
+  function doSearch() {
+    const params = new URLSearchParams();
+
+    if (query.trim()) {
+      params.set("q", query.trim());
+    }
+
+    if (location.trim()) {
+      params.set("location", location.trim());
+    }
+
+    window.history.replaceState(
+      {},
+      "",
+      `/search${params.toString() ? `?${params}` : ""}`
     );
+  }
 
-    setResults(filtered);
-    setSearched(true);
-
-    setTimeout(() => {
-      document
-        .getElementById("search-results")
-        ?.scrollIntoView({
-          behavior: "smooth",
-        });
-    }, 100);
-  };
-
-  const clearSearch = () => {
-    setSearch("");
+  function clearFilters() {
+    setQuery("");
+    setLocation("");
+    setCategory("");
     setCity("");
-    setResults([]);
-    setSearched(false);
+    setArea("");
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
+    window.history.replaceState({}, "", "/search");
+  }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
-
+    <main className="min-h-screen bg-slate-50 text-slate-900">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[68px] w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="flex items-center gap-2"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-lg font-bold text-white">
+              L
+            </div>
 
-          <Link href="/" className="flex items-center">
-            <div className="text-[25px] font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-blue-600">Local</span>
-              <span className="text-orange-500">Platform</span>
+            <div>
+              <div className="text-lg font-bold tracking-tight">
+                LocalPlatform
+              </div>
+
+              <div className="hidden text-[10px] font-medium text-slate-500 sm:block">
+                FIND LOCAL. CHOOSE BETTER.
+              </div>
             </div>
           </Link>
 
           <nav className="hidden items-center gap-7 md:flex">
-
             <Link
               href="/"
-              className="font-semibold hover:text-blue-600"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
             >
               Home
             </Link>
 
-            <a
-              href="#categories"
-              className="font-semibold hover:text-blue-600"
+            <Link
+              href="/search"
+              className="text-sm font-semibold text-slate-900"
             >
-              Categories
-            </a>
+              Search
+            </Link>
 
+            <Link
+              href="/list-business"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              List Business
+            </Link>
+
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/login"
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Login
+            </Link>
           </nav>
 
           <Link
-            href="/list-business"
-            className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-blue-700 sm:px-5 sm:py-2.5 sm:text-sm"
+            href="/"
+            className="text-sm font-semibold text-slate-600 md:hidden"
           >
-            List Your Business
+            ← Home
           </Link>
-
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+      {/* SEARCH HERO */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-wider text-sky-600">
+              Local Search
+            </p>
 
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-12 text-center sm:px-6 sm:py-16 md:min-h-[540px] md:justify-center md:py-20">
+            <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Find local businesses
+            </h1>
 
-          <div className="mb-4 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white sm:mb-6 sm:px-5 sm:py-2 sm:text-sm">
-            India&apos;s Business &amp; Service Discovery Platform
+            <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
+              Search businesses, professionals and services by
+              name, category and location.
+            </p>
           </div>
 
-          <h1 className="max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-            Find the right{" "}
-            <span className="text-yellow-300">
-              business
-            </span>
-            ,
-            <br className="hidden sm:block" />
-            <span className="text-yellow-300">
-              {" "}service
-            </span>{" "}
-            or professional near you
-          </h1>
+          <div className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+            <div className="grid gap-2 md:grid-cols-[1fr_0.8fr_auto]">
+              <div className="flex items-center rounded-xl border border-slate-200 bg-white px-4">
+                <span className="mr-3 text-lg text-slate-400">
+                  ⌕
+                </span>
 
-          <p className="mt-4 max-w-xl text-sm leading-6 text-blue-50 sm:mt-6 sm:text-base md:text-lg">
-            Search local businesses, professionals and
-            services near you.
-          </p>
-
-          {/* SEARCH */}
-          <div className="mt-7 w-full max-w-4xl rounded-2xl bg-white p-2.5 shadow-2xl sm:mt-9 sm:p-3">
-
-            <div className="flex flex-col gap-2.5 md:flex-row">
-
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch();
+                <input
+                  value={query}
+                  onChange={(e) =>
+                    setQuery(e.target.value)
                   }
-                }}
-                placeholder="🔍 What are you looking for?"
-                className="h-12 min-w-0 flex-1 rounded-xl border border-slate-200 px-4 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:h-14 sm:text-base"
-              />
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") doSearch();
+                  }}
+                  placeholder="Business, service or category"
+                  className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                />
+              </div>
 
-              <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch();
+              <div className="flex items-center rounded-xl border border-slate-200 bg-white px-4">
+                <span className="mr-3 text-lg text-slate-400">
+                  ◉
+                </span>
+
+                <input
+                  value={location}
+                  onChange={(e) =>
+                    setLocation(e.target.value)
                   }
-                }}
-                placeholder="📍 City / Location"
-                className="h-12 min-w-0 flex-1 rounded-xl border border-slate-200 px-4 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:h-14 sm:text-base"
-              />
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") doSearch();
+                  }}
+                  placeholder="City or area"
+                  className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                />
+              </div>
 
               <button
-                type="button"
-                onClick={handleSearch}
-                className="h-12 rounded-xl bg-blue-600 px-7 text-sm font-bold text-white hover:bg-blue-700 sm:h-14 sm:px-9 sm:text-base"
+                onClick={doSearch}
+                className="h-12 rounded-xl bg-slate-900 px-7 text-sm font-bold text-white hover:bg-slate-800"
               >
                 Search
               </button>
-
             </div>
           </div>
 
-          <p className="mt-4 text-xs text-white/90 sm:mt-5 sm:text-sm">
-            Try: Architect in Lucknow • Interior Designer • Construction
-          </p>
-
+          {/* POPULAR SEARCHES */}
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+            {popularCategories.map((item) => (
+              <button
+                key={item}
+                onClick={() => {
+                  setQuery(item);
+                  setCategory("");
+                }}
+                className="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:border-slate-900 hover:text-slate-900"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* SEARCH RESULTS */}
-      {searched && (
-        <section
-          id="search-results"
-          className="bg-white px-4 py-10 sm:px-6 sm:py-14"
+      {/* MOBILE FILTER BUTTON */}
+      <div className="border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <button
+          onClick={() =>
+            setMobileFilters(!mobileFilters)
+          }
+          className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold"
         >
-          <div className="mx-auto max-w-6xl">
+          <span>Filters</span>
+          <span>{mobileFilters ? "−" : "+"}</span>
+        </button>
+      </div>
 
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* MOBILE FILTERS */}
+      {mobileFilters && (
+        <div className="border-b border-slate-200 bg-white px-4 py-5 md:hidden">
+          <FilterBox
+            category={category}
+            city={city}
+            area={area}
+            categories={categories}
+            cities={cities}
+            areas={areas}
+            setCategory={setCategory}
+            setCity={setCity}
+            setArea={setArea}
+            clearFilters={clearFilters}
+          />
+        </div>
+      )}
 
-              <div>
-                <h2 className="text-2xl font-bold sm:text-3xl">
-                  Search Results
+      {/* MAIN */}
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+          {/* DESKTOP FILTERS */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-sm font-bold">
+                  Filters
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  {results.length} business
-                  {results.length === 1 ? "" : "es"} found
-                </p>
+                <button
+                  onClick={clearFilters}
+                  className="text-xs font-semibold text-sky-600"
+                >
+                  Clear
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 sm:w-auto"
-              >
-                Clear Search
-              </button>
+              <FilterBox
+                category={category}
+                city={city}
+                area={area}
+                categories={categories}
+                cities={cities}
+                areas={areas}
+                setCategory={setCategory}
+                setCity={setCity}
+                setArea={setArea}
+                clearFilters={clearFilters}
+                hideClear
+              />
+            </div>
+          </aside>
 
+          {/* RESULTS */}
+          <div className="min-w-0">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold">
+                  {loading
+                    ? "Finding businesses..."
+                    : `${results.length} ${
+                        results.length === 1
+                          ? "business"
+                          : "businesses"
+                      } found`}
+                </h2>
+
+                {(query || location) && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {query && `"${query}"`}
+                    {query && location && " · "}
+                    {location && location}
+                  </p>
+                )}
+              </div>
+
+              <Link
+                href="/list-business"
+                className="hidden rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white sm:block"
+              >
+                List Business
+              </Link>
             </div>
 
             {loading ? (
-              <div className="rounded-2xl bg-slate-50 px-5 py-12 text-center">
-                Loading businesses...
-              </div>
+              <LoadingGrid />
             ) : results.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center">
-
-                <div className="text-4xl">🔍</div>
-
-                <h3 className="mt-4 text-lg font-bold">
-                  No businesses found
-                </h3>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Try another business category or city.
-                </p>
-
-                <Link
-                  href="/list-business"
-                  className="mt-5 inline-block rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white"
-                >
-                  List Your Business
-                </Link>
-
-              </div>
+              <EmptyState
+                query={query}
+                location={location}
+                clearFilters={clearFilters}
+              />
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {results.map((business) => (
-                  <div
+                  <BusinessCard
                     key={business.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                  >
-
-                    <div className="flex items-start justify-between">
-
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
-                        🏢
-                      </div>
-
-                      <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                        Active
-                      </span>
-
-                    </div>
-
-                    <h3 className="mt-4 text-lg font-bold">
-                      {business.business_name}
-                    </h3>
-
-                    <p className="mt-1 font-semibold text-blue-600">
-                      {business.category}
-                    </p>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                      📍 {business.city}
-                    </p>
-
-                    {business.phone && (
-                      <p className="mt-1 text-sm text-slate-500">
-                        📞 {business.phone}
-                      </p>
-                    )}
-
-                    <Link
-                      href={`/business/${business.id}`}
-                      className="mt-4 block w-full rounded-xl bg-blue-600 py-3 text-center text-sm font-bold text-white hover:bg-blue-700"
-                    >
-                      View Business
-                    </Link>
-
-                  </div>
+                    business={business}
+                  />
                 ))}
-
               </div>
             )}
-
           </div>
-        </section>
-      )}
-
-      {/* CATEGORIES */}
-      <section
-        id="categories"
-        className="bg-slate-50 px-3 py-10 sm:px-6 sm:py-16"
-      >
-        <div className="mx-auto max-w-6xl">
-
-          <div className="text-center">
-
-            <p className="text-xs font-bold tracking-wide text-blue-600 sm:text-sm">
-              DISCOVER SERVICES
-            </p>
-
-            <h2 className="mt-1.5 text-2xl font-bold sm:text-3xl md:text-4xl">
-              Explore Popular Categories
-            </h2>
-
-            <p className="mt-2 text-xs text-slate-500 sm:text-sm">
-              Find professionals and businesses near you
-            </p>
-
-          </div>
-
-          {/* CATEGORY GRID */}
-          <div className="mt-7 grid grid-cols-4 gap-x-2 gap-y-6 sm:mt-10 sm:grid-cols-4 sm:gap-4 lg:grid-cols-4">
-
-            {categories.map((category) => (
-              <button
-                key={category.name}
-                type="button"
-                onClick={() =>
-                  handleCategorySearch(category.name)
-                }
-                className="group flex min-w-0 flex-col items-center text-center"
-              >
-
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white text-[27px] shadow-sm transition group-hover:-translate-y-1 group-hover:shadow-md sm:h-20 sm:w-20 sm:text-4xl">
-                  {category.icon}
-                </div>
-
-                <h3 className="mt-2 w-full text-[11px] font-semibold leading-4 text-slate-700 sm:mt-3 sm:text-sm">
-                  {category.name}
-                </h3>
-
-              </button>
-            ))}
-
-          </div>
-
         </div>
       </section>
 
-      {/* BUSINESS OWNER CTA */}
-      <section className="px-4 py-10 sm:px-6 sm:py-16">
+      {/* CTA */}
+      <section className="border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="rounded-3xl bg-slate-900 p-7 sm:p-10">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-sky-400">
+                  Business Owners
+                </p>
 
-        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-700 px-5 py-10 text-center text-white sm:px-10 sm:py-14">
+                <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                  Want your business here?
+                </h2>
 
-          <p className="text-xs font-bold text-blue-100 sm:text-sm">
-            FOR BUSINESS OWNERS
-          </p>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+                  Create your LocalPlatform listing and help local
+                  customers discover your business.
+                </p>
+              </div>
 
-          <h2 className="mt-2 text-2xl font-bold sm:text-3xl md:text-4xl">
-            Get discovered by new customers
-          </h2>
-
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
-            Create your business listing yourself and
-            make your services searchable on LocalPlatform.
-          </p>
-
-          <Link
-            href="/list-business"
-            className="mt-6 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 sm:px-8 sm:py-4"
-          >
-            List Your Business
-          </Link>
-
+              <Link
+                href="/list-business"
+                className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-slate-900 hover:bg-slate-100"
+              >
+                List Your Business →
+              </Link>
+            </div>
+          </div>
         </div>
-
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-slate-950 px-4 py-8 text-center text-slate-400">
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-7 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+          <div>
+            <div className="font-bold">
+              LocalPlatform
+            </div>
 
-        <div className="text-xl font-bold">
-          <span className="text-blue-400">Local</span>
-          <span className="text-orange-400">Platform</span>
+            <p className="mt-1 text-xs text-slate-500">
+              Discover local businesses. Connect locally.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-500">
+            <Link href="/" className="hover:text-slate-900">
+              Home
+            </Link>
+
+            <Link
+              href="/search"
+              className="hover:text-slate-900"
+            >
+              Search
+            </Link>
+
+            <Link
+              href="/list-business"
+              className="hover:text-slate-900"
+            >
+              List Business
+            </Link>
+
+            <Link
+              href="/login"
+              className="hover:text-slate-900"
+            >
+              Login
+            </Link>
+          </div>
         </div>
 
-        <p className="mt-1 text-xs">
-          Find. Connect. Grow.
-        </p>
-
-        <div className="mt-4 flex justify-center gap-5 text-xs sm:text-sm">
-
-          <Link
-            href="/"
-            className="hover:text-white"
-          >
-            Home
-          </Link>
-
-          <Link
-            href="/search"
-            className="hover:text-white"
-          >
-            Search
-          </Link>
-
-          <Link
-            href="/list-business"
-            className="hover:text-white"
-          >
-            List Business
-          </Link>
-
+        <div className="border-t border-slate-100 py-4 text-center text-[11px] text-slate-400">
+          © {new Date().getFullYear()} LocalPlatform. All rights reserved.
         </div>
-
-        <p className="mt-5 text-[10px]">
-          © 2026 LocalPlatform. All rights reserved.
-        </p>
-
       </footer>
-
     </main>
+  );
+}
+
+function FilterBox({
+  category,
+  city,
+  area,
+  categories,
+  cities,
+  areas,
+  setCategory,
+  setCity,
+  setArea,
+  clearFilters,
+  hideClear = false,
+}: {
+  category: string;
+  city: string;
+  area: string;
+  categories: string[];
+  cities: string[];
+  areas: string[];
+  setCategory: (value: string) => void;
+  setCity: (value: string) => void;
+  setArea: (value: string) => void;
+  clearFilters: () => void;
+  hideClear?: boolean;
+}) {
+  return (
+    <div className="space-y-5">
+      {!hideClear && (
+        <button
+          onClick={clearFilters}
+          className="mb-1 text-xs font-semibold text-sky-600"
+        >
+          Clear all filters
+        </button>
+      )}
+
+      <div>
+        <label className="mb-2 block text-xs font-bold text-slate-700">
+          Category
+        </label>
+
+        <select
+          value={category}
+          onChange={(e) =>
+            setCategory(e.target.value)
+          }
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-slate-900"
+        >
+          <option value="">All categories</option>
+
+          {categories.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-xs font-bold text-slate-700">
+          City
+        </label>
+
+        <select
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-slate-900"
+        >
+          <option value="">All cities</option>
+
+          {cities.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-xs font-bold text-slate-700">
+          Area
+        </label>
+
+        <select
+          value={area}
+          onChange={(e) => setArea(e.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-slate-900"
+        >
+          <option value="">All areas</option>
+
+          {areas.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function BusinessCard({
+  business,
+}: {
+  business: Business;
+}) {
+  return (
+    <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-xl">
+      <Link href={`/business/${business.id}`}>
+        <div className="relative h-48 overflow-hidden bg-slate-100">
+          {business.image_url ? (
+            <img
+              src={business.image_url}
+              alt={business.business_name}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-5xl text-slate-300">
+              ◫
+            </div>
+          )}
+
+          <div className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-slate-700 shadow-sm">
+            {business.category}
+          </div>
+        </div>
+      </Link>
+
+      <div className="p-5">
+        <Link href={`/business/${business.id}`}>
+          <h3 className="line-clamp-1 text-base font-bold text-slate-900 hover:text-sky-600">
+            {business.business_name}
+          </h3>
+        </Link>
+
+        {business.subcategory && (
+          <p className="mt-1 text-xs font-semibold text-sky-600">
+            {business.subcategory}
+          </p>
+        )}
+
+        <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
+          <span>◉</span>
+
+          <span className="line-clamp-2">
+            {[
+              business.area,
+              business.city,
+              business.state,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          </span>
+        </div>
+
+        {(business.short_description ||
+          business.description) && (
+          <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
+            {business.short_description ||
+              business.description}
+          </p>
+        )}
+
+        {business.services &&
+          business.services.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {business.services
+                .slice(0, 3)
+                .map((service) => (
+                  <span
+                    key={service}
+                    className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-600"
+                  >
+                    {service}
+                  </span>
+                ))}
+            </div>
+          )}
+
+        <div className="mt-5 flex gap-2">
+          <Link
+            href={`/business/${business.id}`}
+            className="flex-1 rounded-lg bg-slate-900 px-3 py-2.5 text-center text-xs font-bold text-white hover:bg-slate-800"
+          >
+            View Business
+          </Link>
+
+          {business.phone && (
+            <a
+              href={`tel:${business.phone}`}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-lg border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:border-slate-900"
+            >
+              Call
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function EmptyState({
+  query,
+  location,
+  clearFilters,
+}: {
+  query: string;
+  location: string;
+  clearFilters: () => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white px-5 py-14 text-center sm:px-10">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-500">
+        ⌕
+      </div>
+
+      <h3 className="mt-5 text-lg font-bold">
+        No business found
+      </h3>
+
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+        {query || location
+          ? "Try another business name, service, category or location."
+          : "No active businesses are currently available."}
+      </p>
+
+      {(query || location) && (
+        <button
+          onClick={clearFilters}
+          className="mt-5 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+        >
+          Clear Search
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LoadingGrid() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div
+          key={index}
+          className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+        >
+          <div className="h-48 animate-pulse bg-slate-200" />
+
+          <div className="space-y-3 p-5">
+            <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+            <div className="h-3 w-1/2 animate-pulse rounded bg-slate-200" />
+            <div className="h-3 w-full animate-pulse rounded bg-slate-200" />
+            <div className="h-3 w-5/6 animate-pulse rounded bg-slate-200" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
