@@ -15,7 +15,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://localplatform.in"),
-
+verification: {
+  google: "N2gZFslS8cBf0dnIgYeTExjsZEgcae75ptJ_n9Kzds0",
+},
   title: {
     default: "LocalPlatform - Find Local Businesses Near You",
     template: "%s | LocalPlatform",
