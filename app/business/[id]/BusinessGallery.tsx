@@ -30,7 +30,7 @@ export default function BusinessGallery({
 }: {
   businessId: string;
 }) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -104,7 +104,8 @@ export default function BusinessGallery({
       const extension =
         file.name.split(".").pop()?.toLowerCase() || "jpg";
 
-      const filePath = `${businessId}/${userId}-${Date.now()}.${extension}`;
+      const filePath =
+        `${businessId}/${userId}-${Date.now()}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
         .from("business-images")
@@ -219,7 +220,7 @@ export default function BusinessGallery({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {uploading ? "Uploading..." : "＋ Add Photo"}
             </button>
@@ -285,7 +286,7 @@ export default function BusinessGallery({
                 <button
                   type="button"
                   onClick={() => deletePhoto(photo)}
-                  className="absolute right-2 top-2 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-bold text-white shadow hover:bg-red-700"
+                  className="absolute right-2 top-2 rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-bold text-white"
                 >
                   Delete
                 </button>
@@ -302,7 +303,7 @@ export default function BusinessGallery({
         >
           <div
             className="relative max-h-[90vh] max-w-5xl"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
