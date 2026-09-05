@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import HomeTopAds from "./components/HomeTopAds";
 
 const supabase = createClient(
   "https://ckuiskbegrlrethnlhzq.supabase.co",
@@ -363,6 +364,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* =====================================================
+          PAID HOME TOP ADS
+      ====================================================== */}
+
+      <HomeTopAds />
 
       {/* =====================================================
           SEARCH RESULTS
