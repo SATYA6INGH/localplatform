@@ -6,7 +6,7 @@ type Business = {
   business_name: string;
   category: string;
   city: string;
-  phone: string;
+  phone: string | null;
   image_url?: string | null;
 };
 
@@ -15,7 +15,7 @@ type Props = {
 };
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
@@ -44,7 +44,8 @@ export async function generateMetadata({
   if (!business) {
     return {
       title: "Business Not Found",
-      description: "Business information not found on LocalPlatform.",
+      description:
+        "Business information not found on LocalPlatform.",
     };
   }
 
@@ -141,7 +142,7 @@ export default async function BusinessDetails({
     ? phone
     : `91${phone}`;
 
-  const siteUrl = "https://localplatform.in";
+  const siteUrl = "https://localplatform-one.vercel.app";
   const businessUrl = `${siteUrl}/business/${business.id}`;
 
   const localBusinessSchema = {
@@ -215,10 +216,8 @@ export default async function BusinessDetails({
       {/* MAIN */}
       <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="overflow-hidden rounded-3xl bg-white shadow-xl">
-          
           {/* BUSINESS HERO */}
           <div className="bg-blue-700 px-8 py-14 text-white">
-            
             {business.image_url && (
               <div className="mb-6">
                 <img
@@ -261,9 +260,8 @@ export default async function BusinessDetails({
 
             {/* CONTACT BUTTONS */}
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              
               <a
-                href={`tel:${business.phone}`}
+                href={`tel:${business.phone || ""}`}
                 className="rounded-xl bg-black px-6 py-4 text-center font-bold text-white hover:bg-gray-800"
               >
                 📞 Call Now
@@ -288,7 +286,6 @@ export default async function BusinessDetails({
               </h2>
 
               <div className="mt-5 grid gap-4 md:grid-cols-3">
-                
                 <div className="rounded-xl bg-gray-50 p-5">
                   <p className="text-sm text-gray-500">
                     Business
@@ -337,7 +334,6 @@ export default async function BusinessDetails({
 
             {/* BOTTOM NAVIGATION */}
             <div className="mt-10 flex flex-col gap-3 border-t pt-8 sm:flex-row">
-              
               <a
                 href="/"
                 className="flex-1 rounded-xl border border-gray-300 px-6 py-4 text-center font-semibold text-gray-800 hover:bg-gray-50"
