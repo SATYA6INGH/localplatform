@@ -2,12 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
+const SUPABASE_URL = "https://ckuiskbegrlrethnlhzq.supabase.co";
+const SUPABASE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -24,7 +22,7 @@ export default function LoginPage() {
     setMessage("");
     setErrorMessage("");
 
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setErrorMessage("Please enter email and password.");
       setLoading(false);
       return;
@@ -36,40 +34,95 @@ export default function LoginPage() {
       return;
     }
 
-    if (isSignup) {
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-      });
+    try {
+      if (isSignup) {
+        const response = await fetch(
+          `${SUPABASE_URL}/auth/v1/signup`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: SUPABASE_KEY,
+            },
+            body: JSON.stringify({
+              email: email.trim(),
+              password,
+            }),
+          }
+        );
 
-      if (error) {
-        setErrorMessage(error.message);
-      } else {
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data?.msg ||
+              data?.message ||
+              data?.error_description ||
+              "Account creation failed."
+          );
+        }
+
         setMessage(
           "Account created successfully. Please check your email to confirm your account."
         );
         setEmail("");
         setPassword("");
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        setErrorMessage(error.message);
       } else {
+        const response = await fetch(
+          `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: SUPABASE_KEY,
+            },
+            body: JSON.stringify({
+              email: email.trim(),
+              password,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data?.msg ||
+              data?.message ||
+              data?.error_description ||
+              "Login failed."
+          );
+        }
+
+        if (!data.access_token || !data.refresh_token) {
+          throw new Error("Login successful but session was not received.");
+        }
+
+        localStorage.setItem(
+          "localplatform_access_token",
+          data.access_token
+        );
+
+        localStorage.setItem(
+          "localplatform_refresh_token",
+          data.refresh_token
+        );
+
         window.location.href = "/list-business";
       }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <main className="min-h-screen bg-slate-50">
-      {/* HEADER */}
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
@@ -94,7 +147,6 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* LOGIN / SIGNUP */}
       <section className="flex min-h-[calc(100vh-82px)] items-center justify-center px-5 py-12">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
@@ -114,7 +166,6 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* MESSAGE */}
             {message && (
               <div className="mt-6 rounded-xl bg-green-50 p-4 text-sm font-medium text-green-700">
                 {message}
@@ -127,7 +178,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* FORM */}
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -174,7 +224,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* SWITCH */}
             <div className="mt-7 text-center text-sm text-slate-500">
               {isSignup
                 ? "Already have an account?"
