@@ -27,22 +27,26 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const redirectUser = (userEmail: string | undefined) => {
+    if (
+      userEmail?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    ) {
+      window.location.replace("/admin");
+    } else {
+      window.location.replace("/list-business");
+    }
+  };
+
   useEffect(() => {
-    const checkExistingSession = async () => {
+    const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
 
-      const user = data.session?.user;
-
-      if (!user) return;
-
-      if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-        window.location.replace("/admin");
-      } else {
-        window.location.replace("/list-business");
+      if (data.session?.user) {
+        redirectUser(data.session.user.email);
       }
     };
 
-    checkExistingSession();
+    checkSession();
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -70,7 +74,7 @@ export default function LoginPage() {
 
     try {
       // =========================
-      // CREATE ACCOUNT
+      // SIGN UP
       // =========================
       if (isSignup) {
         const { data, error } = await supabase.auth.signUp({
@@ -85,28 +89,20 @@ export default function LoginPage() {
         }
 
         if (!data.user) {
-          setErrorMessage("Account create nahi ho paya. Dobara try karo.");
+          setErrorMessage("Account create nahi ho paya.");
           setLoading(false);
           return;
         }
 
-        // Agar email confirmation OFF hai,
-        // Supabase session turant dega.
+        // Confirm Email OFF hone par direct session milega
         if (data.session) {
-          if (
-            data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
-          ) {
-            window.location.replace("/admin");
-          } else {
-            window.location.replace("/list-business");
-          }
-
+          redirectUser(data.user.email);
           return;
         }
 
         // Agar confirmation abhi bhi ON hai
         setMessage(
-          "Account create ho gaya. Supabase me Email Confirmation OFF karo, phir login karo."
+          "Account create ho gaya, lekin email confirmation ON hai. Supabase me Confirm Email OFF karo."
         );
 
         setEmail("");
@@ -130,29 +126,15 @@ export default function LoginPage() {
       }
 
       if (!data.user || !data.session) {
-        setErrorMessage(
-          "Login session create nahi hui. Dobara try karo."
-        );
+        setErrorMessage("Login session nahi bani. Dobara try karo.");
         setLoading(false);
         return;
       }
 
-      // =========================
-      // ADMIN
-      // =========================
-      if (
-        data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
-      ) {
-        window.location.replace("/admin");
-        return;
-      }
-
-      // =========================
-      // NORMAL USER
-      // =========================
-      window.location.replace("/list-business");
+      // ADMIN / NORMAL USER REDIRECT
+      redirectUser(data.user.email);
     } catch (error) {
-      console.error("LOGIN ERROR:", error);
+      console.error("AUTH ERROR:", error);
 
       setErrorMessage(
         error instanceof Error
