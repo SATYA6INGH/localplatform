@@ -1,12 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
+  "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: "localplatform-auth",
+    },
+  }
 );
 
 type Business = {
@@ -24,18 +31,25 @@ export default function Home() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState("");
 
   useEffect(() => {
     async function loadBusinesses() {
+      setLoading(true);
+
       const { data, error } = await supabase
         .from("businesses")
         .select("id, business_name, category, city, phone")
         .order("business_name", { ascending: true });
 
-      if (!error) {
-        setBusinesses(data || []);
+      if (error) {
+        console.error("BUSINESS LOAD ERROR:", error);
+        setDbError(error.message);
+        setBusinesses([]);
       } else {
-        console.error(error);
+        console.log("BUSINESSES:", data);
+        setBusinesses(data || []);
+        setDbError("");
       }
 
       setLoading(false);
@@ -49,9 +63,9 @@ export default function Home() {
     const cityText = city.trim().toLowerCase();
 
     const filtered = businesses.filter((business) => {
-      const name = business.business_name.toLowerCase();
-      const category = business.category.toLowerCase();
-      const businessCity = business.city.toLowerCase();
+      const name = (business.business_name || "").toLowerCase();
+      const category = (business.category || "").toLowerCase();
+      const businessCity = (business.city || "").toLowerCase();
 
       const matchesSearch =
         !searchText ||
@@ -79,7 +93,7 @@ export default function Home() {
     setCity("");
 
     const filtered = businesses.filter((business) =>
-      business.category
+      (business.category || "")
         .toLowerCase()
         .includes(category.toLowerCase())
     );
@@ -158,29 +172,24 @@ export default function Home() {
           >
             List Your Business
           </Link>
-
         </div>
       </header>
 
-
       {/* HERO */}
       <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
-
         <div className="mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-center px-5 py-20 text-center">
 
           <div className="mb-7 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white">
-            India&apos;s Business &amp; Service Discovery Platform
+            India's Business &amp; Service Discovery Platform
           </div>
 
           <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
             Find the right{" "}
             <span className="text-yellow-300">business</span>,
             <br />
-
             <span className="text-yellow-300">service</span>{" "}
             or professional
             <br />
-
             near you
           </h1>
 
@@ -189,7 +198,6 @@ export default function Home() {
             Business owners can list themselves and reach customers
             searching for their services.
           </p>
-
 
           {/* SEARCH */}
           <div className="mt-10 w-full max-w-4xl rounded-2xl bg-white p-3 shadow-2xl">
@@ -238,6 +246,14 @@ export default function Home() {
         </div>
       </section>
 
+      {/* DATABASE ERROR */}
+      {dbError && (
+        <div className="mx-auto max-w-6xl px-5 pt-8">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+            Database Error: {dbError}
+          </div>
+        </div>
+      )}
 
       {/* SEARCH RESULTS */}
       {searched && (
@@ -270,13 +286,11 @@ export default function Home() {
 
             </div>
 
-
             {loading ? (
               <div className="rounded-2xl bg-slate-50 px-6 py-14 text-center">
                 Loading businesses...
               </div>
             ) : results.length === 0 ? (
-
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center">
 
                 <div className="text-5xl">
@@ -299,7 +313,6 @@ export default function Home() {
                 </Link>
 
               </div>
-
             ) : (
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -335,9 +348,11 @@ export default function Home() {
                       📍 {business.city}
                     </p>
 
-                    <p className="mt-2 text-sm text-slate-500">
-                      📞 {business.phone}
-                    </p>
+                    {business.phone && (
+                      <p className="mt-2 text-sm text-slate-500">
+                        📞 {business.phone}
+                      </p>
+                    )}
 
                     <Link
                       href={`/business/${business.id}`}
@@ -357,7 +372,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
 
       {/* STATS */}
       {!searched && (
@@ -406,13 +420,11 @@ export default function Home() {
         </section>
       )}
 
-
       {/* CATEGORIES */}
       <section
         id="categories"
         className="bg-slate-50 px-5 py-20 md:px-6"
       >
-
         <div className="mx-auto max-w-6xl">
 
           <div className="text-center">
@@ -430,7 +442,6 @@ export default function Home() {
             </p>
 
           </div>
-
 
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -473,13 +484,11 @@ export default function Home() {
         </div>
       </section>
 
-
       {/* HOW IT WORKS */}
       <section
         id="how-it-works"
         className="bg-white px-5 py-20 md:px-6"
       >
-
         <div className="mx-auto max-w-6xl">
 
           <div className="text-center">
@@ -493,7 +502,6 @@ export default function Home() {
             </h2>
 
           </div>
-
 
           <div className="mt-12 grid gap-7 md:grid-cols-3">
 
@@ -512,7 +520,6 @@ export default function Home() {
               </p>
             </div>
 
-
             <div className="rounded-2xl border p-8 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-xl font-bold text-white">
                 2
@@ -527,7 +534,6 @@ export default function Home() {
                 you.
               </p>
             </div>
-
 
             <div className="rounded-2xl border p-8 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-xl font-bold text-white">
@@ -547,7 +553,6 @@ export default function Home() {
 
         </div>
       </section>
-
 
       {/* BUSINESS OWNER CTA */}
       <section className="px-5 py-20 md:px-6">
@@ -578,7 +583,6 @@ export default function Home() {
 
       </section>
 
-
       {/* FOOTER */}
       <footer className="bg-slate-950 px-5 py-10 text-center text-slate-400">
 
@@ -591,6 +595,7 @@ export default function Home() {
         </p>
 
         <div className="mt-5 flex justify-center gap-6 text-sm">
+
           <Link href="/" className="hover:text-white">
             Home
           </Link>
@@ -602,6 +607,7 @@ export default function Home() {
           <Link href="/list-business" className="hover:text-white">
             List Business
           </Link>
+
         </div>
 
         <p className="mt-6 text-xs">
