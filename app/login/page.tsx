@@ -27,7 +27,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const redirectUser = (userEmail: string | undefined) => {
+  const goAfterLogin = (userEmail: string | undefined) => {
     if (
       userEmail?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()
     ) {
@@ -39,10 +39,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("SESSION ERROR:", error);
+        return;
+      }
 
       if (data.session?.user) {
-        redirectUser(data.session.user.email);
+        goAfterLogin(data.session.user.email);
       }
     };
 
@@ -82,6 +87,9 @@ export default function LoginPage() {
           password,
         });
 
+        console.log("SIGNUP DATA:", data);
+        console.log("SIGNUP ERROR:", error);
+
         if (error) {
           setErrorMessage(error.message);
           setLoading(false);
@@ -94,18 +102,18 @@ export default function LoginPage() {
           return;
         }
 
-        // Confirm Email OFF hone par direct session milega
+        // Confirm Email OFF hone par session milega
         if (data.session) {
-          redirectUser(data.user.email);
+          goAfterLogin(data.user.email);
           return;
         }
 
-        // Agar confirmation abhi bhi ON hai
+        // Agar session nahi mila
         setMessage(
-          "Account create ho gaya, lekin email confirmation ON hai. Supabase me Confirm Email OFF karo."
+          "Account create ho gaya. Ab Login tab par jaakar isi email aur password se login karo."
         );
 
-        setEmail("");
+        setIsSignup(false);
         setPassword("");
         setLoading(false);
         return;
@@ -119,6 +127,9 @@ export default function LoginPage() {
         password,
       });
 
+      console.log("LOGIN DATA:", data);
+      console.log("LOGIN ERROR:", error);
+
       if (error) {
         setErrorMessage(error.message);
         setLoading(false);
@@ -131,8 +142,7 @@ export default function LoginPage() {
         return;
       }
 
-      // ADMIN / NORMAL USER REDIRECT
-      redirectUser(data.user.email);
+      goAfterLogin(data.user.email);
     } catch (error) {
       console.error("AUTH ERROR:", error);
 
@@ -215,7 +225,8 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  disabled={loading}
+                  className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
                 />
               </div>
 
@@ -232,7 +243,8 @@ export default function LoginPage() {
                   autoComplete={
                     isSignup ? "new-password" : "current-password"
                   }
-                  className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  disabled={loading}
+                  className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
                 />
               </div>
 
@@ -256,12 +268,13 @@ export default function LoginPage() {
 
               <button
                 type="button"
+                disabled={loading}
                 onClick={() => {
                   setIsSignup(!isSignup);
                   setMessage("");
                   setErrorMessage("");
                 }}
-                className="ml-2 font-bold text-blue-600 hover:text-blue-700"
+                className="ml-2 font-bold text-blue-600 hover:text-blue-700 disabled:opacity-50"
               >
                 {isSignup ? "Login" : "Create Account"}
               </button>
