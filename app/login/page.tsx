@@ -6,7 +6,15 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: "localplatform-auth",
+    },
+  }
 );
 
 export default function LoginPage() {

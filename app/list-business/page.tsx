@@ -1,13 +1,26 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const supabase = createClient(
   "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: "localplatform-auth",
+    },
+  }
 );
 
 export default function ListBusinessPage() {
@@ -41,6 +54,7 @@ export default function ListBusinessPage() {
         if (!mounted) return;
 
         if (!session?.user) {
+          setLoading(false);
           router.replace("/login");
           return;
         }
@@ -63,6 +77,7 @@ export default function ListBusinessPage() {
       if (!mounted) return;
 
       if (!session?.user) {
+        setLoading(false);
         router.replace("/login");
         return;
       }
@@ -124,7 +139,9 @@ export default function ListBusinessPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("Login session समाप्त हो गई। कृपया दोबारा Login करें।");
+        throw new Error(
+          "Login session समाप्त हो गई। कृपया दोबारा Login करें।"
+        );
       }
 
       const currentUserId = user.id;
@@ -132,7 +149,6 @@ export default function ListBusinessPage() {
 
       let imageUrl = "";
 
-      // PHOTO UPLOAD
       if (image) {
         const fileExtension =
           image.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -158,7 +174,6 @@ export default function ListBusinessPage() {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      // SAVE BUSINESS
       const { error: insertError } = await supabase
         .from("businesses")
         .insert({
@@ -210,7 +225,6 @@ export default function ListBusinessPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* HEADER */}
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link
@@ -238,7 +252,6 @@ export default function ListBusinessPage() {
         </div>
       </header>
 
-      {/* FORM */}
       <section className="max-w-2xl mx-auto px-6 py-10">
         <div className="bg-white border rounded-2xl p-6 md:p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -250,7 +263,6 @@ export default function ListBusinessPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* IMAGE */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
                 Business Photo / Logo
@@ -278,7 +290,6 @@ export default function ListBusinessPage() {
               )}
             </div>
 
-            {/* BUSINESS NAME */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
                 Business Name
@@ -293,7 +304,6 @@ export default function ListBusinessPage() {
               />
             </div>
 
-            {/* CATEGORY */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
                 Category
@@ -308,7 +318,6 @@ export default function ListBusinessPage() {
               />
             </div>
 
-            {/* CITY */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
                 City
@@ -323,7 +332,6 @@ export default function ListBusinessPage() {
               />
             </div>
 
-            {/* PHONE */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
                 Phone
@@ -338,21 +346,18 @@ export default function ListBusinessPage() {
               />
             </div>
 
-            {/* ERROR */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3">
                 {error}
               </div>
             )}
 
-            {/* SUCCESS */}
             {message && (
               <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3">
                 {message}
               </div>
             )}
 
-            {/* BUTTON */}
             <button
               type="submit"
               disabled={saving}
