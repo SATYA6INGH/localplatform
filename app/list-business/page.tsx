@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  "https://ckuiskbegrlrethnlhzq.supabase.co",
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
@@ -25,30 +25,59 @@ export default function ListBusinessPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let mounted = true;
+
     async function checkUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!user) {
-        router.push("/login");
-        return;
+        if (!mounted) return;
+
+        if (!session?.user) {
+          router.replace("/login");
+          return;
+        }
+
+        setUserId(session.user.id);
+        setLoading(false);
+      } catch {
+        if (mounted) {
+          setError("Login session नहीं मिली। कृपया दोबारा Login करें।");
+          setLoading(false);
+        }
       }
-
-      setUserId(user.id);
-      setLoading(false);
     }
 
     checkUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+
+      if (!session?.user) {
+        router.replace("/login");
+        return;
+      }
+
+      setUserId(session.user.id);
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
-  function handleImageChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
+  function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -70,9 +99,7 @@ export default function ListBusinessPage() {
     setImagePreview(previewUrl);
   }
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setSaving(true);
@@ -92,9 +119,16 @@ export default function ListBusinessPage() {
         throw new Error("City भरें।");
       }
 
-      if (!userId) {
-        throw new Error("User login नहीं है।");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Login session समाप्त हो गई। कृपया दोबारा Login करें।");
       }
+
+      const currentUserId = user.id;
+      setUserId(currentUserId);
 
       let imageUrl = "";
 
@@ -104,8 +138,7 @@ export default function ListBusinessPage() {
           image.name.split(".").pop()?.toLowerCase() || "jpg";
 
         const fileName = `${crypto.randomUUID()}.${fileExtension}`;
-
-        const filePath = `${userId}/${fileName}`;
+        const filePath = `${currentUserId}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("business-images")
@@ -133,7 +166,7 @@ export default function ListBusinessPage() {
           category: category.trim(),
           city: city.trim(),
           phone: phone.trim(),
-          owner_id: userId,
+          owner_id: currentUserId,
           image_url: imageUrl || null,
         });
 
@@ -155,9 +188,7 @@ export default function ListBusinessPage() {
       }, 1200);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "कुछ गलत हो गया।"
+        err instanceof Error ? err.message : "कुछ गलत हो गया।"
       );
     } finally {
       setSaving(false);
@@ -166,13 +197,13 @@ export default function ListBusinessPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.replace("/login");
   }
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-600">Loading...</p>
       </main>
     );
   }
@@ -218,10 +249,7 @@ export default function ListBusinessPage() {
             अपने business की जानकारी भरें।
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* IMAGE */}
             <div>
               <label className="block font-semibold text-gray-800 mb-2">
@@ -259,9 +287,7 @@ export default function ListBusinessPage() {
               <input
                 type="text"
                 value={businessName}
-                onChange={(e) =>
-                  setBusinessName(e.target.value)
-                }
+                onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="जैसे ABC Architects"
                 className="w-full border border-gray-300 rounded-lg px-4 py-3"
               />
@@ -276,9 +302,7 @@ export default function ListBusinessPage() {
               <input
                 type="text"
                 value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value)
-                }
+                onChange={(e) => setCategory(e.target.value)}
                 placeholder="जैसे Architect"
                 className="w-full border border-gray-300 rounded-lg px-4 py-3"
               />
@@ -293,9 +317,7 @@ export default function ListBusinessPage() {
               <input
                 type="text"
                 value={city}
-                onChange={(e) =>
-                  setCity(e.target.value)
-                }
+                onChange={(e) => setCity(e.target.value)}
                 placeholder="जैसे Lucknow"
                 className="w-full border border-gray-300 rounded-lg px-4 py-3"
               />
@@ -310,9 +332,7 @@ export default function ListBusinessPage() {
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) =>
-                  setPhone(e.target.value)
-                }
+                onChange={(e) => setPhone(e.target.value)}
                 placeholder="जैसे 9005798632"
                 className="w-full border border-gray-300 rounded-lg px-4 py-3"
               />
@@ -338,9 +358,7 @@ export default function ListBusinessPage() {
               disabled={saving}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving
-                ? "Saving..."
-                : "List My Business"}
+              {saving ? "Saving..." : "List My Business"}
             </button>
           </form>
         </div>
