@@ -1,363 +1,344 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect, useState, type ChangeEvent } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-
-type Business = {
-  id: string;
-  business_name: string;
-  category: string;
-  city: string;
-  phone: string | null;
-  image_url?: string | null;
-};
-
-type Props = {
-  params: Promise<{ id: string }>;
-};
 
 const supabase = createClient(
   "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: "localplatform-auth",
+    },
+  }
 );
 
-async function getBusiness(id: string) {
-  const { data, error } = await supabase
-    .from("businesses")
-    .select(
-      "id, business_name, category, city, phone, image_url"
-    )
-    .eq("id", id)
-    .maybeSingle();
+export default function EditBusiness() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
 
-  if (error || !data) {
-    return null;
+  const [businessName, setBusinessName] = useState("");
+  const [category, setCategory] = useState("");
+  const [city, setCity] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const [currentImage, setCurrentImage] = useState("");
+  const [newImage, setNewImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    async function loadBusiness() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("businesses")
+        .select(
+          "id, business_name, category, city, phone, image_url"
+        )
+        .eq("id", id)
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        setErrorMessage(error.message);
+      } else if (!data) {
+        setErrorMessage(
+          "Business nahi mila ya aapko is business ko edit karne ki permission nahi hai."
+        );
+      } else {
+        setBusinessName(data.business_name || "");
+        setCategory(data.category || "");
+        setCity(data.city || "");
+        setPhone(data.phone || "");
+        setCurrentImage(data.image_url || "");
+      }
+
+      setLoading(false);
+    }
+
+    if (id) {
+      loadBusiness();
+    }
+  }, [id, router]);
+
+  function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("कृपया केवल image file चुनें।");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("Image का size 5 MB से कम होना चाहिए।");
+      return;
+    }
+
+    setErrorMessage("");
+    setNewImage(file);
+    setImagePreview(URL.createObjectURL(file));
   }
 
-  return data as Business;
-}
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-export async function generateMetadata({
-  params,
-}: Props): Promise<Metadata> {
-  const { id } = await params;
-  const business = await getBusiness(id);
+    setSaving(true);
+    setMessage("");
+    setErrorMessage("");
 
-  if (!business) {
-    return {
-      title: "Business Not Found",
-      description:
-        "Business information not found on LocalPlatform.",
-    };
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      let imageUrl = currentImage;
+
+      if (newImage) {
+        const extension =
+          newImage.name.split(".").pop()?.toLowerCase() || "jpg";
+
+        const fileName = `${crypto.randomUUID()}.${extension}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("business-images")
+          .upload(filePath, newImage, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(uploadError.message);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("business-images")
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrlData.publicUrl;
+      }
+
+      const { error } = await supabase
+        .from("businesses")
+        .update({
+          business_name: businessName.trim(),
+          category: category.trim(),
+          city: city.trim(),
+          phone: phone.trim(),
+          image_url: imageUrl || null,
+        })
+        .eq("id", id)
+        .eq("owner_id", user.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setMessage("Business successfully updated! ✅");
+
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Business update नहीं हो सका।"
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
-  const title = `${business.business_name} - ${business.category} in ${business.city}`;
-
-  const description = `Find ${business.business_name}, a ${business.category} in ${business.city}. View business information and contact details on LocalPlatform.`;
-
-  return {
-    title,
-    description,
-
-    keywords: [
-      business.business_name,
-      business.category,
-      `${business.category} in ${business.city}`,
-      `${business.business_name} ${business.city}`,
-      `businesses in ${business.city}`,
-      `local businesses in ${business.city}`,
-    ],
-
-    alternates: {
-      canonical: `/business/${business.id}`,
-    },
-
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      url: `/business/${business.id}`,
-      siteName: "LocalPlatform",
-
-      ...(business.image_url
-        ? {
-            images: [
-              {
-                url: business.image_url,
-                width: 1200,
-                height: 630,
-                alt: business.business_name,
-              },
-            ],
-          }
-        : {}),
-    },
-
-    robots: {
-      index: true,
-      follow: true,
-    },
-  };
-}
-
-export default async function BusinessDetails({
-  params,
-}: Props) {
-  const { id } = await params;
-  const business = await getBusiness(id);
-
-  if (!business) {
+  if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
-        <div className="w-full max-w-md rounded-2xl bg-white p-10 text-center shadow-lg">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Business Not Found
-          </h1>
-
-          <p className="mt-3 text-gray-500">
-            यह business नहीं मिला।
-          </p>
-
-          <div className="mt-6 flex flex-col gap-3">
-            <a
-              href="/"
-              className="rounded-xl bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
-            >
-              🏠 Home
-            </a>
-
-            <a
-              href="/search"
-              className="rounded-xl bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
-            >
-              ← Back to Search
-            </a>
-          </div>
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-lg font-semibold">
+          Loading business...
         </div>
       </main>
     );
   }
 
-  const phone = business.phone?.replace(/\D/g, "") || "";
-
-  const whatsappNumber = phone.startsWith("91")
-    ? phone
-    : `91${phone}`;
-
-  const siteUrl = "https://localplatform-one.vercel.app";
-  const businessUrl = `${siteUrl}/business/${business.id}`;
-
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: business.business_name,
-    description: `Local ${business.category} business in ${business.city}.`,
-    url: businessUrl,
-
-    ...(business.phone
-      ? {
-          telephone: business.phone,
-        }
-      : {}),
-
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: business.city,
-      addressCountry: "IN",
-    },
-
-    ...(business.category
-      ? {
-          category: business.category,
-        }
-      : {}),
-
-    ...(business.image_url
-      ? {
-          image: business.image_url,
-        }
-      : {}),
-  };
-
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* SEO STRUCTURED DATA */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(localBusinessSchema),
-        }}
-      />
+    <main className="min-h-screen bg-slate-50 px-5 py-10">
+      <div className="mx-auto max-w-xl">
 
-      {/* HEADER */}
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
-          <a
-            href="/"
-            className="font-semibold text-gray-700 hover:text-black"
+        <div className="mb-6 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="font-semibold text-blue-600 hover:text-blue-700"
           >
-            🏠 Home
-          </a>
+            ← Dashboard
+          </button>
 
-          <a
-            href="/search"
-            className="font-semibold text-gray-700 hover:text-black"
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="font-semibold text-slate-600 hover:text-blue-600"
           >
-            ← Back to Search
-          </a>
-
-          <a
-            href="/list-business"
-            className="rounded-xl bg-black px-5 py-3 font-semibold text-white hover:bg-gray-800"
-          >
-            List Your Business
-          </a>
+            Home
+          </button>
         </div>
-      </header>
 
-      {/* MAIN */}
-      <section className="mx-auto max-w-5xl px-6 py-12">
-        <div className="overflow-hidden rounded-3xl bg-white shadow-xl">
-          {/* BUSINESS HERO */}
-          <div className="bg-blue-700 px-8 py-14 text-white">
-            {business.image_url && (
-              <div className="mb-6">
-                <img
-                  src={business.image_url}
-                  alt={`${business.business_name} - ${business.category} in ${business.city}`}
-                  className="h-32 w-32 rounded-2xl object-cover border-4 border-white/30"
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg md:p-10">
+
+          <h1 className="text-3xl font-bold text-slate-900">
+            Edit Business
+          </h1>
+
+          <p className="mt-2 text-slate-500">
+            अपने business की information और photo update करें।
+          </p>
+
+          {errorMessage && (
+            <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">
+              {errorMessage}
+            </div>
+          )}
+
+          {message && (
+            <div className="mt-6 rounded-xl bg-green-50 p-4 text-sm font-medium text-green-700">
+              {message}
+            </div>
+          )}
+
+          {!errorMessage && (
+            <form
+              onSubmit={handleSubmit}
+              className="mt-8 space-y-5"
+            >
+
+              {/* BUSINESS PHOTO */}
+              <div>
+                <label className="mb-2 block font-semibold">
+                  Business Photo / Logo
+                </label>
+
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="New business preview"
+                    className="mb-4 h-40 w-40 rounded-2xl border object-cover"
+                  />
+                ) : currentImage ? (
+                  <img
+                    src={currentImage}
+                    alt={businessName}
+                    className="mb-4 h-40 w-40 rounded-2xl border object-cover"
+                  />
+                ) : (
+                  <div className="mb-4 flex h-40 w-40 items-center justify-center rounded-2xl border bg-slate-50 text-5xl">
+                    🏢
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full rounded-xl border border-slate-300 p-3"
+                />
+
+                <p className="mt-1 text-sm text-slate-500">
+                  JPG, PNG या WebP — अधिकतम 5 MB
+                </p>
+              </div>
+
+              {/* BUSINESS NAME */}
+              <div>
+                <label className="mb-2 block font-semibold">
+                  Business Name
+                </label>
+
+                <input
+                  required
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
-            )}
 
-            <div className="mb-5 inline-block rounded-full bg-white/20 px-4 py-2 text-sm font-semibold">
-              {business.category}
-            </div>
+              {/* CATEGORY */}
+              <div>
+                <label className="mb-2 block font-semibold">
+                  Category
+                </label>
 
-            <h1 className="text-4xl font-bold md:text-5xl">
-              {business.business_name}
-            </h1>
-
-            <p className="mt-4 text-lg text-blue-100">
-              📍 {business.city}
-            </p>
-          </div>
-
-          {/* DETAILS */}
-          <div className="p-8 md:p-10">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Contact Business
-            </h2>
-
-            {/* PHONE */}
-            <div className="mt-6 rounded-2xl bg-gray-50 p-6">
-              <p className="text-sm text-gray-500">
-                Phone Number
-              </p>
-
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {business.phone || "Phone not available"}
-              </p>
-            </div>
-
-            {/* CONTACT BUTTONS */}
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <a
-                href={`tel:${business.phone || ""}`}
-                className="rounded-xl bg-black px-6 py-4 text-center font-bold text-white hover:bg-gray-800"
-              >
-                📞 Call Now
-              </a>
-
-              {phone && (
-                <a
-                  href={`https://wa.me/${whatsappNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-green-600 px-6 py-4 text-center font-bold text-white hover:bg-green-700"
-                >
-                  💬 WhatsApp
-                </a>
-              )}
-            </div>
-
-            {/* BUSINESS INFORMATION */}
-            <div className="mt-10 border-t pt-8">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Business Information
-              </h2>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
-                <div className="rounded-xl bg-gray-50 p-5">
-                  <p className="text-sm text-gray-500">
-                    Business
-                  </p>
-
-                  <p className="mt-1 font-semibold">
-                    {business.business_name}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-gray-50 p-5">
-                  <p className="text-sm text-gray-500">
-                    Category
-                  </p>
-
-                  <p className="mt-1 font-semibold">
-                    {business.category}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-gray-50 p-5">
-                  <p className="text-sm text-gray-500">
-                    Location
-                  </p>
-
-                  <p className="mt-1 font-semibold">
-                    {business.city}
-                  </p>
-                </div>
+                <input
+                  required
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                />
               </div>
-            </div>
 
-            {/* SEO TEXT */}
-            <div className="mt-10 border-t pt-8">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {business.category} in {business.city}
-              </h2>
+              {/* CITY */}
+              <div>
+                <label className="mb-2 block font-semibold">
+                  City
+                </label>
 
-              <p className="mt-3 leading-7 text-gray-600">
-                {business.business_name} is a local{" "}
-                {business.category} business located in{" "}
-                {business.city}. Find business information,
-                contact details and services on LocalPlatform.
-              </p>
-            </div>
+                <input
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
 
-            {/* BOTTOM NAVIGATION */}
-            <div className="mt-10 flex flex-col gap-3 border-t pt-8 sm:flex-row">
-              <a
-                href="/"
-                className="flex-1 rounded-xl border border-gray-300 px-6 py-4 text-center font-semibold text-gray-800 hover:bg-gray-50"
+              {/* PHONE */}
+              <div>
+                <label className="mb-2 block font-semibold">
+                  Phone Number
+                </label>
+
+                <input
+                  required
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                🏠 Go to Home
-              </a>
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
 
-              <a
-                href="/search"
-                className="flex-1 rounded-xl bg-black px-6 py-4 text-center font-semibold text-white hover:bg-gray-800"
-              >
-                🔍 Search More Businesses
-              </a>
-
-              <a
-                href="/list-business"
-                className="flex-1 rounded-xl bg-blue-700 px-6 py-4 text-center font-semibold text-white hover:bg-blue-800"
-              >
-                ➕ List Your Business
-              </a>
-            </div>
-          </div>
+            </form>
+          )}
         </div>
-      </section>
+      </div>
     </main>
   );
 }
