@@ -27,27 +27,23 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const goAfterLogin = (userEmail: string | undefined) => {
+  const redirectUser = (userEmail?: string) => {
     if (
       userEmail?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()
     ) {
       window.location.replace("/admin");
-    } else {
-      window.location.replace("/list-business");
+      return;
     }
+
+    window.location.replace("/list-business");
   };
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("SESSION ERROR:", error);
-        return;
-      }
+      const { data } = await supabase.auth.getSession();
 
       if (data.session?.user) {
-        goAfterLogin(data.session.user.email);
+        redirectUser(data.session.user.email);
       }
     };
 
@@ -78,16 +74,16 @@ export default function LoginPage() {
     }
 
     try {
-      // =========================
-      // SIGN UP
-      // =========================
+      // ==========================
+      // CREATE ACCOUNT
+      // ==========================
       if (isSignup) {
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail,
           password,
         });
 
-        console.log("SIGNUP DATA:", data);
+        console.log("SIGNUP:", data);
         console.log("SIGNUP ERROR:", error);
 
         if (error) {
@@ -102,15 +98,15 @@ export default function LoginPage() {
           return;
         }
 
-        // Confirm Email OFF hone par session milega
+        // Confirm Email OFF hone par session milna chahiye
         if (data.session) {
-          goAfterLogin(data.user.email);
+          redirectUser(data.user.email);
           return;
         }
 
-        // Agar session nahi mila
+        // Session nahi mila
         setMessage(
-          "Account create ho gaya. Ab Login tab par jaakar isi email aur password se login karo."
+          "Account create ho gaya. Ab Login par jaakar email aur password se login karo."
         );
 
         setIsSignup(false);
@@ -119,15 +115,15 @@ export default function LoginPage() {
         return;
       }
 
-      // =========================
+      // ==========================
       // LOGIN
-      // =========================
+      // ==========================
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
 
-      console.log("LOGIN DATA:", data);
+      console.log("LOGIN:", data);
       console.log("LOGIN ERROR:", error);
 
       if (error) {
@@ -137,12 +133,12 @@ export default function LoginPage() {
       }
 
       if (!data.user || !data.session) {
-        setErrorMessage("Login session nahi bani. Dobara try karo.");
+        setErrorMessage("Login session nahi bani.");
         setLoading(false);
         return;
       }
 
-      goAfterLogin(data.user.email);
+      redirectUser(data.user.email);
     } catch (error) {
       console.error("AUTH ERROR:", error);
 
@@ -185,6 +181,7 @@ export default function LoginPage() {
       <section className="flex min-h-[calc(100vh-82px)] items-center justify-center px-5 py-12">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
+
             <div className="text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-extrabold text-white">
                 L
@@ -214,6 +211,7 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Email Address
