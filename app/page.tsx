@@ -123,57 +123,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6">
-
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-xl font-extrabold text-white">
-              L
-            </div>
-
-            <div>
-              <div className="text-lg font-bold md:text-xl">
-                LocalPlatform
-              </div>
-
-              <div className="hidden text-xs text-slate-500 sm:block">
-                Find. Connect. Grow.
-              </div>
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-7 md:flex">
-            <Link
-              href="/"
-              className="font-medium hover:text-blue-600"
-            >
-              Home
-            </Link>
-
-            <a
-              href="#categories"
-              className="font-medium hover:text-blue-600"
-            >
-              Categories
-            </a>
-
-            <a
-              href="#how-it-works"
-              className="font-medium hover:text-blue-600"
-            >
-              How It Works
-            </a>
-          </nav>
-
-          <Link
-            href="/list-business"
-            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 md:px-6 md:py-3 md:text-base"
-          >
-            List Your Business
-          </Link>
-        </div>
-      </header>
+     
 
       {/* HERO */}
       <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">

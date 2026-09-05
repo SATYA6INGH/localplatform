@@ -59,9 +59,7 @@ export default function DashboardPage() {
 
         const { data, error } = await supabase
           .from("businesses")
-          .select(
-            "id, business_name, category, city, phone"
-          )
+          .select("id, business_name, category, city, phone")
           .eq("owner_id", user.id)
           .order("business_name", { ascending: true });
 
@@ -143,7 +141,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <p className="text-gray-600">Loading dashboard...</p>
       </main>
     );
@@ -151,74 +149,66 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* HEADER */}
-      <header className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-2xl font-bold text-blue-600"
-          >
-            LocalPlatform
-          </Link>
+      {/* DASHBOARD CONTENT */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+        
+        {/* TOP BAR */}
+        <div className="mb-8 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              Business Dashboard
+            </h1>
 
-          <div className="flex items-center gap-4">
+            <p className="mt-2 break-all text-sm text-gray-600 sm:text-base">
+              Welcome, {userEmail}
+            </p>
+          </div>
+
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Link
               href="/list-business"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700 sm:py-2"
             >
               + Add Business
             </Link>
 
             <button
               onClick={handleLogout}
-              className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100"
+              className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold hover:bg-gray-100 sm:py-2"
             >
               Logout
             </button>
           </div>
         </div>
-      </header>
-
-      {/* CONTENT */}
-      <section className="max-w-6xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Business Dashboard
-          </h1>
-
-          <p className="text-gray-600 mt-2">
-            Welcome, {userEmail}
-          </p>
-        </div>
 
         {/* STATS */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
-          <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500 text-sm">
+        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
+          <div className="rounded-xl border bg-white p-5 sm:p-6">
+            <p className="text-sm text-gray-500">
               Total Businesses
             </p>
 
-            <p className="text-3xl font-bold mt-2">
+            <p className="mt-2 text-3xl font-bold">
               {businesses.length}
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500 text-sm">
+          <div className="rounded-xl border bg-white p-5 sm:p-6">
+            <p className="text-sm text-gray-500">
               Account
             </p>
 
-            <p className="text-lg font-semibold mt-2">
+            <p className="mt-2 text-lg font-semibold">
               Business Owner
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <p className="text-gray-500 text-sm">
+          <div className="rounded-xl border bg-white p-5 sm:p-6">
+            <p className="text-sm text-gray-500">
               Status
             </p>
 
-            <p className="text-lg font-semibold text-green-600 mt-2">
+            <p className="mt-2 text-lg font-semibold text-green-600">
               Active
             </p>
           </div>
@@ -226,83 +216,86 @@ export default function DashboardPage() {
 
         {/* ERROR */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {/* BUSINESSES */}
-        <div className="flex items-center justify-between mb-5">
+        {/* BUSINESS TITLE */}
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-bold text-gray-900">
             My Businesses
           </h2>
 
           <Link
             href="/list-business"
-            className="text-blue-600 font-medium hover:underline"
+            className="w-full rounded-lg border border-blue-600 px-4 py-2.5 text-center font-medium text-blue-600 hover:bg-blue-50 sm:w-auto"
           >
             Add New
           </Link>
         </div>
 
+        {/* NO BUSINESSES */}
         {businesses.length === 0 ? (
-          <div className="bg-white border rounded-xl p-10 text-center">
+          <div className="rounded-xl border bg-white p-6 text-center sm:p-10">
             <h3 className="text-xl font-semibold text-gray-900">
               No businesses listed yet
             </h3>
 
-            <p className="text-gray-500 mt-2 mb-6">
+            <p className="mt-2 mb-6 text-gray-500">
               Add your first business to LocalPlatform.
             </p>
 
             <Link
               href="/list-business"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+              className="inline-block w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 sm:w-auto"
             >
               List Your Business
             </Link>
           </div>
         ) : (
+          /* BUSINESS LIST */
           <div className="grid gap-5">
             {businesses.map((business) => (
               <div
                 key={business.id}
-                className="bg-white border rounded-xl p-6"
+                className="rounded-xl border bg-white p-5 shadow-sm sm:p-6"
               >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  
                   {/* INFO */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">
+                  <div className="min-w-0">
+                    <h3 className="break-words text-xl font-bold text-gray-900">
                       {business.business_name}
                     </h3>
 
-                    <p className="text-gray-600 mt-1">
+                    <p className="mt-1 font-medium text-blue-600">
                       {business.category}
                     </p>
 
-                    <p className="text-gray-500 mt-1">
-                      {business.city}
+                    <p className="mt-2 text-gray-500">
+                      📍 {business.city}
                     </p>
 
                     {business.phone && (
-                      <p className="text-gray-500 mt-1">
-                        {business.phone}
+                      <p className="mt-1 break-all text-gray-500">
+                        📞 {business.phone}
                       </p>
                     )}
                   </div>
 
                   {/* ACTIONS */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto">
                     <Link
                       href={`/business/${business.id}`}
-                      className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+                      className="rounded-lg border border-gray-300 px-4 py-3 text-center font-medium hover:bg-gray-100 sm:py-2"
                     >
                       View
                     </Link>
 
                     <Link
                       href={`/edit-business/${business.id}`}
-                      className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                      className="rounded-lg bg-blue-600 px-4 py-3 text-center font-medium text-white hover:bg-blue-700 sm:py-2"
                     >
                       Edit
                     </Link>
@@ -310,7 +303,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => handleDelete(business.id)}
                       disabled={deletingId === business.id}
-                      className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                      className="rounded-lg bg-red-600 px-4 py-3 font-medium text-white hover:bg-red-700 disabled:opacity-50 sm:py-2"
                     >
                       {deletingId === business.id
                         ? "Deleting..."
