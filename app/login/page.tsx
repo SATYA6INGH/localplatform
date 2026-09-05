@@ -45,6 +45,9 @@ export default function LoginPage() {
     }
 
     try {
+      // =========================
+      // SIGN UP
+      // =========================
       if (isSignup) {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
@@ -64,45 +67,81 @@ export default function LoginPage() {
           setMessage(
             "Account created successfully. Please check your email to confirm your account."
           );
+
           setEmail("");
           setPassword("");
         }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
 
-        if (error) {
-          setErrorMessage(error.message);
-          setLoading(false);
-          return;
-        }
-
-        if (!data.session) {
-          setErrorMessage(
-            "Login successful, but session was not created. Please try again."
-          );
-          setLoading(false);
-          return;
-        }
-
-        window.location.assign("/list-business");
+        setLoading(false);
         return;
       }
+
+      // =========================
+      // LOGIN
+      // =========================
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!data.session || !data.user) {
+        setErrorMessage(
+          "Login successful, but session was not created. Please try again."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // =========================
+      // ADMIN CHECK
+      // =========================
+      const { data: admin, error: adminError } = await supabase
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (adminError) {
+        console.error("ADMIN CHECK ERROR:", adminError);
+
+        setErrorMessage(
+          "Login successful, but admin verification failed. Please try again."
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      // =========================
+      // REDIRECT
+      // =========================
+      if (admin) {
+        window.location.assign("/admin");
+      } else {
+        window.location.assign("/list-business");
+      }
+
+      return;
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : "Something went wrong. Please try again."
       );
-    }
 
-    setLoading(false);
+      setLoading(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-slate-50">
+      {/* HEADER */}
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
@@ -112,6 +151,7 @@ export default function LoginPage() {
 
             <div>
               <div className="text-xl font-bold">LocalPlatform</div>
+
               <div className="text-xs text-slate-500">
                 Find. Connect. Grow.
               </div>
@@ -127,9 +167,11 @@ export default function LoginPage() {
         </div>
       </header>
 
+      {/* LOGIN SECTION */}
       <section className="flex min-h-[calc(100vh-82px)] items-center justify-center px-5 py-12">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
+            {/* TITLE */}
             <div className="text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-extrabold text-white">
                 L
@@ -146,19 +188,23 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {/* SUCCESS MESSAGE */}
             {message && (
               <div className="mt-6 rounded-xl bg-green-50 p-4 text-sm font-medium text-green-700">
                 {message}
               </div>
             )}
 
+            {/* ERROR MESSAGE */}
             {errorMessage && (
               <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">
                 {errorMessage}
               </div>
             )}
 
+            {/* FORM */}
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              {/* EMAIL */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Email Address
@@ -174,6 +220,7 @@ export default function LoginPage() {
                 />
               </div>
 
+              {/* PASSWORD */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Password
@@ -184,13 +231,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  autoComplete={
-                    isSignup ? "new-password" : "current-password"
-                  }
+                  autoComplete={isSignup ? "new-password" : "current-password"}
                   className="h-14 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
+              {/* SUBMIT */}
               <button
                 type="submit"
                 disabled={loading}
@@ -204,6 +250,7 @@ export default function LoginPage() {
               </button>
             </form>
 
+            {/* SIGNUP / LOGIN SWITCH */}
             <div className="mt-7 text-center text-sm text-slate-500">
               {isSignup
                 ? "Already have an account?"
