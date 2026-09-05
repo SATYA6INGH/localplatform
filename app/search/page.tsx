@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -132,13 +132,9 @@ function scoreBusiness(
 
 export default function SearchPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const initialQuery = searchParams.get("q") || "";
-  const initialCity = searchParams.get("city") || "";
-
-  const [query, setQuery] = useState(initialQuery);
-  const [cityQuery, setCityQuery] = useState(initialCity);
+  const [query, setQuery] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
 
   const [categoryFilter, setCategoryFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
@@ -151,9 +147,11 @@ export default function SearchPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
-    setQuery(searchParams.get("q") || "");
-    setCityQuery(searchParams.get("city") || "");
-  }, [searchParams]);
+    const params = new URLSearchParams(window.location.search);
+
+    setQuery(params.get("q") || "");
+    setCityQuery(params.get("city") || "");
+  }, []);
 
   useEffect(() => {
     async function loadBusinesses() {
@@ -320,7 +318,9 @@ export default function SearchPage() {
     setCityFilter("");
     setAreaFilter("");
 
-    router.push(`/search?q=${encodeURIComponent(category)}`);
+    router.push(
+      `/search?q=${encodeURIComponent(category)}`
+    );
   }
 
   function clearFilters() {
@@ -372,7 +372,9 @@ export default function SearchPage() {
 
                 <input
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) =>
+                    setQuery(e.target.value)
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSearch();
@@ -409,6 +411,7 @@ export default function SearchPage() {
               >
                 Search
               </button>
+
             </div>
           </div>
 
@@ -424,6 +427,7 @@ export default function SearchPage() {
               </button>
             ))}
           </div>
+
         </div>
       </section>
 
@@ -434,12 +438,16 @@ export default function SearchPage() {
         <div className="mb-5 lg:hidden">
           <button
             onClick={() =>
-              setMobileFiltersOpen(!mobileFiltersOpen)
+              setMobileFiltersOpen(
+                !mobileFiltersOpen
+              )
             }
             className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold shadow-sm"
           >
             <span>Filters</span>
-            <span>{mobileFiltersOpen ? "▲" : "▼"}</span>
+            <span>
+              {mobileFiltersOpen ? "▲" : "▼"}
+            </span>
           </button>
         </div>
 
@@ -448,7 +456,9 @@ export default function SearchPage() {
           {/* FILTER SIDEBAR */}
           <aside
             className={`${
-              mobileFiltersOpen ? "block" : "hidden"
+              mobileFiltersOpen
+                ? "block"
+                : "hidden"
             } lg:block`}
           >
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24">
@@ -475,7 +485,9 @@ export default function SearchPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) =>
-                    setCategoryFilter(e.target.value)
+                    setCategoryFilter(
+                      e.target.value
+                    )
                   }
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
                 >
@@ -503,7 +515,9 @@ export default function SearchPage() {
                 <select
                   value={cityFilter}
                   onChange={(e) => {
-                    setCityFilter(e.target.value);
+                    setCityFilter(
+                      e.target.value
+                    );
                     setAreaFilter("");
                   }}
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
@@ -513,7 +527,10 @@ export default function SearchPage() {
                   </option>
 
                   {cities.map((city) => (
-                    <option key={city} value={city}>
+                    <option
+                      key={city}
+                      value={city}
+                    >
                       {city}
                     </option>
                   ))}
@@ -529,7 +546,9 @@ export default function SearchPage() {
                 <select
                   value={areaFilter}
                   onChange={(e) =>
-                    setAreaFilter(e.target.value)
+                    setAreaFilter(
+                      e.target.value
+                    )
                   }
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
                 >
@@ -538,18 +557,23 @@ export default function SearchPage() {
                   </option>
 
                   {areas.map((area) => (
-                    <option key={area} value={area}>
+                    <option
+                      key={area}
+                      value={area}
+                    >
                       {area}
                     </option>
                   ))}
                 </select>
               </div>
+
             </div>
           </aside>
 
           {/* BUSINESS RESULTS */}
           <div>
 
+            {/* RESULTS HEADER */}
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black sm:text-2xl">
@@ -570,7 +594,11 @@ export default function SearchPage() {
                         “{query}”
                       </span>
                     )}
-                    {query && cityQuery ? " in " : ""}
+
+                    {query && cityQuery
+                      ? " in "
+                      : ""}
+
                     {cityQuery && (
                       <span className="font-semibold text-slate-700">
                         “{cityQuery}”
@@ -581,7 +609,11 @@ export default function SearchPage() {
               </div>
 
               <button
-                onClick={() => router.push("/list-business")}
+                onClick={() =>
+                  router.push(
+                    "/list-business"
+                  )
+                }
                 className="hidden rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700 sm:block"
               >
                 List Business
@@ -623,6 +655,7 @@ export default function SearchPage() {
               !error &&
               filteredBusinesses.length === 0 && (
                 <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
+
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-2xl">
                     ⌕
                   </div>
@@ -632,8 +665,9 @@ export default function SearchPage() {
                   </h3>
 
                   <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-                    Search another business, service,
-                    category or location.
+                    Search another business,
+                    service, category or
+                    location.
                   </p>
 
                   <button
@@ -642,6 +676,7 @@ export default function SearchPage() {
                   >
                     Clear Filters
                   </button>
+
                 </div>
               )}
 
@@ -651,145 +686,178 @@ export default function SearchPage() {
               filteredBusinesses.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
-                  {filteredBusinesses.map((business) => {
-                    const services = arrayValues(
-                      business.services
-                    );
+                  {filteredBusinesses.map(
+                    (business) => {
+                      const services =
+                        arrayValues(
+                          business.services
+                        );
 
-                    const highlights = arrayValues(
-                      business.highlights
-                    );
+                      const highlights =
+                        arrayValues(
+                          business.highlights
+                        );
 
-                    const location =
-                      getLocation(business);
+                      const location =
+                        getLocation(
+                          business
+                        );
 
-                    return (
-                      <article
-                        key={business.id}
-                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-                      >
+                      return (
+                        <article
+                          key={business.id}
+                          className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                        >
 
-                        {/* IMAGE */}
-                        <div className="relative h-40 overflow-hidden bg-slate-100">
+                          {/* IMAGE */}
+                          <div className="relative h-40 overflow-hidden bg-slate-100">
 
-                          {business.image_url ? (
-                            <img
-                              src={business.image_url}
-                              alt={business.business_name}
-                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-4xl text-slate-300">
-                              ◫
-                            </div>
-                          )}
-
-                          <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/95 px-3 py-1 text-[10px] font-bold text-slate-700 shadow-sm">
-                            {business.category}
-                          </div>
-                        </div>
-
-                        {/* CONTENT */}
-                        <div className="p-4">
-
-                          <h3 className="line-clamp-1 text-base font-black text-slate-950">
-                            {business.business_name}
-                          </h3>
-
-                          {business.subcategory && (
-                            <p className="mt-1 line-clamp-1 text-xs font-bold text-blue-600">
-                              {business.subcategory}
-                            </p>
-                          )}
-
-                          {location && (
-                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-                              ◉ {location}
-                            </p>
-                          )}
-
-                          {(business.short_description ||
-                            business.description) && (
-                            <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
-                              {business.short_description ||
-                                business.description}
-                            </p>
-                          )}
-
-                          {/* SERVICES */}
-                          {services.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              {services
-                                .slice(0, 3)
-                                .map((service) => (
-                                  <span
-                                    key={service}
-                                    className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-600"
-                                  >
-                                    {service}
-                                  </span>
-                                ))}
-                            </div>
-                          )}
-
-                          {/* HIGHLIGHTS */}
-                          {highlights.length > 0 && (
-                            <div className="mt-3">
-                              <p className="line-clamp-1 text-[10px] font-semibold text-emerald-600">
-                                ✓{" "}
-                                {highlights
-                                  .slice(0, 2)
-                                  .join(" • ")}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* ACTIONS */}
-                          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-
-                            <button
-                              onClick={() =>
-                                router.push(
-                                  `/business/${business.id}`
-                                )
-                              }
-                              className="h-10 rounded-xl bg-slate-950 px-3 text-xs font-bold text-white transition hover:bg-blue-700"
-                            >
-                              View Business
-                            </button>
-
-                            {business.phone ? (
-                              <a
-                                href={`tel:${business.phone}`}
-                                className="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
-                              >
-                                Call
-                              </a>
+                            {business.image_url ? (
+                              <img
+                                src={
+                                  business.image_url
+                                }
+                                alt={
+                                  business.business_name
+                                }
+                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                loading="lazy"
+                              />
                             ) : (
+                              <div className="flex h-full items-center justify-center text-4xl text-slate-300">
+                                ◫
+                              </div>
+                            )}
+
+                            <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/95 px-3 py-1 text-[10px] font-bold text-slate-700 shadow-sm">
+                              {business.category}
+                            </div>
+
+                          </div>
+
+                          {/* CONTENT */}
+                          <div className="p-4">
+
+                            <h3 className="line-clamp-1 text-base font-black text-slate-950">
+                              {business.business_name}
+                            </h3>
+
+                            {business.subcategory && (
+                              <p className="mt-1 line-clamp-1 text-xs font-bold text-blue-600">
+                                {
+                                  business.subcategory
+                                }
+                              </p>
+                            )}
+
+                            {location && (
+                              <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
+                                ◉ {location}
+                              </p>
+                            )}
+
+                            {(business.short_description ||
+                              business.description) && (
+                              <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
+                                {business.short_description ||
+                                  business.description}
+                              </p>
+                            )}
+
+                            {/* SERVICES */}
+                            {services.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1.5">
+                                {services
+                                  .slice(0, 3)
+                                  .map(
+                                    (
+                                      service
+                                    ) => (
+                                      <span
+                                        key={
+                                          service
+                                        }
+                                        className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-600"
+                                      >
+                                        {
+                                          service
+                                        }
+                                      </span>
+                                    )
+                                  )}
+                              </div>
+                            )}
+
+                            {/* HIGHLIGHTS */}
+                            {highlights.length > 0 && (
+                              <div className="mt-3">
+                                <p className="line-clamp-1 text-[10px] font-semibold text-emerald-600">
+                                  ✓{" "}
+                                  {highlights
+                                    .slice(
+                                      0,
+                                      2
+                                    )
+                                    .join(
+                                      " • "
+                                    )}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* ACTIONS */}
+                            <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+
                               <button
                                 onClick={() =>
                                   router.push(
                                     `/business/${business.id}`
                                   )
                                 }
-                                className="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"
+                                className="h-10 rounded-xl bg-slate-950 px-3 text-xs font-bold text-white transition hover:bg-blue-700"
                               >
-                                Contact
+                                View Business
                               </button>
-                            )}
+
+                              {business.phone ? (
+                                <a
+                                  href={`tel:${business.phone}`}
+                                  className="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+                                >
+                                  Call
+                                </a>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    router.push(
+                                      `/business/${business.id}`
+                                    )
+                                  }
+                                  className="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"
+                                >
+                                  Contact
+                                </button>
+                              )}
+
+                            </div>
+
                           </div>
-                        </div>
-                      </article>
-                    );
-                  })}
+                        </article>
+                      );
+                    }
+                  )}
+
                 </div>
               )}
 
             {/* MOBILE LIST BUSINESS */}
             <div className="mt-6 sm:hidden">
               <button
-                onClick={() => router.push("/list-business")}
+                onClick={() =>
+                  router.push(
+                    "/list-business"
+                  )
+                }
                 className="w-full rounded-xl bg-slate-950 py-3 text-sm font-bold text-white"
               >
                 List Your Business
@@ -803,6 +871,7 @@ export default function SearchPage() {
       {/* FOOTER */}
       <footer className="mt-10 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 text-center sm:px-6 lg:px-8">
+
           <p className="text-sm font-black text-slate-900">
             LocalPlatform
           </p>
@@ -810,8 +879,10 @@ export default function SearchPage() {
           <p className="mt-1 text-xs text-slate-500">
             Find local. Choose better.
           </p>
+
         </div>
       </footer>
+
     </main>
   );
 }
