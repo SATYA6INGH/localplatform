@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+
+const ADMIN_EMAIL = "architectsunlight@gmail.com";
 
 const supabase = createClient(
   "https://ckuiskbegrlrethnlhzq.supabase.co",
@@ -25,6 +27,24 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      const user = data.session?.user;
+
+      if (!user) return;
+
+      if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        window.location.replace("/admin");
+      } else {
+        window.location.replace("/list-business");
+      }
+    };
+
+    checkExistingSession();
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -34,29 +54,28 @@ export default function LoginPage() {
     setMessage("");
     setErrorMessage("");
 
-    if (!email.trim() || !password) {
-      setErrorMessage("Please enter email and password.");
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !password) {
+      setErrorMessage("Email aur password enter karo.");
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setErrorMessage("Password must be at least 6 characters.");
+      setErrorMessage("Password kam se kam 6 characters ka hona chahiye.");
       setLoading(false);
       return;
     }
 
     try {
       // =========================
-      // SIGN UP
+      // CREATE ACCOUNT
       // =========================
       if (isSignup) {
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: cleanEmail,
           password,
-          options: {
-            emailRedirectTo: "https://localplatform-one.vercel.app",
-          },
         });
 
         if (error) {
@@ -65,15 +84,33 @@ export default function LoginPage() {
           return;
         }
 
-        if (data.user) {
-          setMessage(
-            "Account created successfully. Please check your email to confirm your account."
-          );
-
-          setEmail("");
-          setPassword("");
+        if (!data.user) {
+          setErrorMessage("Account create nahi ho paya. Dobara try karo.");
+          setLoading(false);
+          return;
         }
 
+        // Agar email confirmation OFF hai,
+        // Supabase session turant dega.
+        if (data.session) {
+          if (
+            data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+          ) {
+            window.location.replace("/admin");
+          } else {
+            window.location.replace("/list-business");
+          }
+
+          return;
+        }
+
+        // Agar confirmation abhi bhi ON hai
+        setMessage(
+          "Account create ho gaya. Supabase me Email Confirmation OFF karo, phir login karo."
+        );
+
+        setEmail("");
+        setPassword("");
         setLoading(false);
         return;
       }
@@ -82,7 +119,7 @@ export default function LoginPage() {
       // LOGIN
       // =========================
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: cleanEmail,
         password,
       });
 
@@ -94,40 +131,26 @@ export default function LoginPage() {
 
       if (!data.user || !data.session) {
         setErrorMessage(
-          "Login successful, but session was not created. Please try again."
+          "Login session create nahi hui. Dobara try karo."
         );
         setLoading(false);
         return;
       }
 
       // =========================
-      // ADMIN CHECK
+      // ADMIN
       // =========================
-      const { data: admin, error: adminError } = await supabase
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
-
-      console.log("LOGIN USER ID:", data.user.id);
-      console.log("ADMIN DATA:", admin);
-      console.log("ADMIN ERROR:", adminError);
-
-      // =========================
-      // ADMIN LOGIN
-      // =========================
-      if (admin) {
+      if (
+        data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+      ) {
         window.location.replace("/admin");
         return;
       }
 
       // =========================
-      // NORMAL USER LOGIN
+      // NORMAL USER
       // =========================
-      if (!admin) {
-        window.location.replace("/list-business");
-        return;
-      }
+      window.location.replace("/list-business");
     } catch (error) {
       console.error("LOGIN ERROR:", error);
 
@@ -143,7 +166,6 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      {/* HEADER */}
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
@@ -153,7 +175,6 @@ export default function LoginPage() {
 
             <div>
               <div className="text-xl font-bold">LocalPlatform</div>
-
               <div className="text-xs text-slate-500">
                 Find. Connect. Grow.
               </div>
@@ -169,11 +190,9 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* LOGIN SECTION */}
       <section className="flex min-h-[calc(100vh-82px)] items-center justify-center px-5 py-12">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
-            {/* LOGO */}
             <div className="text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-extrabold text-white">
                 L
@@ -190,23 +209,19 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* SUCCESS MESSAGE */}
             {message && (
               <div className="mt-6 rounded-xl bg-green-50 p-4 text-sm font-medium text-green-700">
                 {message}
               </div>
             )}
 
-            {/* ERROR MESSAGE */}
             {errorMessage && (
               <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">
                 {errorMessage}
               </div>
             )}
 
-            {/* FORM */}
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-              {/* EMAIL */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Email Address
@@ -222,7 +237,6 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* PASSWORD */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Password
@@ -240,7 +254,6 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* SUBMIT BUTTON */}
               <button
                 type="submit"
                 disabled={loading}
@@ -254,7 +267,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* SWITCH LOGIN / SIGNUP */}
             <div className="mt-7 text-center text-sm text-slate-500">
               {isSignup
                 ? "Already have an account?"
