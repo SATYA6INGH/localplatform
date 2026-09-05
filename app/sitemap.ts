@@ -1,27 +1,29 @@
 import type { MetadataRoute } from "next";
 
+const BASE_URL = "https://localplatform-one.vercel.app";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://localplatform.in",
+      url: BASE_URL,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: "https://localplatform.in/search",
+      url: `${BASE_URL}/search`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: "https://localplatform.in/list-business",
+      url: `${BASE_URL}/list-business`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: "https://localplatform.in/login",
+      url: `${BASE_URL}/login`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,
