@@ -5,11 +5,15 @@ import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const supabase = createClient(
+const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
-  {
+  "https://ckuiskbegrlrethnlhzq.supabase.co";
+
+const SUPABASE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -62,7 +66,11 @@ export default function LoginPage() {
     setBusy(false);
 
     if (otpError) {
-      setError(otpError.message);
+      setError(
+        otpError.message === "Failed to fetch"
+          ? "Supabase से connection नहीं हो पा रहा. Internet और Supabase URL/Key check करें."
+          : otpError.message
+      );
       return;
     }
 
@@ -80,8 +88,8 @@ export default function LoginPage() {
       return;
     }
 
-    if (!/^\d{6}$/.test(otp)) {
-      setError("6 digit OTP डालें.");
+    if (!/^\d{8}$/.test(otp)) {
+      setError("8 digit OTP डालें.");
       return;
     }
 
@@ -240,18 +248,18 @@ export default function LoginPage() {
               ) : (
                 <>
                   <label className="mt-5 block text-xs font-black text-slate-700">
-                    6 Digit OTP
+                    8 Digit OTP
                   </label>
 
                   <input
                     value={otp}
                     onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))
                     }
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="123456"
-                    className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-center text-xl font-black tracking-[0.35em] outline-none focus:border-blue-400"
+                    placeholder="12345678"
+                    className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-center text-xl font-black tracking-[0.25em] outline-none focus:border-blue-400"
                   />
 
                   <button
