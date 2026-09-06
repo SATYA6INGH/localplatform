@@ -339,20 +339,78 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3 lg:grid-cols-8">
-            {categories.map((category) => (
+          <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-6 sm:gap-3 lg:grid-cols-8">
+            {[
+              ...categories,
+              {
+                name: "Plumber",
+                label: "Home Service",
+                bg: "bg-cyan-50",
+                text: "text-cyan-600",
+                icon: <PlumberIcon />,
+              },
+              {
+                name: "Painter",
+                label: "Home Service",
+                bg: "bg-orange-50",
+                text: "text-orange-600",
+                icon: <PainterIcon />,
+              },
+              {
+                name: "Dentist",
+                label: "Dental",
+                bg: "bg-red-50",
+                text: "text-red-600",
+                icon: <DentistIcon />,
+              },
+              {
+                name: "Gym",
+                label: "Fitness",
+                bg: "bg-emerald-50",
+                text: "text-emerald-600",
+                icon: <GymIcon />,
+              },
+              {
+                name: "Hotel",
+                label: "Hotels",
+                bg: "bg-indigo-50",
+                text: "text-indigo-600",
+                icon: <HotelIcon />,
+              },
+              {
+                name: "Lawyer",
+                label: "Legal",
+                bg: "bg-slate-100",
+                text: "text-slate-700",
+                icon: <LawyerIcon />,
+              },
+              {
+                name: "Photographer",
+                label: "Events",
+                bg: "bg-fuchsia-50",
+                text: "text-fuchsia-600",
+                icon: <CameraIcon />,
+              },
+              {
+                name: "Automobile",
+                label: "Auto",
+                bg: "bg-blue-50",
+                text: "text-blue-600",
+                icon: <CarIcon />,
+              },
+            ].map((category) => (
               <button
                 key={category.name}
                 type="button"
                 onClick={() => categorySearch(category.name)}
-                className="group flex min-h-[82px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-1 py-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:min-h-[100px] sm:rounded-2xl"
+                className="group flex min-h-[78px] flex-col items-center justify-center rounded-xl bg-white px-0.5 py-1 transition active:scale-95 sm:min-h-[100px] sm:rounded-2xl sm:border sm:border-slate-200 sm:px-1 sm:py-2 sm:shadow-sm sm:hover:-translate-y-0.5 sm:hover:shadow-md"
               >
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full ${category.bg} ${category.text} transition group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-full ${category.bg} ${category.text} shadow-sm transition group-hover:scale-105 sm:h-12 sm:w-12 sm:rounded-2xl`}
                 >
                   {category.icon}
                 </div>
-                <span className="mt-2 line-clamp-2 min-h-[24px] w-full text-center text-[9px] font-bold leading-3 text-slate-700 sm:text-[10px]">
+                <span className="mt-1.5 line-clamp-2 min-h-[24px] w-full text-center text-[9px] font-bold leading-3 text-slate-700 sm:mt-2 sm:text-[10px]">
                   {category.name}
                 </span>
               </button>
@@ -874,6 +932,102 @@ function PropertyIcon() {
       <path d="M9 21v-6h6v6" />
       <path d="M9 10h1" />
       <path d="M14 10h1" />
+    </svg>
+  );
+}
+
+
+function PlumberIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 4v7a5 5 0 0 0 10 0V8" />
+      <path d="M7 4H4v4h3" />
+      <path d="M17 8h3v4h-3" />
+      <path d="M12 16v5" />
+      <path d="M9 21h6" />
+    </svg>
+  );
+}
+
+function PainterIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h12a2 2 0 0 0 2-2V3H6v2" />
+      <path d="M9 7v5a3 3 0 0 0 3 3h1v6" />
+      <path d="M13 21h4" />
+      <path d="M18 3h2v2h-2" />
+    </svg>
+  );
+}
+
+function DentistIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 4c2-2 4 1 5 1s3-3 5-1c3 2 1 7 0 10-.8 2.4-1.3 6-3 6-1.8 0-1.4-5-4-5s-2.2 5-4 5c-1.7 0-2.2-3.6-3-6C2 11 4 6 7 4Z" />
+      <path d="M12 6v3" />
+      <path d="M10.5 7.5h3" />
+    </svg>
+  );
+}
+
+function GymIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 9v6" />
+      <path d="M7 7v10" />
+      <path d="M17 7v10" />
+      <path d="M20 9v6" />
+      <path d="M7 12h10" />
+      <path d="M2 10h2" />
+      <path d="M20 10h2" />
+    </svg>
+  );
+}
+
+function HotelIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 21V5h16v16" />
+      <path d="M7 8h2" />
+      <path d="M15 8h2" />
+      <path d="M7 12h2" />
+      <path d="M15 12h2" />
+      <path d="M9 21v-5h6v5" />
+      <path d="M2 21h20" />
+    </svg>
+  );
+}
+
+function LawyerIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4v16" />
+      <path d="M5 7h14" />
+      <path d="m7 7-3 5a3 3 0 0 0 6 0L7 7Z" />
+      <path d="m17 7-3 5a3 3 0 0 0 6 0l-3-5Z" />
+      <path d="M8 21h8" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h4l2-2h4l2 2h4v12H4V7Z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  );
+}
+
+function CarIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m5 11 2-5h10l2 5" />
+      <path d="M3 11h18v7H3z" />
+      <circle cx="7" cy="18" r="1.5" />
+      <circle cx="17" cy="18" r="1.5" />
+      <path d="M5 14h2" />
+      <path d="M17 14h2" />
     </svg>
   );
 }
