@@ -242,6 +242,17 @@ export default function HomePage() {
       `/search?q=${encodeURIComponent(category)}`;
   }
 
+  const categorySectionData = HOME_CATEGORY_SECTIONS.map((section) => ({
+    ...section,
+    businesses: businesses
+      .filter((business) =>
+        `${business.category || ""} ${business.subcategory || ""} ${(business.services || []).join(" ")}`
+          .toLowerCase()
+          .includes(section.query.toLowerCase())
+      )
+      .slice(0, 8),
+  }));
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
 
@@ -602,6 +613,56 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CATEGORY-WISE BUSINESS SECTIONS */}
+      {categorySectionData.map((section) => (
+        <section key={section.title} className="border-b border-slate-100 bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-11 lg:px-8">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600 sm:text-[10px]">
+                  {section.emoji} {section.query}
+                </p>
+                <h2 className="mt-1 truncate text-xl font-black tracking-tight sm:text-2xl">
+                  {section.title}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">{section.subtitle}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => categorySearch(section.query)}
+                className="shrink-0 text-xs font-black text-sky-600"
+              >
+                View All →
+              </button>
+            </div>
+
+            {section.businesses.length > 0 ? (
+              <div className="-mx-4 mt-5 flex snap-x gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+                {section.businesses.map((business) => (
+                  <div key={business.id} className="w-[235px] shrink-0 snap-start sm:w-auto">
+                    <BusinessCard business={business} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                <div className="text-2xl">{section.emoji}</div>
+                <p className="mt-2 text-sm font-black text-slate-800">
+                  {section.title} coming soon
+                </p>
+                <button
+                  type="button"
+                  onClick={() => categorySearch(section.query)}
+                  className="mt-3 rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-black text-white"
+                >
+                  Search {section.query} →
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      ))}
+
       {/* BUSINESS OWNER CTA */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
@@ -658,6 +719,88 @@ export default function HomePage() {
   );
 }
 
+const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
+  architect:
+    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=85",
+  "interior designer":
+    "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=85",
+  construction:
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=85",
+  doctor:
+    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=85",
+  restaurant:
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85",
+  salon:
+    "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=85",
+  electrician:
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=900&q=85",
+  "real estate":
+    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=900&q=85",
+  plumber:
+    "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=900&q=85",
+  painter:
+    "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=900&q=85",
+  dentist:
+    "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&w=900&q=85",
+  gym:
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=85",
+  hotel:
+    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=85",
+  lawyer:
+    "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=900&q=85",
+  photographer:
+    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=85",
+  automobile:
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=85",
+};
+
+const DEFAULT_BUSINESS_IMAGE =
+  "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85";
+
+function getBusinessImage(category?: string | null) {
+  const key = (category || "").trim().toLowerCase();
+  return CATEGORY_FALLBACK_IMAGES[key] || DEFAULT_BUSINESS_IMAGE;
+}
+
+const HOME_CATEGORY_SECTIONS = [
+  {
+    title: "Restaurants Near You",
+    subtitle: "Popular food & dining businesses",
+    query: "Restaurant",
+    emoji: "🍽️",
+  },
+  {
+    title: "Doctors & Healthcare",
+    subtitle: "Find trusted healthcare professionals",
+    query: "Doctor",
+    emoji: "🩺",
+  },
+  {
+    title: "Beauty & Salons",
+    subtitle: "Salons, spa & beauty services",
+    query: "Salon",
+    emoji: "💇",
+  },
+  {
+    title: "Home Services",
+    subtitle: "Experts for your home",
+    query: "Electrician",
+    emoji: "🔧",
+  },
+  {
+    title: "Architects & Interior Designers",
+    subtitle: "Plan, design & build your dream space",
+    query: "Architect",
+    emoji: "🏠",
+  },
+  {
+    title: "Real Estate",
+    subtitle: "Property & real estate professionals",
+    query: "Real Estate",
+    emoji: "🏢",
+  },
+];
+
 /* =========================================================
    BUSINESS CARD
 ========================================================= */
@@ -674,19 +817,18 @@ function BusinessCard({
 
         <div className="relative h-44 overflow-hidden bg-slate-100 sm:h-52">
 
-          {business.image_url ? (
-            <img
-              src={business.image_url}
-              alt={business.business_name}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-200">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-lg sm:h-16 sm:w-16">
-                <BuildingIcon />
-              </div>
-            </div>
-          )}
+          <img
+            src={business.image_url || getBusinessImage(business.category)}
+            alt={`${business.business_name} - ${business.category || "Local business"}`}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.src !== DEFAULT_BUSINESS_IMAGE) {
+                img.src = DEFAULT_BUSINESS_IMAGE;
+              }
+            }}
+          />
 
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent" />
 
