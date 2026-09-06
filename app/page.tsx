@@ -254,7 +254,7 @@ export default function HomePage() {
   }));
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
+    <main className="min-h-screen overflow-x-hidden bg-white pb-20 text-slate-900 sm:pb-0">
 
       {/* HERO / SEARCH */}
       <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 text-white">
@@ -350,79 +350,67 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-6 sm:gap-3 lg:grid-cols-8">
+          <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-6 sm:gap-3 lg:grid-cols-8">
             {[
-              ...categories,
-              {
-                name: "Plumber",
-                label: "Home Service",
-                bg: "bg-cyan-50",
-                text: "text-cyan-600",
-                icon: <PlumberIcon />,
-              },
-              {
-                name: "Painter",
-                label: "Home Service",
-                bg: "bg-orange-50",
-                text: "text-orange-600",
-                icon: <PainterIcon />,
-              },
-              {
-                name: "Dentist",
-                label: "Dental",
-                bg: "bg-red-50",
-                text: "text-red-600",
-                icon: <DentistIcon />,
-              },
-              {
-                name: "Gym",
-                label: "Fitness",
-                bg: "bg-emerald-50",
-                text: "text-emerald-600",
-                icon: <GymIcon />,
-              },
-              {
-                name: "Hotel",
-                label: "Hotels",
-                bg: "bg-indigo-50",
-                text: "text-indigo-600",
-                icon: <HotelIcon />,
-              },
-              {
-                name: "Lawyer",
-                label: "Legal",
-                bg: "bg-slate-100",
-                text: "text-slate-700",
-                icon: <LawyerIcon />,
-              },
-              {
-                name: "Photographer",
-                label: "Events",
-                bg: "bg-fuchsia-50",
-                text: "text-fuchsia-600",
-                icon: <CameraIcon />,
-              },
-              {
-                name: "Automobile",
-                label: "Auto",
-                bg: "bg-blue-50",
-                text: "text-blue-600",
-                icon: <CarIcon />,
-              },
-            ].map((category) => (
+              ["B2B","🤝","bg-pink-50","text-pink-600"],
+              ["Doctors","🩺","bg-emerald-50","text-emerald-600"],
+              ["Travel","✈️","bg-sky-50","text-sky-600"],
+              ["Car Hire","🚕","bg-amber-50","text-amber-600"],
+              ["Beauty","💇","bg-rose-50","text-rose-600"],
+              ["Ask Astro","🔮","bg-yellow-50","text-yellow-600"],
+              ["Wedding Planning","💍","bg-fuchsia-50","text-fuchsia-600"],
+              ["Education","🎓","bg-blue-50","text-blue-600"],
+              ["Packers & Movers","🚚","bg-violet-50","text-violet-600"],
+              ["Gyms","🏋️","bg-pink-50","text-pink-600"],
+              ["Rent or Hire","🔑","bg-cyan-50","text-cyan-600"],
+              ["Jobs","👨‍💼","bg-amber-50","text-amber-600"],
+              ["Loans","💰","bg-emerald-50","text-emerald-600"],
+              ["Real Estate","🏠","bg-orange-50","text-orange-600"],
+              ["PG/Hostel","🛏️","bg-indigo-50","text-indigo-600"],
+              ["Restaurants","🍽️","bg-red-50","text-red-600"],
+              ["Architects","📐","bg-blue-50","text-blue-600"],
+              ["Interior Designers","🛋️","bg-violet-50","text-violet-600"],
+              ["Construction","🏗️","bg-orange-50","text-orange-600"],
+              ["Electrician","⚡","bg-yellow-50","text-yellow-600"],
+              ["Plumber","🔧","bg-cyan-50","text-cyan-600"],
+              ["AC Repair","❄️","bg-sky-50","text-sky-600"],
+              ["Refrigerator Repair","🧊","bg-cyan-50","text-cyan-600"],
+              ["Washing Machine Repair","🧺","bg-blue-50","text-blue-600"],
+              ["Mobile Repair","📱","bg-fuchsia-50","text-fuchsia-600"],
+              ["Laptop Repair","💻","bg-indigo-50","text-indigo-600"],
+              ["Computer Repair","🖥️","bg-slate-100","text-slate-700"],
+              ["Printer Repair","🖨️","bg-purple-50","text-purple-600"],
+              ["CCTV & Security","📹","bg-red-50","text-red-600"],
+              ["Car Repair","🚗","bg-blue-50","text-blue-600"],
+              ["Bike Repair","🏍️","bg-orange-50","text-orange-600"],
+              ["Pest Control","🛡️","bg-lime-50","text-lime-600"],
+              ["Painters","🎨","bg-orange-50","text-orange-600"],
+              ["Carpenters","🪚","bg-yellow-50","text-yellow-600"],
+              ["Dentists","🦷","bg-red-50","text-red-600"],
+              ["Lawyers","⚖️","bg-slate-100","text-slate-700"],
+              ["Photographers","📷","bg-fuchsia-50","text-fuchsia-600"],
+              ["Hotels","🏨","bg-indigo-50","text-indigo-600"],
+              ["Fashion","👗","bg-pink-50","text-pink-600"],
+              ["Florists","💐","bg-rose-50","text-rose-600"],
+              ["Pet Services","🐾","bg-amber-50","text-amber-600"],
+              ["Laundry","👕","bg-cyan-50","text-cyan-600"],
+              ["AC Dealers","🌬️","bg-sky-50","text-sky-600"],
+              ["Electronics","🔌","bg-violet-50","text-violet-600"],
+              ["Furniture","🪑","bg-orange-50","text-orange-600"],
+              ["Grocery","🛒","bg-emerald-50","text-emerald-600"],
+              ["Show More","•••","bg-indigo-50","text-indigo-600"],
+            ].map(([name, icon, bg, color]) => (
               <button
-                key={category.name}
+                key={name}
                 type="button"
-                onClick={() => categorySearch(category.name)}
-                className="group flex min-h-[78px] flex-col items-center justify-center rounded-xl bg-white px-0.5 py-1 transition active:scale-95 sm:min-h-[100px] sm:rounded-2xl sm:border sm:border-slate-200 sm:px-1 sm:py-2 sm:shadow-sm sm:hover:-translate-y-0.5 sm:hover:shadow-md"
+                onClick={() => name === "Show More" ? categorySearch("") : categorySearch(name)}
+                className="group flex min-h-[82px] flex-col items-center justify-center rounded-xl bg-white px-0.5 py-1 transition active:scale-95 sm:min-h-[100px] sm:rounded-2xl sm:border sm:border-slate-200 sm:px-1 sm:py-2 sm:shadow-sm sm:hover:-translate-y-0.5 sm:hover:shadow-md"
               >
-                <div
-                  className={`flex h-11 w-11 items-center justify-center rounded-full ${category.bg} ${category.text} shadow-sm transition group-hover:scale-105 sm:h-12 sm:w-12 sm:rounded-2xl`}
-                >
-                  {category.icon}
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${bg} ${color} text-[23px] shadow-sm transition group-hover:scale-105 sm:h-12 sm:w-12`}>
+                  {icon}
                 </div>
                 <span className="mt-1.5 line-clamp-2 min-h-[24px] w-full text-center text-[9px] font-bold leading-3 text-slate-700 sm:mt-2 sm:text-[10px]">
-                  {category.name}
+                  {name}
                 </span>
               </button>
             ))}
@@ -691,6 +679,28 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+6px)] pt-2 shadow-[0_-6px_24px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-5">
+          {[
+            ["Home", "🏠", "/"],
+            ["Leads", "✉️", "/dashboard"],
+            ["B2B", "🤝", "/list-business"],
+            ["News", "📰", "/search"],
+            ["More", "▦", "/dashboard"],
+          ].map(([label, icon, href]) => (
+            <Link
+              key={label}
+              href={href}
+              className={`flex flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] font-bold ${label === "Home" ? "text-blue-600" : "text-slate-700"}`}
+            >
+              <span className="flex h-7 items-center justify-center text-[21px] leading-none">{icon}</span>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
 
       {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white">
