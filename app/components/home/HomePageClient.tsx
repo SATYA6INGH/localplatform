@@ -86,7 +86,7 @@ export default function HomePageClient() {
   }, [businesses]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
 
       {/* HERO / SEARCH */}
 
@@ -149,7 +149,7 @@ export default function HomePageClient() {
 
         </div>
 
-        <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
+        <div className="grid grid-cols-6 gap-1 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
           {(showAllCategories
             ? allCategoryNames
             : categories.map((category) => category.name)
