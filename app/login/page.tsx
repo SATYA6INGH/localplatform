@@ -14,27 +14,26 @@ const SUPABASE_KEY =
   "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      storageKey: "localplatform-auth",
-    },
-  }
-);
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: "localplatform-auth",
+  },
+});
 
 const ADMIN_EMAIL = "architectsunlight@gmail.com";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [mode, setMode] = useState<"email" | "admin">("email");
+  const [mode, setMode] = useState<"login" | "register" | "admin">("login");
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
 
-  const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -44,76 +43,102 @@ export default function LoginPage() {
     setMessage("");
   }
 
-  async function sendOtp() {
+  function validEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
+
+  async function loginUser() {
     clearStatus();
 
     const cleanEmail = email.trim().toLowerCase();
 
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    if (!validEmail(cleanEmail)) {
       setError("Valid email address डालें.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password कम से कम 6 characters का होना चाहिए.");
       return;
     }
 
     setBusy(true);
 
-    const { error: otpError } = await supabase.auth.signInWithOtp({
+    const { error: loginError } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
+      password,
+    });
+
+    setBusy(false);
+
+    if (loginError) {
+      if (
+        loginError.message.toLowerCase().includes("invalid login credentials")
+      ) {
+        setError("Email या password गलत है.");
+      } else {
+        setError(loginError.message);
+      }
+      return;
+    }
+
+    router.replace("/list-business");
+  }
+
+  async function registerUser() {
+    clearStatus();
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!validEmail(cleanEmail)) {
+      setError("Valid email address डालें.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password कम से कम 6 characters का होना चाहिए.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("दोनों passwords match नहीं कर रहे.");
+      return;
+    }
+
+    setBusy(true);
+
+    const { data, error: signupError } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
       options: {
-        shouldCreateUser: true,
+        data: {
+          account_type: "business_owner",
+        },
       },
     });
 
     setBusy(false);
 
-    if (otpError) {
-      setError(
-        otpError.message === "Failed to fetch"
-          ? "Supabase से connection नहीं हो पा रहा. Internet और Supabase URL/Key check करें."
-          : otpError.message
-      );
+    if (signupError) {
+      if (signupError.message.toLowerCase().includes("already registered")) {
+        setError("यह email पहले से registered है. Login करें.");
+      } else {
+        setError(signupError.message);
+      }
       return;
     }
 
-    setOtpSent(true);
-    setMessage("OTP आपके email पर भेज दिया गया है.");
-  }
-
-  async function verifyOtp() {
-    clearStatus();
-
-    const cleanEmail = email.trim().toLowerCase();
-
-    if (!cleanEmail) {
-      setError("Email address डालें.");
+    if (data.session) {
+      router.replace("/list-business");
       return;
     }
 
-    if (!/^\d{8}$/.test(otp)) {
-      setError("8 digit OTP डालें.");
-      return;
-    }
-
-    setBusy(true);
-
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email: cleanEmail,
-      token: otp,
-      type: "email",
-    });
-
-    setBusy(false);
-
-    if (verifyError) {
-      setError(verifyError.message);
-      return;
-    }
-
-    if (!data.session) {
-      setError("Login session नहीं मिला. फिर से OTP verify करें.");
-      return;
-    }
-
-    router.replace("/list-business");
+    setMessage(
+      "Registration successful. अब इसी email और password से Login करें."
+    );
+    setMode("login");
+    setPassword("");
+    setConfirmPassword("");
   }
 
   async function adminLogin() {
@@ -155,7 +180,7 @@ export default function LoginPage() {
 
     if (adminError || !adminRow) {
       await supabase.auth.signOut();
-      setError("Ye account admin ke roop me authorized nahi hai.");
+      setError("यह account admin के रूप में authorized नहीं है.");
       return;
     }
 
@@ -163,8 +188,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-orange-50 px-4 pb-24 pt-8">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-orange-50 px-4 pb-16 pt-8">
       <div className="mx-auto max-w-md">
+
         <Link
           href="/"
           className="block text-center text-3xl font-black tracking-tight"
@@ -174,52 +200,56 @@ export default function LoginPage() {
         </Link>
 
         <p className="mt-2 text-center text-xs font-semibold text-slate-500">
-          Find local • Support local • Grow local
+          Find Local • Support Local • Grow Local
         </p>
 
-        <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
-          {/* MODE SWITCH */}
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMode("email");
-                clearStatus();
-              }}
-              className={`rounded-xl px-3 py-3 text-xs font-black ${
-                mode === "email"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500"
-              }`}
-            >
-              ✉️ Email OTP
-            </button>
+        <section className="mt-7 rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
 
-            <button
-              type="button"
-              onClick={() => {
-                setMode("admin");
-                clearStatus();
-              }}
-              className={`rounded-xl px-3 py-3 text-xs font-black ${
-                mode === "admin"
-                  ? "bg-white text-orange-600 shadow-sm"
-                  : "text-slate-500"
-              }`}
-            >
-              🔐 Admin
-            </button>
-          </div>
-
-          {mode === "email" ? (
+          {/* USER LOGIN / REGISTER */}
+          {mode !== "admin" && (
             <>
+              <div className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    clearStatus();
+                  }}
+                  className={`rounded-xl py-3 text-sm font-black ${
+                    mode === "login"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-500"
+                  }`}
+                >
+                  Login
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("register");
+                    clearStatus();
+                  }}
+                  className={`rounded-xl py-3 text-sm font-black ${
+                    mode === "register"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-slate-500"
+                  }`}
+                >
+                  Register
+                </button>
+              </div>
+
               <h1 className="mt-7 text-2xl font-black">
-                Login / Register
+                {mode === "login"
+                  ? "Welcome Back"
+                  : "Create Business Account"}
               </h1>
 
-              <p className="mt-1 text-xs text-slate-500">
-                Mobile number की जरूरत नहीं. Email OTP से account बनाएं या
-                login करें.
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {mode === "login"
+                  ? "Email और password से तुरंत login करें."
+                  : "Business owner के लिए simple और free registration."}
               </p>
 
               <label className="mt-6 block text-xs font-black text-slate-700">
@@ -231,68 +261,90 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
                 autoComplete="email"
-                placeholder="you@example.com"
-                disabled={otpSent}
-                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-blue-400 disabled:opacity-70"
+                placeholder="business@example.com"
+                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none transition focus:border-blue-400 focus:bg-white"
               />
 
-              {!otpSent ? (
-                <button
-                  type="button"
-                  onClick={sendOtp}
-                  disabled={busy}
-                  className="mt-4 w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-black text-white disabled:opacity-60"
-                >
-                  {busy ? "Sending OTP..." : "Send Email OTP"}
-                </button>
-              ) : (
+              <label className="mt-4 block text-xs font-black text-slate-700">
+                Password
+              </label>
+
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                autoComplete={
+                  mode === "register" ? "new-password" : "current-password"
+                }
+                placeholder="Minimum 6 characters"
+                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none transition focus:border-blue-400 focus:bg-white"
+              />
+
+              {mode === "register" && (
                 <>
-                  <label className="mt-5 block text-xs font-black text-slate-700">
-                    8 Digit OTP
+                  <label className="mt-4 block text-xs font-black text-slate-700">
+                    Confirm Password
                   </label>
 
                   <input
-                    value={otp}
-                    onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))
-                    }
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    placeholder="12345678"
-                    className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-center text-xl font-black tracking-[0.25em] outline-none focus:border-blue-400"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Enter password again"
+                    className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none transition focus:border-blue-400 focus:bg-white"
                   />
-
-                  <button
-                    type="button"
-                    onClick={verifyOtp}
-                    disabled={busy}
-                    className="mt-4 w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-black text-white disabled:opacity-60"
-                  >
-                    {busy ? "Verifying..." : "Verify OTP & Continue"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtpSent(false);
-                      setOtp("");
-                      clearStatus();
-                    }}
-                    className="mt-3 w-full py-2 text-xs font-bold text-slate-500"
-                  >
-                    Change email address
-                  </button>
                 </>
               )}
+
+              <button
+                type="button"
+                onClick={mode === "login" ? loginUser : registerUser}
+                disabled={busy}
+                className="mt-5 w-full rounded-2xl bg-blue-600 py-4 text-sm font-black text-white shadow-lg shadow-blue-100 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {busy
+                  ? "Please wait..."
+                  : mode === "login"
+                    ? "Login"
+                    : "Create Account"}
+              </button>
+
+              <div className="mt-5 border-t border-slate-100 pt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("admin");
+                    clearStatus();
+                  }}
+                  className="text-xs font-bold text-slate-400 hover:text-orange-500"
+                >
+                  Admin Login
+                </button>
+              </div>
             </>
-          ) : (
+          )}
+
+          {/* ADMIN */}
+          {mode === "admin" && (
             <>
-              <h1 className="mt-7 text-2xl font-black">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  clearStatus();
+                }}
+                className="text-xs font-bold text-blue-600"
+              >
+                ← Back to User Login
+              </button>
+
+              <h1 className="mt-6 text-2xl font-black">
                 Admin Login
               </h1>
 
               <p className="mt-1 text-xs text-slate-500">
-                Admin account के लिए email/password इस्तेमाल करें.
+                Authorized LocalPlatform administrator only.
               </p>
 
               <input
@@ -317,7 +369,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={adminLogin}
                 disabled={busy}
-                className="mt-4 w-full rounded-2xl bg-orange-500 py-3.5 text-sm font-black text-white disabled:opacity-60"
+                className="mt-4 w-full rounded-2xl bg-orange-500 py-4 text-sm font-black text-white disabled:opacity-60"
               >
                 {busy ? "Signing in..." : "Admin Login"}
               </button>
@@ -325,17 +377,21 @@ export default function LoginPage() {
           )}
 
           {message && (
-            <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-700">
+            <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-700">
               {message}
             </p>
           )}
 
           {error && (
-            <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">
+            <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-bold leading-5 text-red-700">
               {error}
             </p>
           )}
         </section>
+
+        <p className="mt-5 text-center text-[11px] leading-5 text-slate-400">
+          By continuing, you agree to use LocalPlatform responsibly.
+        </p>
       </div>
     </main>
   );
