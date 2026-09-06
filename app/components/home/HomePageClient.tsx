@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-import CategoryCard from "./CategoryCard";
 import BusinessCard from "./BusinessCard";
 
 import {
@@ -149,7 +148,7 @@ export default function HomePageClient() {
 
         </div>
 
-        <div className="grid grid-cols-6 gap-1 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
+        <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
           {(showAllCategories
             ? allCategoryNames
             : categories.map((category) => category.name)
@@ -166,10 +165,18 @@ export default function HomePageClient() {
             };
 
             return (
-              <CategoryCard
+              <Link
                 key={name}
-                category={category}
-              />
+                href={`/search?category=${encodeURIComponent(category.name)}`}
+                className="group flex min-h-[78px] flex-col items-center justify-start text-center"
+              >
+                <span className="flex h-12 items-center justify-center text-[38px] leading-none transition-transform group-hover:scale-105">
+                  {category.icon}
+                </span>
+                <span className="mt-2 line-clamp-2 px-1 text-[12px] font-bold leading-4 text-slate-700 group-hover:text-blue-600">
+                  {category.name}
+                </span>
+              </Link>
             );
           })}
         </div>
