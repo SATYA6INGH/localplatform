@@ -81,13 +81,9 @@ const fallbackImages = [
 function BusinessCard({ business, index }: { business: Business; index: number }) {
   const image = business.image_url || fallbackImages[index % fallbackImages.length];
 
-  const slug = encodeURIComponent(
-    business.business_name.toLowerCase().replace(/\s+/g, "-")
-  );
-
   return (
     <Link
-      href={`/business/${slug}?id=${encodeURIComponent(business.id)}`}
+      href={`/business/${encodeURIComponent(business.id)}`}
       className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="h-40 overflow-hidden bg-slate-100">
