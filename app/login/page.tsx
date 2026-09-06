@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const supabase = createClient(
-  "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://ckuiskbegrlrethnlhzq.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
   {
     auth: {
       persistSession: true,
@@ -21,37 +22,43 @@ const ADMIN_EMAIL = "architectsunlight@gmail.com";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"phone" | "admin">("phone");
-  const [phone, setPhone] = useState("");
+
+  const [mode, setMode] = useState<"email" | "admin">("email");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+
   const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const normalizedPhone = () => {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length === 10) return `+91${digits}`;
-    if (digits.startsWith("91") && digits.length === 12) return `+${digits}`;
-    return "";
-  };
-
-  async function sendOtp() {
+  function clearStatus() {
     setError("");
     setMessage("");
+  }
 
-    const fullPhone = normalizedPhone();
-    if (!fullPhone) {
-      setError("10 digit Indian mobile number डालें.");
+  async function sendOtp() {
+    clearStatus();
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError("Valid email address डालें.");
       return;
     }
 
     setBusy(true);
+
     const { error: otpError } = await supabase.auth.signInWithOtp({
-      phone: fullPhone,
+      email: cleanEmail,
+      options: {
+        shouldCreateUser: true,
+      },
     });
+
     setBusy(false);
 
     if (otpError) {
@@ -60,25 +67,32 @@ export default function LoginPage() {
     }
 
     setOtpSent(true);
-    setMessage("OTP आपके mobile पर भेज दिया गया है.");
+    setMessage("OTP आपके email पर भेज दिया गया है.");
   }
 
   async function verifyOtp() {
-    setError("");
-    setMessage("");
+    clearStatus();
 
-    const fullPhone = normalizedPhone();
-    if (!fullPhone || !/^\d{6}$/.test(otp)) {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      setError("Email address डालें.");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
       setError("6 digit OTP डालें.");
       return;
     }
 
     setBusy(true);
+
     const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      phone: fullPhone,
+      email: cleanEmail,
       token: otp,
-      type: "sms",
+      type: "email",
     });
+
     setBusy(false);
 
     if (verifyError) {
@@ -95,18 +109,25 @@ export default function LoginPage() {
   }
 
   async function adminLogin() {
-    setError("");
-    setMessage("");
+    clearStatus();
 
-    if (adminEmail.trim().toLowerCase() !== ADMIN_EMAIL) {
+    const cleanAdminEmail = adminEmail.trim().toLowerCase();
+
+    if (cleanAdminEmail !== ADMIN_EMAIL) {
       setError(`Admin login सिर्फ ${ADMIN_EMAIL} के लिए है.`);
       return;
     }
 
+    if (!adminPassword) {
+      setError("Admin password डालें.");
+      return;
+    }
+
     setBusy(true);
+
     const { data, error: loginError } =
       await supabase.auth.signInWithPassword({
-        email: adminEmail.trim(),
+        email: cleanAdminEmail,
         password: adminPassword,
       });
 
@@ -136,7 +157,10 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-orange-50 px-4 pb-24 pt-8">
       <div className="mx-auto max-w-md">
-        <Link href="/" className="block text-center text-3xl font-black tracking-tight">
+        <Link
+          href="/"
+          className="block text-center text-3xl font-black tracking-tight"
+        >
           <span className="text-blue-600">Local</span>
           <span className="text-orange-500">Platform</span>
         </Link>
@@ -146,43 +170,63 @@ export default function LoginPage() {
         </p>
 
         <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl sm:p-7">
+          {/* MODE SWITCH */}
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
             <button
               type="button"
-              onClick={() => { setMode("phone"); setError(""); setMessage(""); }}
-              className={`rounded-xl px-3 py-3 text-xs font-black ${mode === "phone" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}
+              onClick={() => {
+                setMode("email");
+                clearStatus();
+              }}
+              className={`rounded-xl px-3 py-3 text-xs font-black ${
+                mode === "email"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-slate-500"
+              }`}
             >
-              📱 Mobile OTP
+              ✉️ Email OTP
             </button>
+
             <button
               type="button"
-              onClick={() => { setMode("admin"); setError(""); setMessage(""); }}
-              className={`rounded-xl px-3 py-3 text-xs font-black ${mode === "admin" ? "bg-white text-orange-600 shadow-sm" : "text-slate-500"}`}
+              onClick={() => {
+                setMode("admin");
+                clearStatus();
+              }}
+              className={`rounded-xl px-3 py-3 text-xs font-black ${
+                mode === "admin"
+                  ? "bg-white text-orange-600 shadow-sm"
+                  : "text-slate-500"
+              }`}
             >
               🔐 Admin
             </button>
           </div>
 
-          {mode === "phone" ? (
+          {mode === "email" ? (
             <>
-              <h1 className="mt-7 text-2xl font-black">Login / Register</h1>
+              <h1 className="mt-7 text-2xl font-black">
+                Login / Register
+              </h1>
+
               <p className="mt-1 text-xs text-slate-500">
-                Email या password की जरूरत नहीं. Mobile OTP से account बनाएं.
+                Mobile number की जरूरत नहीं. Email OTP से account बनाएं या
+                login करें.
               </p>
 
               <label className="mt-6 block text-xs font-black text-slate-700">
-                Mobile Number
+                Email Address
               </label>
-              <div className="mt-2 flex overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                <span className="flex items-center border-r border-slate-200 px-3 text-sm font-black text-slate-500">+91</span>
-                <input
-                  value={phone.replace(/^\+91/, "")}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  inputMode="numeric"
-                  placeholder="9876543210"
-                  className="h-14 w-full bg-transparent px-4 text-base font-bold outline-none"
-                />
-              </div>
+
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                disabled={otpSent}
+                className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-blue-400 disabled:opacity-70"
+              />
 
               {!otpSent ? (
                 <button
@@ -191,18 +235,25 @@ export default function LoginPage() {
                   disabled={busy}
                   className="mt-4 w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-black text-white disabled:opacity-60"
                 >
-                  {busy ? "Sending OTP..." : "Send OTP"}
+                  {busy ? "Sending OTP..." : "Send Email OTP"}
                 </button>
               ) : (
                 <>
-                  <label className="mt-5 block text-xs font-black text-slate-700">6 Digit OTP</label>
+                  <label className="mt-5 block text-xs font-black text-slate-700">
+                    6 Digit OTP
+                  </label>
+
                   <input
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
                     inputMode="numeric"
+                    autoComplete="one-time-code"
                     placeholder="123456"
-                    className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-center text-xl font-black tracking-[0.35em] outline-none"
+                    className="mt-2 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-center text-xl font-black tracking-[0.35em] outline-none focus:border-blue-400"
                   />
+
                   <button
                     type="button"
                     onClick={verifyOtp}
@@ -211,19 +262,27 @@ export default function LoginPage() {
                   >
                     {busy ? "Verifying..." : "Verify OTP & Continue"}
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => { setOtpSent(false); setOtp(""); }}
+                    onClick={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                      clearStatus();
+                    }}
                     className="mt-3 w-full py-2 text-xs font-bold text-slate-500"
                   >
-                    Change mobile number
+                    Change email address
                   </button>
                 </>
               )}
             </>
           ) : (
             <>
-              <h1 className="mt-7 text-2xl font-black">Admin Login</h1>
+              <h1 className="mt-7 text-2xl font-black">
+                Admin Login
+              </h1>
+
               <p className="mt-1 text-xs text-slate-500">
                 Admin account के लिए email/password इस्तेमाल करें.
               </p>
@@ -232,16 +291,20 @@ export default function LoginPage() {
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 type="email"
+                autoComplete="username"
                 placeholder="Admin email"
-                className="mt-6 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none"
+                className="mt-6 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-orange-400"
               />
+
               <input
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 type="password"
+                autoComplete="current-password"
                 placeholder="Admin password"
-                className="mt-3 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none"
+                className="mt-3 h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-orange-400"
               />
+
               <button
                 type="button"
                 onClick={adminLogin}
@@ -253,8 +316,17 @@ export default function LoginPage() {
             </>
           )}
 
-          {message && <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-700">{message}</p>}
-          {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">{error}</p>}
+          {message && (
+            <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-700">
+              {message}
+            </p>
+          )}
+
+          {error && (
+            <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">
+              {error}
+            </p>
+          )}
         </section>
       </div>
     </main>
