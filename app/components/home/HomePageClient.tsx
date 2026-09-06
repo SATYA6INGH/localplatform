@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-import SearchBar from "./SearchBar";
 import CategoryCard from "./CategoryCard";
 import BusinessCard from "./BusinessCard";
 
@@ -59,7 +58,6 @@ export default function HomePageClient() {
         `
         )
         .eq("listing_status", "active")
-        .or("listing_expires_at.is.null,listing_expires_at.gt.now()")
         .order("created_at", { ascending: false })
         .limit(12);
 
@@ -93,7 +91,7 @@ export default function HomePageClient() {
       {/* HERO / SEARCH */}
 
       <section className="border-b border-slate-200 bg-gradient-to-b from-blue-50 to-slate-50">
-        <div className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-5 pt-5 sm:px-6 sm:pb-8 sm:pt-7 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
 
             <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">
@@ -107,10 +105,6 @@ export default function HomePageClient() {
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
               Discover trusted businesses, shops and professionals in your city.
             </p>
-
-            <div className="mx-auto mt-6 max-w-4xl">
-              <SearchBar />
-            </div>
 
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {popularSearches.slice(0, 8).map((item) => (
@@ -130,7 +124,7 @@ export default function HomePageClient() {
 
       {/* CATEGORIES */}
 
-      <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
         <div className="mb-4 flex items-end justify-between">
 
           <div>
@@ -155,7 +149,7 @@ export default function HomePageClient() {
 
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
+        <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
           {(showAllCategories
             ? allCategoryNames
             : categories.map((category) => category.name)
@@ -486,37 +480,10 @@ export default function HomePageClient() {
 
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 pb-24 text-center text-xs text-slate-400 sm:px-6 lg:px-8 md:pb-12">
+      <div className="mx-auto max-w-7xl px-4 pb-12 text-center text-xs text-slate-400 sm:px-6 lg:px-8">
         LocalPlatform is designed for businesses, shops, professionals,
         freelancers and service providers across India.
       </div>
-
-      {/* MOBILE BOTTOM NAV */}
-      <nav
-        aria-label="Mobile navigation"
-        className="fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200 bg-white/95 shadow-[0_-4px_18px_rgba(0,0,0,0.08)] backdrop-blur md:hidden"
-      >
-        <div className="mx-auto grid max-w-lg grid-cols-5">
-          {[
-            ["Home", "/", "⌂"],
-            ["Leads", "/dashboard", "▣"],
-            ["B2B", "/list-business", "▤"],
-            ["News", "/search", "▥"],
-            ["More", "/dashboard", "☰"],
-          ].map(([label, href, icon]) => (
-            <Link
-              key={label}
-              href={href}
-              className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-slate-500 transition hover:text-blue-600"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full text-[19px] leading-none">
-                {icon}
-              </span>
-              <span className="text-[10px] font-bold">{label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
 
     </main>
   );
