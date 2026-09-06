@@ -245,480 +245,356 @@ export default function HomePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
 
-      {/* =====================================================
-          HERO
-      ====================================================== */}
-
-      <section className="relative overflow-hidden bg-slate-950">
-
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.045]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px)",
-            backgroundSize: "38px 38px",
-          }}
-        />
-
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[480px] w-[480px] rounded-full bg-sky-500/20 blur-[100px]" />
-
-        <div className="pointer-events-none absolute -bottom-40 -left-40 h-[480px] w-[480px] rounded-full bg-violet-500/15 blur-[100px]" />
-
-        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-20 lg:px-8 lg:pb-24 lg:pt-24">
-
+      {/* HERO / SEARCH */}
+      <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 text-white">
+        <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3.5 py-2 text-[9px] font-bold tracking-[0.13em] text-slate-300 sm:px-4 sm:text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-lg shadow-sky-400/50 sm:h-2 sm:w-2" />
-              LOCAL BUSINESS DISCOVERY
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-sky-200 sm:text-[10px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+              India's Local Business Directory
             </div>
 
-            <h1 className="text-[40px] font-black leading-[1] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
-              Find the right
-              <span className="block bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400 bg-clip-text pb-2 text-transparent">
-                business near you.
-              </span>
+            <h1 className="text-[36px] font-black leading-[1.04] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+              Find local businesses
+              <span className="block text-sky-300">near you</span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-slate-300 sm:mt-6 sm:text-base sm:leading-7 lg:text-lg">
-              Discover local professionals, services and businesses
-              by category, service and location.
+            <p className="mx-auto mt-3 max-w-2xl text-xs leading-5 text-slate-300 sm:text-sm sm:leading-6">
+              Search trusted shops, professionals, services and businesses by
+              category, service and city.
             </p>
 
-            {/* SEARCH BOX */}
-
-            <div className="mx-auto mt-8 max-w-4xl rounded-[22px] border border-white/10 bg-white p-2 shadow-2xl shadow-black/40 sm:mt-9 sm:rounded-[25px]">
-
-              <div className="grid gap-2 md:grid-cols-[1fr_0.72fr_auto]">
-
-                <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4">
-
+            <div className="mx-auto mt-6 max-w-5xl rounded-2xl bg-white p-2 shadow-2xl sm:mt-8 sm:rounded-[22px]">
+              <div className="grid gap-2 md:grid-cols-[1.15fr_0.8fr_auto]">
+                <div className="flex min-w-0 items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5">
                   <SearchIcon />
-
                   <input
                     value={query}
-                    onChange={(e) =>
-                      setQuery(e.target.value)
-                    }
+                    onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        search();
-                      }
+                      if (e.key === "Enter") search();
                     }}
                     placeholder="Business, service or category"
-                    className="h-11 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400 sm:h-12"
+                    className="h-11 w-full min-w-0 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 sm:h-12"
                   />
-
                 </div>
 
-                <div className="flex min-w-0 items-center rounded-2xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4">
-
+                <div className="flex min-w-0 items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5">
                   <LocationIcon />
-
                   <input
                     value={location}
-                    onChange={(e) =>
-                      setLocation(e.target.value)
-                    }
+                    onChange={(e) => setLocation(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        search();
-                      }
+                      if (e.key === "Enter") search();
                     }}
                     placeholder="City or area"
-                    className="h-11 w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400 sm:h-12"
+                    className="h-11 w-full min-w-0 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 sm:h-12"
                   />
-
                 </div>
 
                 <button
+                  type="button"
                   onClick={search}
-                  className="h-11 rounded-2xl bg-slate-950 px-7 text-sm font-black text-white transition hover:bg-slate-800 sm:h-12 sm:px-8"
+                  className="h-11 rounded-xl bg-sky-600 px-7 text-sm font-black text-white transition hover:bg-sky-500 sm:h-12"
                 >
                   Search
                 </button>
-
               </div>
             </div>
 
-            {/* POPULAR */}
-
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:mt-5 sm:gap-2">
-
-              <span className="mr-1 text-[10px] font-medium text-slate-500 sm:text-[11px]">
-                Popular:
-              </span>
-
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+              <span className="mr-1 text-[10px] text-slate-400">Popular:</span>
               {popularSearches.map((item) => (
                 <button
                   key={item}
+                  type="button"
                   onClick={() => categorySearch(item)}
-                  className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white sm:px-3.5 sm:py-2 sm:text-[11px]"
+                  className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-semibold text-slate-200 hover:bg-white/15"
                 >
                   {item}
                 </button>
               ))}
-
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          PAID HOME TOP ADS
-      ====================================================== */}
+      {/* QUICK CATEGORIES */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600 sm:text-[10px]">
+                Explore
+              </p>
+              <h2 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">
+                Popular categories
+              </h2>
+            </div>
+            <Link
+              href="/search"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-black text-slate-700 sm:text-xs"
+            >
+              View All →
+            </Link>
+          </div>
 
+          <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3 lg:grid-cols-8">
+            {categories.map((category) => (
+              <button
+                key={category.name}
+                type="button"
+                onClick={() => categorySearch(category.name)}
+                className="group flex min-h-[82px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-1 py-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:min-h-[100px] sm:rounded-2xl"
+              >
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full ${category.bg} ${category.text} transition group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl`}
+                >
+                  {category.icon}
+                </div>
+                <span className="mt-2 line-clamp-2 min-h-[24px] w-full text-center text-[9px] font-bold leading-3 text-slate-700 sm:text-[10px]">
+                  {category.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PAID HOME TOP ADS */}
       <HomeTopAds />
 
-      {/* =====================================================
-          SEARCH RESULTS
-      ====================================================== */}
-
+      {/* SEARCH RESULTS */}
       {(query || location) && (
-        <section className="border-b border-slate-200 bg-slate-50">
-
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-
-            <div className="mb-5 flex items-end justify-between">
-
+        <section className="border-y border-slate-200 bg-slate-50">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mb-5 flex items-end justify-between gap-3">
               <div>
-
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600 sm:text-[10px]">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600">
                   Search Results
                 </p>
-
-                <h2 className="mt-1.5 text-xl font-black tracking-tight sm:text-2xl">
+                <h2 className="mt-1 text-xl font-black sm:text-2xl">
                   Matching businesses
                 </h2>
-
               </div>
-
               <Link
-                href={`/search?q=${encodeURIComponent(
-                  query
-                )}&location=${encodeURIComponent(location)}`}
-                className="hidden text-xs font-black text-sky-600 sm:block"
+                href={`/search?q=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}`}
+                className="text-xs font-black text-sky-600"
               >
                 View all →
               </Link>
-
             </div>
 
             {loading ? (
-
               <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
                 Finding businesses...
               </div>
-
             ) : searchResults.length === 0 ? (
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-10">
-
+              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
                   <SearchIcon />
                 </div>
-
-                <h3 className="mt-4 font-black">
-                  No matching business found
-                </h3>
-
+                <h3 className="mt-4 font-black">No matching business found</h3>
                 <p className="mt-1 text-xs text-slate-500">
                   Try another business, service or location.
                 </p>
-
               </div>
-
             ) : (
-
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
                 {searchResults.map((business) => (
-                  <BusinessCard
-                    key={business.id}
-                    business={business}
-                  />
+                  <BusinessCard key={business.id} business={business} />
                 ))}
-
               </div>
-
             )}
-
           </div>
         </section>
       )}
 
-      {/* =====================================================
-          CATEGORIES
-      ====================================================== */}
-
-      <section className="bg-white">
-
-        <div className="mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-
+      {/* HOME SERVICES */}
+      <section className="bg-slate-50">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <div className="flex items-end justify-between gap-3">
-
             <div>
-
-              <div className="mb-2 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-sky-600 sm:px-3 sm:py-1.5 sm:text-[10px]">
-                Explore Categories
-              </div>
-
-              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">
-                What are you looking for?
-              </h2>
-
-              <p className="mt-1.5 max-w-xl text-xs leading-5 text-slate-500 sm:mt-2 sm:text-sm sm:leading-6">
-                Explore popular local services and professionals.
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600">
+                Home Services
               </p>
-
+              <h2 className="mt-1 text-xl font-black sm:text-2xl">
+                Services at your doorstep
+              </h2>
             </div>
-
-            <Link
-              href="/search"
-              className="shrink-0 text-[10px] font-black text-slate-900 sm:text-xs"
-            >
-              All →
+            <Link href="/search" className="text-xs font-black text-slate-700">
+              See all →
             </Link>
-
           </div>
 
-          {/* =================================================
-              COMPACT MOBILE CATEGORY GRID
-          ================================================== */}
-
-          <div className="mt-6 grid grid-cols-4 gap-2 sm:mt-9 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
-
-            {categories.map((category) => (
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              ["AC Repair & Service", "AC Repair", "❄️"],
+              ["Plumbers", "Plumber", "🔧"],
+              ["Electricians", "Electrician", "⚡"],
+              ["Painters", "Painter", "🎨"],
+              ["Pest Control", "Pest Control", "🛡️"],
+              ["Carpenters", "Carpenter", "🪚"],
+            ].map(([name, queryValue, icon]) => (
               <button
-                key={category.name}
-                onClick={() =>
-                  categorySearch(category.name)
-                }
-                className="group flex min-h-[86px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-1.5 py-2 shadow-sm transition duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md sm:min-h-[105px] sm:rounded-2xl sm:px-2 sm:py-3"
+                key={name}
+                type="button"
+                onClick={() => categorySearch(queryValue)}
+                className="group relative min-h-[126px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
               >
-
-                {/* SMALL COLOUR ICON */}
-
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full ${category.bg} ${category.text} transition duration-200 group-hover:scale-105 sm:h-11 sm:w-11 sm:rounded-2xl`}
-                >
-                  {category.icon}
-                </div>
-
-                <span className="mt-2 line-clamp-2 min-h-[26px] w-full text-center text-[9px] font-bold leading-3 text-slate-700 sm:mt-2.5 sm:text-[10px] sm:leading-3.5">
-                  {category.name}
+                <span className="text-3xl">{icon}</span>
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent px-4 pb-3 pt-10 text-xs font-black text-white">
+                  {name}
                 </span>
-
-                <span className="hidden text-[9px] font-medium text-slate-400 sm:block">
-                  {category.label}
-                </span>
-
               </button>
             ))}
-
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          FEATURED BUSINESSES
-      ====================================================== */}
+      {/* TRENDING SEARCHES */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600">
+            Trending
+          </p>
+          <h2 className="mt-1 text-xl font-black sm:text-2xl">
+            Popular searches near you
+          </h2>
 
-      <section className="relative overflow-hidden border-y border-slate-200 bg-slate-50">
+          <div className="mt-5 flex flex-wrap gap-2">
+            {[
+              "Architects",
+              "Interior Designers",
+              "Doctors",
+              "Dentists",
+              "Restaurants",
+              "Salons",
+              "Packers & Movers",
+              "Real Estate",
+            ].map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => categorySearch(item)}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm hover:border-sky-300 hover:text-sky-600"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-100/70 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-
+      {/* FEATURED BUSINESSES */}
+      <section className="border-y border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
           <div className="flex items-end justify-between gap-3">
-
             <div>
-
-              <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-sky-600 shadow-sm sm:px-3 sm:py-1.5 sm:text-[10px]">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-600">
                 Discover
-              </div>
-
-              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">
-                Local businesses
+              </p>
+              <h2 className="mt-1 text-xl font-black sm:text-3xl">
+                Featured local businesses
               </h2>
-
-              <p className="mt-1.5 text-xs text-slate-500 sm:text-sm">
+              <p className="mt-1 text-xs text-slate-500">
                 Recently listed active businesses.
               </p>
-
             </div>
-
             <Link
               href="/search"
-              className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 shadow-sm sm:block"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black shadow-sm"
             >
               View all
             </Link>
-
           </div>
 
           {loading ? (
-
-            <div className="mt-7 grid gap-4 sm:mt-9 sm:grid-cols-2 lg:grid-cols-3">
-
+            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
                   className="h-[350px] animate-pulse rounded-[22px] bg-white"
                 />
               ))}
-
             </div>
-
           ) : featuredBusinesses.length === 0 ? (
-
-            <div className="mt-7 rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center sm:mt-9 sm:rounded-[28px] sm:px-6 sm:py-16">
-
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+            <div className="mt-7 rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
                 <BuildingIcon />
               </div>
-
-              <h3 className="mt-4 text-base font-black sm:text-lg">
-                Businesses coming soon
-              </h3>
-
-              <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
-                Be one of the first businesses listed on
-                LocalPlatform.
+              <h3 className="mt-4 font-black">Businesses coming soon</h3>
+              <p className="mx-auto mt-2 max-w-md text-xs text-slate-500">
+                Be one of the first businesses listed on LocalPlatform.
               </p>
-
               <Link
                 href="/list-business"
                 className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white"
               >
-                List Your Business
+                List Your Business FREE →
               </Link>
-
             </div>
-
           ) : (
-
-            <div className="mt-7 grid gap-4 sm:mt-9 sm:grid-cols-2 lg:grid-cols-3">
-
+            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {featuredBusinesses.map((business) => (
-                <BusinessCard
-                  key={business.id}
-                  business={business}
-                />
+                <BusinessCard key={business.id} business={business} />
               ))}
-
             </div>
-
           )}
-
         </div>
       </section>
 
-      {/* =====================================================
-          BUSINESS OWNER CTA
-      ====================================================== */}
-
+      {/* BUSINESS OWNER CTA */}
       <section className="bg-white">
-
-        <div className="mx-auto max-w-7xl px-4 py-11 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-
-          <div className="relative overflow-hidden rounded-[25px] bg-slate-950 px-6 py-9 sm:rounded-[32px] sm:px-10 sm:py-12 lg:px-14 lg:py-14">
-
-            <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-sky-500/20 blur-[80px]" />
-
-            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
-
+        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
+          <div className="overflow-hidden rounded-[26px] bg-slate-950 px-6 py-8 sm:rounded-[32px] sm:px-10 sm:py-12 lg:px-14">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
-
-                <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-sky-400 sm:text-[10px]">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-400">
                   For Business Owners
-                </div>
-
-                <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-4xl">
-                  Make your business easier to discover.
-                </h2>
-
-                <p className="mt-3 text-xs leading-5 text-slate-300 sm:mt-4 sm:text-base sm:leading-6">
-                  Create your LocalPlatform listing and connect
-                  with customers searching for your services.
                 </p>
-
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-4xl">
+                  Get your business discovered locally.
+                </h2>
+                <p className="mt-3 text-xs leading-5 text-slate-300 sm:text-sm sm:leading-6">
+                  Create your listing, add services and location, and connect
+                  with customers searching for businesses like yours.
+                </p>
               </div>
 
               <Link
                 href="/list-business"
-                className="shrink-0 rounded-xl bg-white px-5 py-3.5 text-center text-xs font-black text-slate-950 shadow-xl transition hover:-translate-y-1 hover:bg-slate-100 sm:rounded-2xl sm:px-6 sm:py-4 sm:text-sm"
+                className="shrink-0 rounded-xl bg-sky-500 px-6 py-3.5 text-center text-xs font-black text-white shadow-xl transition hover:bg-sky-400 sm:rounded-2xl sm:px-7 sm:py-4 sm:text-sm"
               >
-                List Your Business →
+                List Your Business FREE →
               </Link>
-
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          FOOTER
-      ====================================================== */}
-
+      {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white">
-
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 sm:px-6 sm:py-8 md:flex-row md:items-center md:justify-between lg:px-8">
-
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <div>
-            <div className="text-sm font-black">
-              LocalPlatform
-            </div>
-
+            <div className="text-sm font-black">LocalPlatform</div>
             <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
               Discover local businesses. Connect locally.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-4 text-[10px] font-semibold text-slate-500 sm:gap-5 sm:text-xs">
-
-            <Link href="/" className="hover:text-slate-950">
-              Home
-            </Link>
-
-            <Link
-              href="/search"
-              className="hover:text-slate-950"
-            >
-              Search
-            </Link>
-
-            <Link
-              href="/list-business"
-              className="hover:text-slate-950"
-            >
-              List Business
-            </Link>
-
-            <Link
-              href="/dashboard"
-              className="hover:text-slate-950"
-            >
-              Dashboard
-            </Link>
-
-            <Link
-              href="/login"
-              className="hover:text-slate-950"
-            >
-              Login
-            </Link>
-
+          <div className="flex flex-wrap gap-4 text-[10px] font-semibold text-slate-500 sm:text-xs">
+            <Link href="/" className="hover:text-slate-950">Home</Link>
+            <Link href="/search" className="hover:text-slate-950">Search</Link>
+            <Link href="/list-business" className="hover:text-slate-950">List Business</Link>
+            <Link href="/dashboard" className="hover:text-slate-950">Dashboard</Link>
+            <Link href="/login" className="hover:text-slate-950">Login</Link>
           </div>
-
         </div>
 
         <div className="border-t border-slate-100 py-3 text-center text-[9px] text-slate-400 sm:py-4 sm:text-[10px]">
           © {new Date().getFullYear()} LocalPlatform. All rights reserved.
         </div>
-
       </footer>
     </main>
   );
