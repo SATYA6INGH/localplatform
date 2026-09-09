@@ -1,79 +1,68 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SearchBar() {
   const router = useRouter();
 
   const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("");
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  const search = () => {
+    const value = query.trim();
 
-    const params = new URLSearchParams();
-
-    if (query.trim()) {
-      params.set("q", query.trim());
+    if (value) {
+      router.push(
+        `/search?q=${encodeURIComponent(value)}`
+      );
+    } else {
+      router.push("/search");
     }
-
-    if (location.trim()) {
-      params.set("location", location.trim());
-    }
-
-    router.push(
-      `/search${params.toString() ? `?${params.toString()}` : ""}`
-    );
-  }
+  };
 
   return (
-    <form
-      onSubmit={submit}
-      className="flex w-full flex-col gap-2 sm:flex-row sm:gap-0"
-    >
-      <label className="flex min-h-12 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 shadow-sm sm:rounded-r-none">
-        <span>🔎</span>
+    <div className="lp-search-box">
+
+      <div className="lp-search-top">
+
+        <span className="lp-search-icon">
+          ⌕
+        </span>
 
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="What are you looking for?"
-          aria-label="What are you looking for"
-          className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+          onChange={(e) =>
+            setQuery(e.target.value)
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              search();
+            }
+          }}
+          placeholder="Search business or service..."
         />
-      </label>
 
-      <label className="flex min-h-12 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 shadow-sm sm:rounded-none sm:border-l-0">
-        <span>📍</span>
+      </div>
 
-        <input
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="City, area or pincode"
-          aria-label="Location"
-          className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
-        />
+      <div className="lp-search-bottom">
+
+        <span className="lp-location-icon">
+          ⌖
+        </span>
+
+        <span className="lp-current-city">
+          Lucknow
+        </span>
 
         <button
           type="button"
-          className="shrink-0 text-xs font-bold text-blue-600"
-          onClick={() => {
-            if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(() => {});
-            }
-          }}
+          onClick={search}
         >
-          Near me
+          ⌕
         </button>
-      </label>
 
-      <button
-        type="submit"
-        className="min-h-12 rounded-xl bg-blue-600 px-7 text-sm font-bold text-white hover:bg-blue-700 sm:rounded-l-none"
-      >
-        Search
-      </button>
-    </form>
+      </div>
+
+    </div>
   );
 }
