@@ -48,6 +48,7 @@ const statusPosts = [
     title: "Today's Special",
     offer: "20% OFF",
     text: "20% OFF on All Combos",
+    categories: ["Following", "Nearby", "Business"],
   },
   {
     id: 2,
@@ -58,6 +59,7 @@ const statusPosts = [
     title: "Special Offer",
     offer: "30% OFF",
     text: "Flat 30% OFF on Hair Services",
+    categories: ["Following", "Nearby"],
   },
   {
     id: 3,
@@ -68,12 +70,14 @@ const statusPosts = [
     title: "New Project",
     offer: "",
     text: "Construction & Civil Work",
+    categories: ["Nearby", "Business"],
   },
 ];
 
 export default function StatusPage() {
-  const [activeTab, setActiveTab] =
-    useState("All");
+  const [activeTab, setActiveTab] = useState("All");
+  const [liked, setLiked] = useState<number[]>([]);
+  const [saved, setSaved] = useState<number[]>([]);
 
   const tabs = [
     "All",
@@ -81,6 +85,10 @@ export default function StatusPage() {
     "Nearby",
     "Business",
   ];
+
+  const visiblePosts = statusPosts.filter(
+    (post) => activeTab === "All" || post.categories.includes(activeTab),
+  );
 
   return (
     <main className="lp-status-page">
@@ -190,7 +198,7 @@ export default function StatusPage() {
 
       <section className="lp-status-feed">
 
-        {statusPosts.map((post) => (
+        {visiblePosts.map((post) => (
 
           <article
             key={post.id}
@@ -267,9 +275,18 @@ export default function StatusPage() {
 
             <div className="lp-status-actions">
 
-              <button>
-                ♡
-                <small>Like</small>
+              <button
+                className={liked.includes(post.id) ? "selected" : ""}
+                onClick={() =>
+                  setLiked((items) =>
+                    items.includes(post.id)
+                      ? items.filter((id) => id !== post.id)
+                      : [...items, post.id],
+                  )
+                }
+              >
+                {liked.includes(post.id) ? "♥" : "♡"}
+                <small>{liked.includes(post.id) ? "Liked" : "Like"}</small>
               </button>
 
               <Link href="/chat">
@@ -282,9 +299,18 @@ export default function StatusPage() {
                 <small>Share</small>
               </button>
 
-              <button>
+              <button
+                className={saved.includes(post.id) ? "selected" : ""}
+                onClick={() =>
+                  setSaved((items) =>
+                    items.includes(post.id)
+                      ? items.filter((id) => id !== post.id)
+                      : [...items, post.id],
+                  )
+                }
+              >
                 🔖
-                <small>Save</small>
+                <small>{saved.includes(post.id) ? "Saved" : "Save"}</small>
               </button>
 
             </div>
@@ -307,6 +333,14 @@ export default function StatusPage() {
           </article>
 
         ))}
+
+        {visiblePosts.length === 0 && (
+          <div className="lp-empty-profile">
+            <span>⊙</span>
+            <h3>No updates here yet</h3>
+            <p>Try another status category.</p>
+          </div>
+        )}
 
       </section>
 

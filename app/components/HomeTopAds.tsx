@@ -37,6 +37,8 @@ export default function HomeTopAds() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // The loader is intentionally invoked once when the component mounts.
+    // eslint-disable-next-line react-hooks/immutability
     loadAds();
   }, []);
 

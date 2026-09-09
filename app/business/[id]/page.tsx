@@ -2,9 +2,58 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+import { supabase } from "../../lib/supabase";
 
 export default function BusinessProfilePage() {
+  const params = useParams<{ id: string }>();
+  const businessId = String(params.id);
   const [tab, setTab] = useState("Overview");
+  const [expanded, setExpanded] = useState(false);
+  const [business, setBusiness] = useState({
+    business_name: "Spice Hub Restaurant",
+    category: "Restaurant • North Indian • Chinese",
+    city: "Lucknow",
+    area: "Gomti Nagar",
+    address: "Gomti Nagar, Lucknow",
+    description: "Delicious food, great ambience and unforgettable experiences. Visit Spice Hub for the best dining in Lucknow.",
+    image_url: "",
+    phone: "+919876543210",
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadBusiness() {
+      if (!supabase || !businessId) return;
+
+      const { data } = await supabase
+        .from("businesses")
+        .select("business_name, category, city, area, address, description, short_description, image_url, phone")
+        .eq("id", businessId)
+        .maybeSingle();
+
+      if (!mounted || !data) return;
+
+      setBusiness((current) => ({
+        ...current,
+        business_name: data.business_name || current.business_name,
+        category: data.category || current.category,
+        city: data.city || current.city,
+        area: data.area || current.area,
+        address: data.address || data.area || current.address,
+        description: data.description || data.short_description || current.description,
+        image_url: data.image_url || current.image_url,
+        phone: data.phone || current.phone,
+      }));
+    }
+
+    loadBusiness();
+    return () => {
+      mounted = false;
+    };
+  }, [businessId]);
 
   const tabs = [
     "Overview",
@@ -21,7 +70,10 @@ export default function BusinessProfilePage() {
 
       <section className="lp-business-cover">
 
-        <div className="lp-cover-image" />
+        <div
+          className="lp-cover-image"
+          style={business.image_url ? { backgroundImage: `url("${business.image_url}")` } : undefined}
+        />
 
         <div className="lp-cover-overlay" />
 
@@ -58,18 +110,18 @@ export default function BusinessProfilePage() {
           <div>
 
             <h1>
-              Spice Hub Restaurant
+              {business.business_name}
               <span className="lp-verified">
                 ✓
               </span>
             </h1>
 
             <p>
-              ⌖ Restaurant • North Indian • Chinese
+              ⌖ {business.category}
             </p>
 
             <p>
-              ⌖ Gomti Nagar, Lucknow
+              ⌖ {business.address || `${business.area}, ${business.city}`}
             </p>
 
           </div>
@@ -134,7 +186,7 @@ export default function BusinessProfilePage() {
           <button
             onClick={() =>
               (window.location.href =
-                "tel:+919876543210")
+                `tel:${business.phone}`)
             }
           >
             <span>☎</span>
@@ -144,7 +196,7 @@ export default function BusinessProfilePage() {
           <button
             onClick={() =>
               window.open(
-                "https://wa.me/919876543210",
+                `https://wa.me/${business.phone.replace(/\D/g, "")}`,
                 "_blank"
               )
             }
@@ -156,7 +208,9 @@ export default function BusinessProfilePage() {
           <button
             onClick={() =>
               window.open(
-                "https://maps.google.com/?q=Gomti+Nagar+Lucknow",
+                `https://maps.google.com/?q=${encodeURIComponent(
+                  business.address || `${business.area}, ${business.city}`,
+                )}`,
                 "_blank"
               )
             }
@@ -208,15 +262,12 @@ export default function BusinessProfilePage() {
           <>
             <h2>About</h2>
 
-            <p className="lp-about">
-              Delicious food, great ambience and
-              unforgettable experiences. Visit
-              Spice Hub for the best dining in
-              Lucknow.
+            <p className={`lp-about ${expanded ? "expanded" : ""}`}>
+              {business.description}
             </p>
 
-            <button className="lp-read-more">
-              Read More
+            <button className="lp-read-more" onClick={() => setExpanded((value) => !value)}>
+              {expanded ? "Show Less" : "Read More"}
             </button>
 
 
@@ -228,7 +279,7 @@ export default function BusinessProfilePage() {
                 <div>
                   <strong>Address</strong>
                   <small>
-                    Gomti Nagar, Lucknow
+                    {business.address || `${business.area}, ${business.city}`}
                   </small>
                 </div>
               </div>

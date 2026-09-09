@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 
 const supabase = createClient(
   "https://ckuiskbegrlrethnlhzq.supabase.co",
@@ -61,7 +62,10 @@ export default function AdminPage() {
   const [actionId, setActionId] = useState("");
 
   useEffect(() => {
+    // The data loader is intentionally kept as a named async function for the admin workflow.
+    // eslint-disable-next-line react-hooks/immutability
     checkAdmin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkAdmin() {
@@ -486,12 +490,12 @@ export default function AdminPage() {
             </h1>
           </div>
 
-          <a
+          <Link
             href="/"
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10"
           >
             View Website
-          </a>
+          </Link>
 
         </div>
       </header>

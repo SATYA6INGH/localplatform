@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "./lib/supabase";
 
 const categories = [
   ["Food", "🍴", "food"],
@@ -23,6 +24,7 @@ const statuses = [
 
 const businesses = [
   {
+    id: "1",
     name: "Spice Hub",
     rating: "4.8",
     area: "Gomti Nagar",
@@ -30,6 +32,7 @@ const businesses = [
       "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80",
   },
   {
+    id: "2",
     name: "Urban Cafe",
     rating: "4.6",
     area: "Hazratganj",
@@ -37,6 +40,7 @@ const businesses = [
       "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=80",
   },
   {
+    id: "3",
     name: "Glow Salon",
     rating: "4.7",
     area: "Aliganj",
@@ -44,6 +48,7 @@ const businesses = [
       "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80",
   },
   {
+    id: "4",
     name: "Studio Nest",
     rating: "4.9",
     area: "Indira Nagar",
@@ -56,6 +61,40 @@ export default function HomePage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("Lucknow");
+  const [remoteBusinesses, setRemoteBusinesses] = useState<typeof businesses>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadBusinesses() {
+      if (!supabase) return;
+      const { data } = await supabase
+        .from("businesses")
+        .select("id, business_name, category, city, area, address, image_url, listing_status")
+        .eq("listing_status", "active")
+        .order("business_name", { ascending: true })
+        .limit(12);
+
+      if (!mounted || !data?.length) return;
+
+      setRemoteBusinesses(
+        data.map((business) => ({
+          id: String(business.id),
+          name: business.business_name,
+          rating: "4.8",
+          area: business.area || business.address || business.city || "Nearby",
+          image: business.image_url || businesses[0].image,
+        })),
+      );
+    }
+
+    loadBusinesses();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const availableBusinesses = remoteBusinesses.length ? remoteBusinesses : businesses;
 
   const search = (event: FormEvent) => {
     event.preventDefault();
@@ -163,7 +202,7 @@ export default function HomePage() {
 
       <Section title="🔥 Trending Near You" action="See All">
         <div className="lp-business-scroll">
-          {businesses.map((business) => (
+          {availableBusinesses.map((business) => (
             <article className="lp-mini-business" key={business.name}>
               <div
                 className="lp-mini-business-image"
@@ -174,7 +213,7 @@ export default function HomePage() {
               </div>
 
               <div className="lp-mini-business-content">
-                <h3>{business.name}</h3>
+                <h3><Link href={`/business/${business.id}`}>{business.name}</Link></h3>
 
                 <div className="lp-rating">
                   <b>★ {business.rating}</b>

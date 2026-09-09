@@ -810,6 +810,12 @@ a {
   font-size: 9px;
 }
 
+.lp-loading-text {
+  margin: 10px 0;
+  color: #667085;
+  font-size: 9px;
+}
+
 .lp-sort-button {
   padding: 7px 10px;
   border: 1px solid #e4e8ef;
@@ -927,10 +933,13 @@ a {
   margin-top: 12px;
 }
 
-.lp-result-actions button {
+.lp-result-actions button,
+.lp-result-actions a {
   min-width: 0;
   flex: 1;
   height: 24px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   border-radius: 5px;
   background: #eaf3ff;
@@ -945,7 +954,8 @@ a {
   color: #079447;
 }
 
-.lp-result-actions button:nth-child(3) {
+.lp-result-actions button:nth-child(3),
+.lp-result-actions a {
   background: #f3f4f6;
   color: #475467;
 }
@@ -1514,7 +1524,8 @@ a {
 }
 
 .lp-profile-content > h2 { margin: 0 0 8px; color: #101828; font-size: 14px; }
-.lp-about { margin: 0; color: #667085; font-size: 10px; line-height: 1.55; }
+.lp-about { display: -webkit-box; margin: 0; overflow: hidden; color: #667085; font-size: 10px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+.lp-about.expanded { display: block; }
 .lp-read-more { margin-top: 8px; padding: 0; background: transparent; color: #0868f2; font-size: 9px; font-weight: 600; }
 
 .lp-info-box {
@@ -1613,6 +1624,7 @@ a {
 .lp-status-actions { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #edf0f4; }
 .lp-status-actions button,
 .lp-status-actions a { height: 39px; display: flex; align-items: center; justify-content: center; gap: 4px; background: #fff; color: #667085; font-size: 13px; }
+.lp-status-actions button.selected { color: #d91e48; }
 .lp-status-actions small { font-size: 7px; }
 .lp-status-reply { display: flex; align-items: center; justify-content: space-between; margin: 0 10px 9px; padding: 8px 10px; border-radius: 7px; background: #f5f7fa; }
 .lp-status-reply a { color: #98a2b3; font-size: 8px; }

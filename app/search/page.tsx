@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { supabase } from "../lib/supabase";
 
 const businesses = [
   {
+    id: "1",
     name: "Spice Hub Restaurant",
     category: "Food",
     area: "Gomti Nagar, Lucknow",
@@ -15,6 +17,7 @@ const businesses = [
     open: true,
   },
   {
+    id: "2",
     name: "The Urban Cafe",
     category: "Cafe",
     area: "Hazratganj, Lucknow",
@@ -25,6 +28,7 @@ const businesses = [
     open: true,
   },
   {
+    id: "3",
     name: "Glow Beauty Salon",
     category: "Salon",
     area: "Aliganj, Lucknow",
@@ -35,6 +39,7 @@ const businesses = [
     open: false,
   },
   {
+    id: "4",
     name: "Care Life Clinic",
     category: "Doctors",
     area: "Indira Nagar, Lucknow",
@@ -46,18 +51,80 @@ const businesses = [
   },
 ];
 
-const filters = ["All", "Food", "Doctors", "Salon", "Cafe"];
+const filters = [
+  "All",
+  "Food",
+  "Doctors",
+  "Salon",
+  "Cafe",
+  "Architect",
+  "Construction",
+  "Real Estate",
+];
 
 export default function SearchPage() {
-  const [query, setQuery] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : new URLSearchParams(window.location.search).get("q") ?? "",
-  );
+  const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [remoteBusinesses, setRemoteBusinesses] = useState<typeof businesses>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Read the URL only after hydration so the server and client render the same markup.
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get("q");
+    if (value) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery(value);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadBusinesses() {
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("businesses")
+        .select("id, business_name, category, city, area, address, image_url, listing_status")
+        .eq("listing_status", "active")
+        .order("business_name", { ascending: true })
+        .limit(40);
+
+      if (!mounted) return;
+
+      if (error || !data?.length) {
+        setLoading(false);
+        return;
+      }
+
+      setRemoteBusinesses(
+        data.map((business) => ({
+          id: String(business.id),
+          name: business.business_name,
+          category: business.category || "Local business",
+          area: business.area || business.address || business.city || "Nearby",
+          rating: "4.8",
+          reviews: "New",
+          image: business.image_url || businesses[0].image,
+          open: true,
+        })),
+      );
+      setLoading(false);
+    }
+
+    loadBusinesses();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const availableBusinesses = remoteBusinesses.length ? remoteBusinesses : businesses;
 
   const filteredBusinesses = useMemo(() => {
-    return businesses.filter((business) => {
+    return availableBusinesses.filter((business) => {
       const matchesFilter =
         activeFilter === "All" || business.category === activeFilter;
 
@@ -67,7 +134,7 @@ export default function SearchPage() {
 
       return matchesFilter && searchText;
     });
-  }, [query, activeFilter]);
+  }, [query, activeFilter, availableBusinesses]);
 
   return (
     <main className="lp-mobile-app lp-search-page">
@@ -128,9 +195,11 @@ export default function SearchPage() {
           <button className="lp-sort-button">Sort⌄</button>
         </div>
 
+        {loading && <p className="lp-loading-text">Loading local businesses...</p>}
+
         <div className="lp-results-list">
           {filteredBusinesses.map((business) => (
-            <article className="lp-result-card" key={business.name}>
+              <article className="lp-result-card" key={business.name}>
               <div
                 className="lp-result-image"
                 style={{ backgroundImage: `url(${business.image})` }}
@@ -163,7 +232,7 @@ export default function SearchPage() {
                 <div className="lp-result-actions">
                   <button>☎ Call</button>
                   <button>◉ WhatsApp</button>
-                  <button>View</button>
+                  <Link className="lp-result-view" href={`/business/${business.id ?? "1"}`}>View</Link>
                 </div>
               </div>
             </article>
