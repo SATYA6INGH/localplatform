@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -32,18 +32,38 @@ type Business = {
   listing_expires_at?: string | null;
 };
 
+type StatusRecord = {
+  id?: string;
+  business_id?: string | null;
+  businessId?: string | null;
+  image_url?: string | null;
+  media_url?: string | null;
+  image?: string | null;
+  media?: string | null;
+  content?: string | null;
+  text?: string | null;
+  caption?: string | null;
+  created_at?: string | null;
+  expires_at?: string | null;
+  expiry?: string | null;
+  expiresAt?: string | null;
+  [key: string]: unknown;
+};
+
+type LiveStatus = {
+  id: string;
+  businessId: string;
+  businessName: string;
+  category: string;
+  city: string;
+  image: string;
+  caption: string;
+  createdAt: string;
+};
+
 type Category = {
   name: string;
   icon: string;
-};
-
-type StatusItem = {
-  id: number;
-  name: string;
-  category: string;
-  image: string;
-  time: string;
-  color: string;
 };
 
 const categories: Category[] = [
@@ -127,7 +147,10 @@ const categories: Category[] = [
   ["Party & Event Rental", "🎪"],
   ["Repair, Installation & Maintenance", "🔩"],
   ["Other Services", "➕"],
-].map(([name, icon]) => ({ name, icon }));
+].map(([name, icon]) => ({
+  name,
+  icon,
+}));
 
 const popularSearches = [
   "Beauty Parlour",
@@ -146,62 +169,94 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=80",
 ];
 
-const liveStatuses: StatusItem[] = [
-  {
-    id: 1,
-    name: "Royal Cafe",
-    category: "Restaurant",
-    image:
-      "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=500&q=80",
-    time: "12 min",
-    color: "from-orange-400 to-red-500",
-  },
-  {
-    id: 2,
-    name: "Style Studio",
-    category: "Salon",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=500&q=80",
-    time: "28 min",
-    color: "from-pink-400 to-purple-600",
-  },
-  {
-    id: 3,
-    name: "City Care",
-    category: "Healthcare",
-    image:
-      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=500&q=80",
-    time: "41 min",
-    color: "from-blue-400 to-cyan-500",
-  },
-  {
-    id: 4,
-    name: "Home Decor",
-    category: "Furniture",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80",
-    time: "1 hr",
-    color: "from-amber-400 to-orange-600",
-  },
-  {
-    id: 5,
-    name: "Auto Care",
-    category: "Automobile",
-    image:
-      "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=500&q=80",
-    time: "1 hr",
-    color: "from-slate-500 to-slate-800",
-  },
-  {
-    id: 6,
-    name: "Tech World",
-    category: "IT Services",
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=500&q=80",
-    time: "2 hr",
-    color: "from-indigo-400 to-blue-700",
-  },
-];
+function getStatusBusinessId(status: StatusRecord) {
+  return String(status.business_id || status.businessId || "");
+}
+
+function getStatusImage(status: StatusRecord, business: Business) {
+  return (
+    String(
+      status.image_url ||
+        status.media_url ||
+        status.image ||
+        status.media ||
+        business.image_url ||
+        ""
+    ) || fallbackImages[0]
+  );
+}
+
+function getStatusCaption(status: StatusRecord) {
+  return String(
+    status.content ||
+      status.text ||
+      status.caption ||
+      ""
+  );
+}
+
+function getStatusCreatedAt(status: StatusRecord) {
+  return String(status.created_at || "");
+}
+
+function isStatusLive(status: StatusRecord) {
+  const now = Date.now();
+
+  const explicitExpiry =
+    status.expires_at ||
+    status.expiry ||
+    status.expiresAt;
+
+  if (explicitExpiry) {
+    const expiryTime = new Date(String(explicitExpiry)).getTime();
+
+    if (!Number.isNaN(expiryTime)) {
+      return expiryTime > now;
+    }
+  }
+
+  if (status.created_at) {
+    const createdTime = new Date(
+      String(status.created_at)
+    ).getTime();
+
+    if (!Number.isNaN(createdTime)) {
+      return now - createdTime <= 24 * 60 * 60 * 1000;
+    }
+  }
+
+  return false;
+}
+
+function formatStatusTime(createdAt: string) {
+  if (!createdAt) return "Live now";
+
+  const created = new Date(createdAt).getTime();
+
+  if (Number.isNaN(created)) {
+    return "Live now";
+  }
+
+  const diff = Date.now() - created;
+
+  if (diff < 60 * 1000) {
+    return "Just now";
+  }
+
+  const minutes = Math.floor(diff / (60 * 1000));
+
+  if (minutes < 60) {
+    return `${minutes} min ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return `${hours} hr ago`;
+  }
+
+  return "Today";
+}
 
 function BusinessCard({
   business,
@@ -217,9 +272,9 @@ function BusinessCard({
   return (
     <Link
       href={`/business/${encodeURIComponent(business.id)}`}
-      className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+      className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
     >
-      <div className="relative h-48 overflow-hidden bg-slate-100">
+      <div className="relative h-44 overflow-hidden bg-slate-100">
         <img
           src={image}
           alt={business.business_name}
@@ -227,15 +282,9 @@ function BusinessCard({
           loading="lazy"
         />
 
-        <div className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black text-green-700 shadow-sm backdrop-blur">
-          ✓ ACTIVE
+        <div className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-black text-green-700 shadow-sm">
+          ● Active
         </div>
-
-        <div className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black text-slate-700 shadow-sm">
-          ★ Local
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
       </div>
 
       <div className="p-4">
@@ -249,63 +298,183 @@ function BusinessCard({
               {business.category}
             </p>
           </div>
-
-          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black text-amber-700">
-            ★ 4.8
-          </span>
         </div>
 
-        {(business.short_description || business.description) && (
+        {(business.short_description ||
+          business.description) && (
           <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-            {business.short_description || business.description}
+            {business.short_description ||
+              business.description}
           </p>
         )}
 
         {(business.area || business.city) && (
           <p className="mt-3 text-xs font-semibold text-slate-600">
-            📍 {[business.area, business.city].filter(Boolean).join(", ")}
+            📍{" "}
+            {[business.area, business.city]
+              .filter(Boolean)
+              .join(", ")}
           </p>
         )}
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {business.phone ? (
-            <>
-              <span className="rounded-xl bg-blue-50 py-2.5 text-center text-[11px] font-black text-blue-700">
-                ☎ Call
-              </span>
-
-              <span className="rounded-xl bg-green-50 py-2.5 text-center text-[11px] font-black text-green-700">
-                WhatsApp
-              </span>
-
-              <span className="rounded-xl bg-slate-900 py-2.5 text-center text-[11px] font-black text-white">
-                View
-              </span>
-            </>
-          ) : (
-            <span className="col-span-3 rounded-xl bg-slate-100 py-2.5 text-center text-[11px] font-black text-slate-700">
-              View Business
+        {business.phone && (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <span className="rounded-xl bg-blue-50 py-2.5 text-center text-xs font-black text-blue-700">
+              📞 Call
             </span>
-          )}
-        </div>
+
+            <span className="rounded-xl bg-green-50 py-2.5 text-center text-xs font-black text-green-700">
+              💬 WhatsApp
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );
 }
 
+function StatusViewer({
+  status,
+  onClose,
+}: {
+  status: LiveStatus;
+  onClose: () => void;
+}) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const started = Date.now();
+    const duration = 7000;
+
+    const timer = window.setInterval(() => {
+      const elapsed = Date.now() - started;
+      const value = Math.min(
+        100,
+        (elapsed / duration) * 100
+      );
+
+      setProgress(value);
+
+      if (value >= 100) {
+        window.clearInterval(timer);
+        onClose();
+      }
+    }, 50);
+
+    return () => window.clearInterval(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 p-3 sm:p-6">
+      <div className="relative h-[min(90vh,760px)] w-full max-w-md overflow-hidden rounded-3xl bg-black shadow-2xl">
+        <img
+          src={status.image}
+          alt={status.businessName}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80" />
+
+        <div className="absolute left-3 right-3 top-3 z-10">
+          <div className="h-1 overflow-hidden rounded-full bg-white/30">
+            <div
+              className="h-full rounded-full bg-white transition-[width] duration-75"
+              style={{
+                width: `${progress}%`,
+              }}
+            />
+          </div>
+
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white">
+                <img
+                  src={status.image}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <div className="min-w-0 text-white">
+                <p className="truncate text-sm font-black">
+                  {status.businessName}
+                </p>
+
+                <p className="text-[10px] font-semibold text-white/75">
+                  {formatStatusTime(status.createdAt)}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-xl text-white backdrop-blur"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="absolute bottom-5 left-5 right-5 text-white">
+          <p className="text-xs font-bold text-white/80">
+            {status.category}
+            {status.city
+              ? ` • ${status.city}`
+              : ""}
+          </p>
+
+          {status.caption && (
+            <p className="mt-2 text-lg font-black leading-6">
+              {status.caption}
+            </p>
+          )}
+
+          <Link
+            href={`/business/${encodeURIComponent(
+              status.businessId
+            )}`}
+            className="mt-4 inline-flex rounded-xl bg-white px-5 py-3 text-xs font-black text-slate-900"
+          >
+            View Business
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [businesses, setBusinesses] =
+    useState<Business[]>([]);
+
+  const [liveStatuses, setLiveStatuses] =
+    useState<LiveStatus[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [statusLoading, setStatusLoading] =
+    useState(true);
+
+  const [showAllCategories, setShowAllCategories] =
+    useState(false);
+
   const [query, setQuery] = useState("");
+
   const [selectedStatus, setSelectedStatus] =
-    useState<StatusItem | null>(null);
+    useState<LiveStatus | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadBusinesses() {
-      const { data } = await supabase
+    async function loadHomeData() {
+      setLoading(true);
+      setStatusLoading(true);
+
+      const now = new Date().toISOString();
+
+      const businessesResult = await supabase
         .from("businesses")
         .select(
           `
@@ -331,17 +500,139 @@ export default function HomePage() {
         `
         )
         .eq("listing_status", "active")
-        .or("listing_expires_at.is.null,listing_expires_at.gt.now()")
-        .order("created_at", { ascending: false })
-        .limit(6);
+        .or(
+          `listing_expires_at.is.null,listing_expires_at.gt.${now}`
+        )
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(24);
 
       if (!mounted) return;
 
-      setBusinesses((data || []) as Business[]);
+      const activeBusinesses =
+        (businessesResult.data ||
+          []) as Business[];
+
+      setBusinesses(activeBusinesses);
       setLoading(false);
+
+      /*
+       * REAL 24-HOUR STATUS
+       *
+       * Statuses are loaded from Supabase "statuses" table.
+       * We intentionally use select("*") so the homepage
+       * remains compatible with status records containing
+       * image_url/media_url/content/expires_at etc.
+       */
+      const statusesResult = await supabase
+        .from("statuses")
+        .select("*")
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(100);
+
+      if (!mounted) return;
+
+      if (
+        statusesResult.error ||
+        !statusesResult.data
+      ) {
+        console.error(
+          "Status loading error:",
+          statusesResult.error
+        );
+
+        setLiveStatuses([]);
+        setStatusLoading(false);
+        return;
+      }
+
+      const businessMap = new Map<
+        string,
+        Business
+      >();
+
+      activeBusinesses.forEach((business) => {
+        businessMap.set(
+          String(business.id),
+          business
+        );
+      });
+
+      const finalStatuses: LiveStatus[] = [];
+
+      (
+        statusesResult.data as StatusRecord[]
+      ).forEach((status, index) => {
+        const businessId =
+          getStatusBusinessId(status);
+
+        if (!businessId) return;
+
+        const business =
+          businessMap.get(businessId);
+
+        /*
+         * Only registered ACTIVE businesses
+         * are allowed to appear in Live Status.
+         */
+        if (!business) return;
+
+        if (!isStatusLive(status)) return;
+
+        finalStatuses.push({
+          id:
+            String(status.id || `${businessId}-${index}`),
+
+          businessId,
+
+          businessName:
+            business.business_name,
+
+          category:
+            business.category,
+
+          city:
+            business.city || "",
+
+          image:
+            getStatusImage(status, business),
+
+          caption:
+            getStatusCaption(status),
+
+          createdAt:
+            getStatusCreatedAt(status),
+        });
+      });
+
+      /*
+       * One business should appear only once in the
+       * top Live Status row. Latest status wins because
+       * the database query is ordered newest first.
+       */
+      const uniqueStatuses: LiveStatus[] = [];
+      const seenBusinesses = new Set<string>();
+
+      for (const status of finalStatuses) {
+        if (seenBusinesses.has(status.businessId)) {
+          continue;
+        }
+
+        seenBusinesses.add(status.businessId);
+        uniqueStatuses.push(status);
+      }
+
+      setLiveStatuses(
+        uniqueStatuses.slice(0, 12)
+      );
+
+      setStatusLoading(false);
     }
 
-    loadBusinesses();
+    loadHomeData();
 
     return () => {
       mounted = false;
@@ -356,7 +647,7 @@ export default function HomePage() {
     [showAllCategories]
   );
 
-  function submitSearch(e: React.FormEvent) {
+  function submitSearch(e: FormEvent) {
     e.preventDefault();
 
     const value = query.trim();
@@ -370,130 +661,49 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-white pb-20 text-slate-900 md:pb-0">
-
-      {/* =========================
-          HEADER
-      ========================== */}
-
-      <header className="sticky top-0 z-[80] border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex h-[64px] max-w-7xl items-center justify-between px-3 sm:h-[72px] sm:px-6 lg:px-8">
-
-          <Link
-            href="/"
-            className="flex items-center gap-2.5"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-black text-white shadow-lg shadow-blue-200">
-              L
-            </span>
-
-            <div>
-              <div className="text-base font-black tracking-tight sm:text-lg">
-                LocalPlatform
-              </div>
-
-              <div className="hidden text-[9px] font-bold text-slate-400 sm:block">
-                LOCAL • CONNECT • DISCOVER
-              </div>
-            </div>
-          </Link>
-
-          <div className="hidden items-center gap-7 md:flex">
-            <Link
-              href="/"
-              className="text-sm font-black text-blue-600"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/search"
-              className="text-sm font-bold text-slate-600 hover:text-blue-600"
-            >
-              Explore
-            </Link>
-
-            <Link
-              href="/search"
-              className="text-sm font-bold text-slate-600 hover:text-blue-600"
-            >
-              Services
-            </Link>
-
-            <Link
-              href="/list-business"
-              className="text-sm font-bold text-slate-600 hover:text-blue-600"
-            >
-              For Business
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-lg shadow-sm hover:bg-slate-50 sm:flex"
-            >
-              🔔
-            </button>
-
-            <Link
-              href="/login"
-              className="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-blue-600 sm:px-5 sm:text-sm"
-            >
-              Login
-            </Link>
-          </div>
-
-        </div>
-      </header>
-
+    <main className="min-h-screen overflow-x-hidden bg-white pb-20 text-slate-900 md:pb-0">
 
       {/* =========================
           HERO
-      ========================== */}
+      ========================= */}
+      <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-indigo-200/30 blur-3xl" />
 
-      <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-b from-blue-50 via-white to-white">
-
-        <div className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-blue-200/30 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 top-10 h-72 w-72 rounded-full bg-indigo-200/30 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-3 pb-7 pt-7 sm:px-6 sm:pb-12 sm:pt-12 lg:px-8">
-
+        <div className="relative mx-auto max-w-7xl px-3 pb-8 pt-7 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-blue-600 shadow-sm sm:text-[10px]">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-              India Local Business Network
+            <div className="mb-2 inline-flex rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-600 shadow-sm">
+              India Local Business Platform
             </div>
 
-            <h1 className="text-[34px] font-black leading-[1.02] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="text-[32px] font-black leading-[1.02] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
               Find Local Businesses
               <br />
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="text-blue-600">
                 & Services Near You
               </span>
             </h1>
 
-            <p className="mx-auto mt-3 max-w-2xl text-xs leading-5 text-slate-500 sm:mt-5 sm:text-base sm:leading-7">
-              Discover trusted businesses, shops and professionals.
-              See live updates, offers and connect directly with local
-              businesses.
+            <p className="mx-auto mt-3 max-w-2xl text-xs leading-5 text-slate-500 sm:text-base sm:leading-6">
+              Discover trusted businesses, shops,
+              professionals and services in your city.
             </p>
 
             {/* SEARCH */}
-
             <form
               onSubmit={submitSearch}
-              className="mx-auto mt-5 flex max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-200/60 sm:mt-7 sm:rounded-2xl"
+              className="mx-auto mt-5 flex max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-blue-100/50"
             >
               <div className="flex min-w-0 flex-1 items-center">
-                <span className="px-2 text-lg sm:text-xl">
+                <span className="px-2 text-xl">
                   🔎
                 </span>
 
                 <input
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) =>
+                    setQuery(e.target.value)
+                  }
                   placeholder="Search business, service, category or city"
                   className="min-w-0 flex-1 bg-transparent px-1 py-3 text-xs font-semibold outline-none sm:text-sm"
                 />
@@ -501,230 +711,168 @@ export default function HomePage() {
 
               <button
                 type="submit"
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 text-xs font-black text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 sm:px-8 sm:text-sm"
+                className="rounded-xl bg-blue-600 px-5 text-xs font-black text-white transition hover:bg-blue-700 sm:px-8 sm:text-sm"
               >
                 Search
               </button>
             </form>
 
             {/* POPULAR SEARCHES */}
-
             <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 sm:justify-center sm:overflow-visible">
               {popularSearches.map((item) => (
                 <Link
                   key={item}
-                  href={`/search?q=${encodeURIComponent(item)}`}
+                  href={`/search?q=${encodeURIComponent(
+                    item
+                  )}`}
                   className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-blue-200 hover:text-blue-600 sm:text-xs"
                 >
                   {item}
                 </Link>
               ))}
             </div>
-
           </div>
         </div>
       </section>
 
-
       {/* =========================
-          24 HOUR LIVE STATUS
-      ========================== */}
-
-      <section className="mx-auto max-w-7xl px-3 pt-5 sm:px-6 sm:pt-8 lg:px-8">
-
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-
-          <div className="flex items-center justify-between px-4 pt-4 sm:px-6 sm:pt-5">
-
+          LIVE 24H STATUS
+      ========================= */}
+      <section className="mx-auto max-w-7xl px-3 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-sm">
+                  🔴
                 </span>
 
-                <h2 className="text-lg font-black tracking-tight text-slate-900 sm:text-2xl">
+                <h2 className="text-lg font-black sm:text-2xl">
                   Live Near You
                 </h2>
-
-                <span className="rounded-full bg-red-50 px-2 py-1 text-[8px] font-black text-red-600 sm:text-[9px]">
-                  24H
-                </span>
-
               </div>
 
-              <p className="mt-1 text-[10px] text-slate-500 sm:text-sm">
-                Fresh updates from local businesses
+              <p className="mt-1 text-[11px] text-slate-500 sm:text-sm">
+                Fresh business updates from the last 24 hours.
               </p>
             </div>
 
-            <Link
-              href="/search"
-              className="shrink-0 rounded-full bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-600 hover:bg-blue-100 sm:px-4 sm:text-xs"
-            >
-              View All
-            </Link>
-
+            <span className="hidden rounded-full bg-green-50 px-3 py-1.5 text-[10px] font-black text-green-700 sm:block">
+              24H STATUS
+            </span>
           </div>
 
+          {statusLoading ? (
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4, 5, 6].map(
+                (item) => (
+                  <div
+                    key={item}
+                    className="flex w-[78px] shrink-0 flex-col items-center"
+                  >
+                    <div className="h-[70px] w-[70px] animate-pulse rounded-full bg-slate-100" />
 
-          <div className="flex gap-4 overflow-x-auto px-4 py-5 pb-6 sm:gap-6 sm:px-6">
-
-            {/* YOUR STATUS */}
-
-            <button
-              type="button"
-              className="group flex w-[74px] shrink-0 flex-col items-center"
-              onClick={() =>
-                alert(
-                  "Status posting feature will be connected to Supabase in the next step."
-                )
-              }
-            >
-
-              <div className="relative">
-
-                <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full border-[3px] border-dashed border-blue-200 bg-blue-50 shadow-sm transition group-hover:scale-105">
-
-                  <div className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-white text-2xl font-light text-blue-600 shadow-inner">
-                    +
+                    <div className="mt-2 h-3 w-16 animate-pulse rounded bg-slate-100" />
                   </div>
-
-                </div>
-
-                <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-[10px] font-black text-white">
-                  +
-                </span>
-
+                )
+              )}
+            </div>
+          ) : liveStatuses.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-7 text-center">
+              <div className="text-3xl">
+                📸
               </div>
 
-              <span className="mt-2 w-full truncate text-center text-[10px] font-extrabold text-slate-700">
-                Your Status
-              </span>
+              <p className="mt-2 text-sm font-black text-slate-800">
+                No live business updates yet
+              </p>
 
-            </button>
-
-
-            {/* BUSINESS STATUSES */}
-
-            {liveStatuses.map((status) => (
-              <button
-                key={status.id}
-                type="button"
-                onClick={() => setSelectedStatus(status)}
-                className="group flex w-[74px] shrink-0 flex-col items-center"
-              >
-
-                <div
-                  className={`rounded-full bg-gradient-to-br ${status.color} p-[3px] shadow-sm transition duration-200 group-hover:scale-105 group-hover:shadow-lg`}
+              <p className="mt-1 text-xs text-slate-500">
+                Business owners can post a 24-hour status from their dashboard.
+              </p>
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-1">
+              {liveStatuses.map((status) => (
+                <button
+                  type="button"
+                  key={status.id}
+                  onClick={() =>
+                    setSelectedStatus(status)
+                  }
+                  className="group w-[78px] shrink-0 text-center"
                 >
-
-                  <div className="rounded-full bg-white p-[3px]">
-
-                    <img
-                      src={status.image}
-                      alt={status.name}
-                      className="h-[62px] w-[62px] rounded-full object-cover"
-                    />
-
+                  <div className="mx-auto h-[72px] w-[72px] rounded-full bg-gradient-to-tr from-orange-500 via-pink-500 to-purple-600 p-[3px] shadow-md">
+                    <div className="h-full w-full rounded-full bg-white p-[2px]">
+                      <img
+                        src={status.image}
+                        alt={status.businessName}
+                        className="h-full w-full rounded-full object-cover transition group-hover:scale-105"
+                      />
+                    </div>
                   </div>
 
-                </div>
+                  <p className="mt-2 line-clamp-1 text-[10px] font-black text-slate-800">
+                    {status.businessName}
+                  </p>
 
-                <span className="mt-2 w-full truncate text-center text-[10px] font-extrabold text-slate-800">
-                  {status.name}
-                </span>
-
-                <span className="mt-0.5 w-full truncate text-center text-[9px] font-medium text-slate-400">
-                  {status.time} ago
-                </span>
-
-              </button>
-            ))}
-
-          </div>
-
+                  <p className="mt-0.5 text-[9px] font-semibold text-slate-400">
+                    {formatStatusTime(
+                      status.createdAt
+                    )}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-
       </section>
-
 
       {/* =========================
-          QUICK DISCOVERY STRIP
-      ========================== */}
+          QUICK DISCOVERY
+      ========================= */}
+      <section className="mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ["📍", "Nearby", "Find services around you"],
+            ["⚡", "Quick Search", "Search by category"],
+            ["⭐", "Trusted", "Discover active listings"],
+            ["💬", "Connect", "Call or message businesses"],
+          ].map(
+            ([icon, title, description]) => (
+              <Link
+                key={title}
+                href="/search"
+                className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:border-blue-100 hover:bg-blue-50"
+              >
+                <div className="text-2xl">
+                  {icon}
+                </div>
 
-      <section className="mx-auto max-w-7xl px-3 pt-5 sm:px-6 sm:pt-7 lg:px-8">
+                <p className="mt-2 text-xs font-black text-slate-900 sm:text-sm">
+                  {title}
+                </p>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-
-          <Link
-            href="/search"
-            className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50 to-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="text-xl">📍</div>
-            <div className="mt-2 text-xs font-black text-slate-900">
-              Nearby
-            </div>
-            <div className="mt-1 text-[10px] text-slate-500">
-              Find services around you
-            </div>
-          </Link>
-
-          <Link
-            href="/search"
-            className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-orange-50 to-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="text-xl">🔥</div>
-            <div className="mt-2 text-xs font-black text-slate-900">
-              Trending
-            </div>
-            <div className="mt-1 text-[10px] text-slate-500">
-              Popular local businesses
-            </div>
-          </Link>
-
-          <Link
-            href="/search"
-            className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-green-50 to-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="text-xl">🎁</div>
-            <div className="mt-2 text-xs font-black text-slate-900">
-              Offers
-            </div>
-            <div className="mt-1 text-[10px] text-slate-500">
-              Deals available today
-            </div>
-          </Link>
-
-          <Link
-            href="/search"
-            className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-purple-50 to-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="text-xl">✓</div>
-            <div className="mt-2 text-xs font-black text-slate-900">
-              Trusted
-            </div>
-            <div className="mt-1 text-[10px] text-slate-500">
-              Discover active listings
-            </div>
-          </Link>
-
+                <p className="mt-1 text-[10px] leading-4 text-slate-500 sm:text-xs">
+                  {description}
+                </p>
+              </Link>
+            )
+          )}
         </div>
-
       </section>
-
 
       {/* =========================
           CATEGORIES
-      ========================== */}
-
-      <section className="mx-auto max-w-7xl px-3 py-7 sm:px-6 sm:py-9 lg:px-8">
-
+      ========================= */}
+      <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
         <div className="mb-5 flex items-end justify-between">
-
           <div>
-            <h2 className="text-lg font-black tracking-tight sm:text-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">
+              Explore
+            </p>
+
+            <h2 className="mt-1 text-lg font-black sm:text-2xl">
               Browse Categories
             </h2>
 
@@ -736,208 +884,77 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() =>
-              setShowAllCategories((value) => !value)
+              setShowAllCategories(
+                (value) => !value
+              )
             }
-            className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-extrabold text-blue-600 sm:text-sm"
-          >
-            {showAllCategories ? "Show Less" : "View All"}
-          </button>
-
-        </div>
-
-
-        <div className="grid grid-cols-4 gap-x-2 gap-y-6 sm:grid-cols-4 sm:gap-5 md:grid-cols-6 lg:grid-cols-8">
-
-          {visibleCategories.map((category) => (
-            <Link
-              key={category.name}
-              href={`/search?category=${encodeURIComponent(
-                category.name
-              )}`}
-              className="group flex min-h-[82px] flex-col items-center rounded-2xl border border-transparent px-1 py-2 text-center transition hover:border-blue-100 hover:bg-blue-50/50"
-            >
-
-              <span className="flex h-11 items-center justify-center text-[30px] leading-none transition-transform group-hover:scale-110 sm:h-14 sm:text-[38px]">
-                {category.icon}
-              </span>
-
-              <span className="mt-2 line-clamp-2 px-1 text-[10px] font-bold leading-4 text-slate-700 group-hover:text-blue-600 sm:text-xs">
-                {category.name}
-              </span>
-
-            </Link>
-          ))}
-
-        </div>
-
-      </section>
-
-
-      {/* =========================
-          OFFERS
-      ========================== */}
-
-      <section className="mx-auto max-w-7xl px-3 pb-7 sm:px-6 sm:pb-9 lg:px-8">
-
-        <div className="mb-5 flex items-end justify-between">
-
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black sm:text-2xl">
-                Today&apos;s Offers
-              </h2>
-
-              <span className="rounded-full bg-red-50 px-2 py-1 text-[8px] font-black text-red-600">
-                NEW
-              </span>
-            </div>
-
-            <p className="mt-1 text-[11px] text-slate-500 sm:text-sm">
-              Deals and promotions from local businesses.
-            </p>
-          </div>
-
-          <Link
-            href="/search"
             className="text-[11px] font-extrabold text-blue-600 sm:text-sm"
           >
-            All Offers →
-          </Link>
-
+            {showAllCategories
+              ? "Show Less"
+              : "View All"}
+          </button>
         </div>
 
+        <div className="grid grid-cols-4 gap-x-2 gap-y-6 sm:grid-cols-4 sm:gap-5 md:grid-cols-6 lg:grid-cols-8">
+          {visibleCategories.map(
+            (category) => (
+              <Link
+                key={category.name}
+                href={`/search?category=${encodeURIComponent(
+                  category.name
+                )}`}
+                className="group flex min-h-[82px] flex-col items-center text-center"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-[28px] shadow-sm transition group-hover:-translate-y-1 group-hover:bg-blue-50 sm:h-14 sm:w-14 sm:text-[34px]">
+                  {category.icon}
+                </span>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-
-          <div className="relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-red-50 p-5">
-
-            <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-orange-200/40" />
-
-            <span className="relative rounded-full bg-white px-3 py-1.5 text-[9px] font-black text-orange-600 shadow-sm">
-              TODAY ONLY
-            </span>
-
-            <h3 className="relative mt-4 text-xl font-black">
-              20% OFF Dining
-            </h3>
-
-            <p className="relative mt-1 text-xs leading-5 text-slate-500">
-              Special dining offer from selected local restaurants.
-            </p>
-
-            <Link
-              href="/search?q=Restaurant"
-              className="relative mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-2.5 text-[11px] font-black text-white"
-            >
-              View Offer
-            </Link>
-
-          </div>
-
-
-          <div className="relative overflow-hidden rounded-3xl border border-purple-100 bg-gradient-to-br from-purple-50 via-white to-pink-50 p-5">
-
-            <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-purple-200/40" />
-
-            <span className="relative rounded-full bg-white px-3 py-1.5 text-[9px] font-black text-purple-600 shadow-sm">
-              LIMITED
-            </span>
-
-            <h3 className="relative mt-4 text-xl font-black">
-              Salon Special
-            </h3>
-
-            <p className="relative mt-1 text-xs leading-5 text-slate-500">
-              Discover beauty and salon services near your location.
-            </p>
-
-            <Link
-              href="/search?q=Salon"
-              className="relative mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-2.5 text-[11px] font-black text-white"
-            >
-              Explore
-            </Link>
-
-          </div>
-
-
-          <div className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-5">
-
-            <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-blue-200/40" />
-
-            <span className="relative rounded-full bg-white px-3 py-1.5 text-[9px] font-black text-blue-600 shadow-sm">
-              DISCOVER
-            </span>
-
-            <h3 className="relative mt-4 text-xl font-black">
-              Local Services
-            </h3>
-
-            <p className="relative mt-1 text-xs leading-5 text-slate-500">
-              Connect directly with professionals and service providers.
-            </p>
-
-            <Link
-              href="/search"
-              className="relative mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-2.5 text-[11px] font-black text-white"
-            >
-              Discover
-            </Link>
-
-          </div>
-
+                <span className="mt-2 line-clamp-2 px-1 text-[10px] font-bold leading-4 text-slate-700 group-hover:text-blue-600 sm:text-xs">
+                  {category.name}
+                </span>
+              </Link>
+            )
+          )}
         </div>
-
       </section>
-
 
       {/* =========================
           BUSINESS OWNER CTA
-      ========================== */}
-
+      ========================= */}
       <section className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-5 text-white shadow-xl shadow-blue-100 sm:p-8">
-
-          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10" />
-          <div className="absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-indigo-300/10" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-5 text-white shadow-xl sm:p-8">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
 
           <div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-
             <div>
-
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-blue-100 sm:text-[10px]">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-100">
                 For Business Owners
               </p>
 
-              <h2 className="mt-1 text-xl font-black tracking-tight sm:text-3xl">
+              <h2 className="mt-1 text-xl font-black sm:text-3xl">
                 Grow Your Business Online
               </h2>
 
               <p className="mt-2 max-w-xl text-xs leading-5 text-blue-100 sm:text-sm">
-                Create your business profile, get discovered by customers,
-                share updates and generate enquiries.
+                List your business and get discovered by customers near you.
               </p>
-
             </div>
 
             <Link
               href="/list-business"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 text-sm font-black text-blue-700 shadow-sm transition hover:bg-blue-50"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 text-sm font-black text-blue-700 shadow-lg transition hover:bg-blue-50"
             >
-              List Your Business →
+              List Your Business
             </Link>
-
           </div>
 
-
           <div className="relative mt-5 grid grid-cols-2 gap-2 text-[10px] font-bold text-blue-50 sm:grid-cols-4 sm:text-xs">
-
             {[
               "Online visibility",
               "Customer enquiries",
               "Business profile",
-              "Photos & reviews",
+              "24H Status",
             ].map((item) => (
               <div
                 key={item}
@@ -946,25 +963,22 @@ export default function HomePage() {
                 ✓ {item}
               </div>
             ))}
-
           </div>
-
         </div>
-
       </section>
-
 
       {/* =========================
           POPULAR BUSINESSES
-      ========================== */}
-
-      <section className="mx-auto max-w-7xl px-3 py-7 sm:px-6 sm:py-9 lg:px-8">
-
-        <div className="mb-5 flex items-end justify-between">
-
+      ========================= */}
+      <section className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="mb-4 flex items-end justify-between">
           <div>
-            <h2 className="text-lg font-black sm:text-2xl">
-              Popular Businesses Near You
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">
+              Discover
+            </p>
+
+            <h2 className="mt-1 text-lg font-black sm:text-2xl">
+              Popular Businesses
             </h2>
 
             <p className="mt-1 text-[11px] text-slate-500 sm:text-sm">
@@ -974,31 +988,25 @@ export default function HomePage() {
 
           <Link
             href="/search"
-            className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-extrabold text-blue-600 sm:text-sm"
+            className="text-[11px] font-extrabold text-blue-600 sm:text-sm"
           >
-            View All →
+            View All
           </Link>
-
         </div>
 
-
         {loading ? (
-
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
-            {[1, 2, 3].map((number) => (
-              <div
-                key={number}
-                className="h-80 animate-pulse rounded-3xl bg-slate-100"
-              />
-            ))}
-
+            {[1, 2, 3, 4, 5, 6].map(
+              (number) => (
+                <div
+                  key={number}
+                  className="h-72 animate-pulse rounded-2xl bg-slate-100"
+                />
+              )
+            )}
           </div>
-
         ) : businesses.length === 0 ? (
-
           <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-
             <div className="text-4xl">
               🏪
             </div>
@@ -1013,326 +1021,122 @@ export default function HomePage() {
 
             <Link
               href="/list-business"
-              className="mt-5 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-sm"
+              className="mt-5 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white"
             >
               List Your Business
             </Link>
-
           </div>
-
         ) : (
-
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
-            {businesses.map((business, index) => (
-              <BusinessCard
-                key={business.id}
-                business={business}
-                index={index}
-              />
-            ))}
-
+            {businesses
+              .slice(0, 6)
+              .map((business, index) => (
+                <BusinessCard
+                  key={business.id}
+                  business={business}
+                  index={index}
+                />
+              ))}
           </div>
-
         )}
-
       </section>
-
 
       {/* =========================
           PLATFORM FEATURES
-      ========================== */}
+      ========================= */}
+      <section className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-10 lg:px-8">
+        <div className="rounded-3xl bg-slate-950 p-6 text-white sm:p-10">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-300">
+              LocalPlatform
+            </p>
 
-      <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+            <h2 className="mt-2 text-2xl font-black sm:text-4xl">
+              Everything Local,
+              <br />
+              in One Place.
+            </h2>
 
-        <div className="mb-5">
-          <h2 className="text-lg font-black sm:text-2xl">
-            Everything Local, In One Place
-          </h2>
+            <p className="mt-3 text-xs leading-5 text-slate-400 sm:text-sm">
+              Search, discover and connect with local businesses and professionals.
+            </p>
+          </div>
 
-          <p className="mt-1 text-[11px] text-slate-500 sm:text-sm">
-            Built for customers and local businesses.
-          </p>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["🔎", "Smart Search", "Find businesses by service, category and city."],
+              ["📸", "24H Status", "See fresh updates from local businesses."],
+              ["📞", "Direct Contact", "Call or connect with businesses directly."],
+              ["📍", "Local Discovery", "Discover services available around you."],
+            ].map(
+              ([icon, title, description]) => (
+                <div
+                  key={title}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                >
+                  <div className="text-2xl">
+                    {icon}
+                  </div>
+
+                  <h3 className="mt-3 text-sm font-black">
+                    {title}
+                  </h3>
+
+                  <p className="mt-1 text-[10px] leading-4 text-slate-400 sm:text-xs">
+                    {description}
+                  </p>
+                </div>
+              )
+            )}
+          </div>
         </div>
-
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-lg">
-              ◉
-            </div>
-
-            <h3 className="mt-3 text-sm font-black">
-              24h Status
-            </h3>
-
-            <p className="mt-1 text-[10px] leading-4 text-slate-500">
-              See fresh updates from local businesses.
-            </p>
-
-          </div>
-
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-lg">
-              🔎
-            </div>
-
-            <h3 className="mt-3 text-sm font-black">
-              Smart Discovery
-            </h3>
-
-            <p className="mt-1 text-[10px] leading-4 text-slate-500">
-              Find relevant businesses and services.
-            </p>
-
-          </div>
-
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-lg">
-              💬
-            </div>
-
-            <h3 className="mt-3 text-sm font-black">
-              Direct Chat
-            </h3>
-
-            <p className="mt-1 text-[10px] leading-4 text-slate-500">
-              Connect directly with businesses.
-            </p>
-
-          </div>
-
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-lg">
-              📊
-            </div>
-
-            <h3 className="mt-3 text-sm font-black">
-              Business Analytics
-            </h3>
-
-            <p className="mt-1 text-[10px] leading-4 text-slate-500">
-              Track views, calls and enquiries.
-            </p>
-
-          </div>
-
-        </div>
-
       </section>
 
-
       {/* =========================
-          MOBILE NAVIGATION
-      ========================== */}
-
+          MOBILE NAV
+      ========================= */}
       <nav
         aria-label="Mobile navigation"
-        className="fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200 bg-white/95 shadow-[0_-5px_22px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200 bg-white/95 shadow-[0_-5px_22px_rgba(15,23,42,0.10)] backdrop-blur md:hidden"
       >
-
         <div className="mx-auto grid max-w-lg grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
+          {[
+            ["Home", "/", "🏠"],
+            ["Search", "/search", "🔎"],
+            ["Status", "/", "📸"],
+            ["List", "/list-business", "➕"],
+            ["Account", "/dashboard", "👤"],
+          ].map(
+            ([label, href, icon]) => (
+              <Link
+                key={label}
+                href={href}
+                className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-slate-600 transition hover:text-blue-600"
+              >
+                <span className="flex h-8 w-8 items-center justify-center text-[18px] leading-none">
+                  {icon}
+                </span>
 
-          <Link
-            href="/"
-            className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-blue-600"
-          >
-            <span className="text-[19px]">🏠</span>
-            <span className="text-[9px] font-extrabold">
-              Home
-            </span>
-          </Link>
-
-          <Link
-            href="/search"
-            className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-slate-500"
-          >
-            <span className="text-[19px]">🔎</span>
-            <span className="text-[9px] font-extrabold">
-              Explore
-            </span>
-          </Link>
-
-          <Link
-            href="/list-business"
-            className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-slate-500"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg shadow-blue-200">
-              +
-            </span>
-            <span className="text-[9px] font-extrabold">
-              List
-            </span>
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-slate-500"
-          >
-            <span className="text-[19px]">📋</span>
-            <span className="text-[9px] font-extrabold">
-              Dashboard
-            </span>
-          </Link>
-
-          <Link
-            href="/login"
-            className="flex min-h-[62px] flex-col items-center justify-center gap-1 text-slate-500"
-          >
-            <span className="text-[19px]">👤</span>
-            <span className="text-[9px] font-extrabold">
-              Profile
-            </span>
-          </Link>
-
+                <span className="text-[9px] font-extrabold">
+                  {label}
+                </span>
+              </Link>
+            )
+          )}
         </div>
-
       </nav>
 
-
       {/* =========================
-          STATUS VIEWER MODAL
-      ========================== */}
-
+          STATUS VIEWER
+      ========================= */}
       {selectedStatus && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-0 backdrop-blur-sm sm:p-5"
-          onClick={() => setSelectedStatus(null)}
-        >
-
-          <div
-            className="relative h-full w-full overflow-hidden bg-slate-950 sm:h-[90vh] sm:max-w-md sm:rounded-3xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-
-            {/* STATUS IMAGE */}
-
-            <img
-              src={selectedStatus.image}
-              alt={selectedStatus.name}
-              className="h-full w-full object-cover"
-            />
-
-            {/* TOP GRADIENT */}
-
-            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/70 to-transparent" />
-
-            {/* PROGRESS */}
-
-            <div className="absolute left-4 right-4 top-3 h-1 overflow-hidden rounded-full bg-white/30">
-
-              <div
-                className="h-full w-[45%] rounded-full bg-white"
-                style={{
-                  animation:
-                    "statusProgress 5s linear forwards",
-                }}
-              />
-
-            </div>
-
-
-            {/* HEADER */}
-
-            <div className="absolute left-4 right-4 top-7 flex items-center justify-between">
-
-              <div className="flex items-center gap-3">
-
-                <img
-                  src={selectedStatus.image}
-                  alt=""
-                  className="h-10 w-10 rounded-full border-2 border-white object-cover"
-                />
-
-                <div>
-
-                  <div className="text-sm font-black text-white">
-                    {selectedStatus.name}
-                  </div>
-
-                  <div className="text-[10px] font-medium text-white/75">
-                    {selectedStatus.category} •{" "}
-                    {selectedStatus.time} ago
-                  </div>
-
-                </div>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedStatus(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-xl text-white backdrop-blur"
-              >
-                ×
-              </button>
-
-            </div>
-
-
-            {/* BOTTOM CONTENT */}
-
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-5 pb-7 pt-28">
-
-              <div className="text-xl font-black text-white">
-                {selectedStatus.name}
-              </div>
-
-              <p className="mt-1 text-xs text-white/80">
-                Fresh update from this local business.
-              </p>
-
-              <div className="mt-4 flex gap-2">
-
-                <Link
-                  href="/search"
-                  onClick={() => setSelectedStatus(null)}
-                  className="flex-1 rounded-xl bg-white px-4 py-3 text-center text-xs font-black text-slate-900"
-                >
-                  View Business
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedStatus(null);
-                    alert(
-                      "Reply / Chat feature will be connected in the next step."
-                    );
-                  }}
-                  className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-xs font-black text-white"
-                >
-                  💬 Reply
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <style jsx>{`
-            @keyframes statusProgress {
-              from {
-                width: 0%;
-              }
-              to {
-                width: 100%;
-              }
-            }
-          `}</style>
-
-        </div>
+        <StatusViewer
+          status={selectedStatus}
+          onClose={() =>
+            setSelectedStatus(null)
+          }
+        />
       )}
-
     </main>
   );
 }
