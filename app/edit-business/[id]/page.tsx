@@ -1,165 +1,51 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
 
-const gallery = [
-  "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80",
-  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=400&q=80",
-];
+type BusinessForm = { business_name: string; category: string; city: string; area: string; address: string; description: string; image_url: string; phone: string };
 
-export default function BusinessProfilePage() {
-  const [saved, setSaved] = useState(false);
+export default function EditBusinessPage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const businessId = String(params.id);
+  const [form, setForm] = useState<BusinessForm>({ business_name: "", category: "", city: "", area: "", address: "", description: "", image_url: "", phone: "" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  return (
-    <main className="lp-mobile-app lp-profile-page">
-      <div className="lp-profile-hero">
-        <div
-          className="lp-profile-cover"
-          style={{ backgroundImage: `url(${gallery[0]})` }}
-        />
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.replace(`/login?next=/edit-business/${businessId}`); return; }
+      const { data, error: loadError } = await supabase.from("businesses").select("business_name,category,city,area,address,description,short_description,image_url,phone,owner_id").eq("id", businessId).maybeSingle();
+      if (!mounted) return;
+      if (loadError || !data || data.owner_id !== user.id) { setError("Business nahi mila ya aap owner nahi hain."); setLoading(false); return; }
+      setForm({ business_name: data.business_name ?? "", category: data.category ?? "", city: data.city ?? "", area: data.area ?? "", address: data.address ?? "", description: data.description ?? data.short_description ?? "", image_url: data.image_url ?? "", phone: data.phone ?? "" });
+      setLoading(false);
+    }
+    void load();
+    return () => { mounted = false; };
+  }, [businessId, router]);
 
-        <div className="lp-profile-hero-actions">
-          <Link href="/" className="lp-round-action" aria-label="Go back">
-            ‹
-          </Link>
+  function update(key: keyof BusinessForm, value: string) { setForm((current) => ({ ...current, [key]: value })); }
 
-          <button
-            className="lp-round-action"
-            onClick={() => setSaved(!saved)}
-            aria-label="Save business"
-          >
-            {saved ? "♥" : "♡"}
-          </button>
-        </div>
-      </div>
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    if (!form.business_name.trim() || !form.category.trim() || saving) return;
+    if (form.image_url && !/^https?:\/\//i.test(form.image_url.trim())) { setError("Visual URL http:// ya https:// se start hona chahiye."); return; }
+    setSaving(true); setError(""); setMessage("");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setError("Session expire ho gaya. Dobara login karein."); setSaving(false); return; }
+    const { error: saveError } = await supabase.from("businesses").update({ business_name: form.business_name.trim(), category: form.category.trim(), city: form.city.trim() || null, area: form.area.trim() || null, address: form.address.trim() || null, description: form.description.trim() || null, image_url: form.image_url.trim() || null, phone: form.phone.trim() || null }).eq("id", businessId).eq("owner_id", user.id);
+    if (saveError) setError("Changes save nahi ho paaye.");
+    else setMessage("Business profile updated.");
+    setSaving(false);
+  }
 
-      <section className="lp-business-summary">
-        <div className="lp-business-logo">🍛</div>
-
-        <div className="lp-business-heading">
-          <div>
-            <h1>Spice Hub Restaurant</h1>
-            <p>North Indian · Chinese · Fast Food</p>
-          </div>
-
-          <span className="lp-verified">✓</span>
-        </div>
-
-        <div className="lp-profile-rating">
-          <strong>★ 4.8</strong>
-          <span>320 reviews</span>
-          <b>Open Now</b>
-        </div>
-
-        <p className="lp-profile-location">
-          ⌖ Gomti Nagar, Lucknow
-        </p>
-      </section>
-
-      <div className="lp-profile-actions">
-        <button>☎ Call</button>
-        <button>◉ WhatsApp</button>
-        <button>◌ Chat</button>
-      </div>
-
-      <section className="lp-profile-section">
-        <div className="lp-profile-section-heading">
-          <h2>About this business</h2>
-        </div>
-
-        <p className="lp-about-text">
-          Spice Hub serves delicious North Indian and Chinese food made with
-          fresh ingredients. Visit us for family meals, quick bites and special
-          combo offers.
-        </p>
-      </section>
-
-      <section className="lp-profile-section">
-        <div className="lp-profile-section-heading">
-          <h2>Photos</h2>
-          <a href="#photos">See All</a>
-        </div>
-
-        <div className="lp-gallery">
-          {gallery.map((image) => (
-            <div
-              key={image}
-              className="lp-gallery-image"
-              style={{ backgroundImage: `url(${image})` }}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="lp-profile-section">
-        <div className="lp-profile-section-heading">
-          <h2>Offers</h2>
-          <a href="#offers">See All</a>
-        </div>
-
-        <div className="lp-profile-offer">
-          <span>🏷</span>
-          <div>
-            <strong>20% OFF on All Combos</strong>
-            <small>Valid this week · Spice Hub</small>
-          </div>
-          <button>Use</button>
-        </div>
-      </section>
-
-      <section className="lp-profile-section">
-        <div className="lp-profile-section-heading">
-          <h2>Customer reviews</h2>
-          <a href="#reviews">See All</a>
-        </div>
-
-        <article className="lp-review-card">
-          <div className="lp-review-avatar">A</div>
-
-          <div>
-            <div className="lp-review-top">
-              <strong>Arjun Sharma</strong>
-              <span>★ 5.0</span>
-            </div>
-
-            <p>
-              Great taste, quick service and very friendly staff. Recommended
-              for family dinners.
-            </p>
-
-            <small>2 days ago</small>
-          </div>
-        </article>
-      </section>
-
-      <nav className="lp-bottom-nav">
-        <Link className="active" href="/">
-          <span>⌂</span>
-          <small>Home</small>
-        </Link>
-
-        <Link href="/search">
-          <span>⌕</span>
-          <small>Explore</small>
-        </Link>
-
-        <Link href="/search">
-          <span>⌖</span>
-          <small>Nearby</small>
-        </Link>
-
-        <Link href="/chat">
-          <span>◌</span>
-          <small>Chat</small>
-        </Link>
-
-        <Link href="/profile">
-          <span>♙</span>
-          <small>Profile</small>
-        </Link>
-      </nav>
-    </main>
-  );
+  return <main className="lp-mobile-app lp-profile-page"><header className="lp-search-header"><Link href={`/business/${businessId}`} className="lp-back-button">‹</Link><div><h1>Edit listing</h1><p>Only your business details and visual</p></div></header>{loading ? <div className="lp-empty-profile"><span>⌛</span><h3>Loading listing…</h3></div> : error && !form.business_name ? <div className="lp-empty-profile"><span>!</span><h3>{error}</h3><p><Link href="/dashboard">Back to dashboard</Link></p></div> : <form className="lp-edit-form" onSubmit={save}><label>Business name<input value={form.business_name} onChange={(event) => update("business_name", event.target.value)} maxLength={120} required /></label><label>Category<input value={form.category} onChange={(event) => update("category", event.target.value)} maxLength={80} required /></label><label>City<input value={form.city} onChange={(event) => update("city", event.target.value)} maxLength={80} /></label><label>Area<input value={form.area} onChange={(event) => update("area", event.target.value)} maxLength={120} /></label><label>Address<input value={form.address} onChange={(event) => update("address", event.target.value)} maxLength={240} /></label><label>Phone<input value={form.phone} onChange={(event) => update("phone", event.target.value)} maxLength={30} inputMode="tel" /></label><label>Business visual URL<input value={form.image_url} onChange={(event) => update("image_url", event.target.value)} placeholder="Paste your own image URL" inputMode="url" /></label><label>Description<textarea value={form.description} onChange={(event) => update("description", event.target.value)} maxLength={1000} /></label>{error && <p className="lp-inline-notice">{error}</p>}{message && <p className="lp-inline-success">{message}</p>}<button className="lp-edit-submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button><Link href={`/business/${businessId}`} className="lp-edit-cancel">Cancel</Link></form>}<nav className="lp-bottom-nav"><Link href="/"><span>⌂</span><small>Home</small></Link><Link href="/search"><span>⌕</span><small>Explore</small></Link><Link href="/status"><span>⊙</span><small>Status</small></Link><Link href="/chat"><span>◌</span><small>Chat</small></Link><Link href="/profile"><span>♙</span><small>Profile</small></Link></nav></main>;
 }

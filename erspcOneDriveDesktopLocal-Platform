@@ -1,0 +1,37 @@
+warning: in the working copy of 'app/admin/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/business/[id]/BusinessGallery.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/business/[id]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/chat/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/components/HomeTopAds.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/dashboard/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/edit-business/[id]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/globals.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/lib/supabase.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/list-business/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/login/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/profile/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/robots.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/search/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/status/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'next.config.ts', LF will be replaced by CRLF the next time Git touches it
+ app/admin/page.tsx                    |  15 [32m+[m[31m-[m
+ app/business/[id]/BusinessGallery.tsx |  37 [32m++[m[31m-[m
+ app/business/[id]/page.tsx            | 129 [32m++[m[31m-------[m
+ app/chat/page.tsx                     | 244 [32m+++++++++++++[m[31m----[m
+ app/components/HomeTopAds.tsx         |  49 [32m++[m[31m--[m
+ app/dashboard/page.tsx                |  24 [32m+[m[31m-[m
+ app/edit-business/[id]/page.tsx       | 208 [32m++++[m[31m----------[m
+ app/globals.css                       |  41 [32m++[m[31m-[m
+ app/layout.tsx                        |  47 [32m+++[m[31m-[m
+ app/lib/supabase.ts                   |  26 [32m+[m[31m-[m
+ app/list-business/page.tsx            | 138 [32m+++++++[m[31m---[m
+ app/login/page.tsx                    | 118 [32m+++++[m[31m---[m
+ app/page.tsx                          | 183 [32m+++[m[31m----------[m
+ app/profile/page.tsx                  |  32 [32m++[m[31m-[m
+ app/robots.ts                         |   5 [32m+[m[31m-[m
+ app/search/page.tsx                   | 111 [32m+++[m[31m-----[m
+ app/status/page.tsx                   | 491 [32m++++++++[m[31m--------------------------[m
+ next.config.ts                        |  15 [32m+[m[31m-[m
+ 18 files changed, 838 insertions(+), 1075 deletions(-)

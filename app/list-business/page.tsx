@@ -1,23 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const SUPABASE_URL =
-  "https://ckuiskbegrlrethnlhzq.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    storageKey: "localplatform-auth",
-  },
-});
+import { supabase } from "../lib/supabase";
 
 const CATEGORY_SERVICES: Record<string, string[]> = {
   Architect: [
@@ -569,6 +555,7 @@ export default function ListBusinessPage() {
 
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [ownerInput, setOwnerInput] = useState("");
 
@@ -602,6 +589,19 @@ export default function ListBusinessPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  const selectedCategory = category === "Other" ? customCategory.trim() : category;
+  const upiId = process.env.NEXT_PUBLIC_UPI_ID || "";
+  const planAmounts: Record<ListingPlan, number> = {
+    free: 0,
+    "6_month": 49,
+    "1_year": 99,
+  };
+  const paidPlan = listingPlan !== "free";
+  const upiPaymentLink = upiId
+    ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=LocalPlatform&am=${planAmounts[listingPlan]}&cu=INR`
+    : "";
+  const [paymentUtr, setPaymentUtr] = useState("");
+
   useEffect(() => {
     async function checkUser() {
       const {
@@ -620,8 +620,8 @@ export default function ListBusinessPage() {
   }, [router]);
 
   const availableServices = useMemo(() => {
-    return CATEGORY_SERVICES[category] || [];
-  }, [category]);
+    return CATEGORY_SERVICES[selectedCategory] || [];
+  }, [selectedCategory]);
 
   const toggleService = (service: string) => {
     setServices((old) =>
@@ -641,7 +641,7 @@ export default function ListBusinessPage() {
       return;
     }
 
-    if (!category) {
+    if (!selectedCategory) {
       setError("Category select karo.");
       setStep(1);
       return;
@@ -652,7 +652,7 @@ export default function ListBusinessPage() {
     setTimeout(() => {
       const result = createAutomaticListing(
         businessName,
-        category,
+        selectedCategory,
         city,
         ownerInput,
         services
@@ -743,7 +743,7 @@ export default function ListBusinessPage() {
       return false;
     }
 
-    if (targetStep >= 2 && !category) {
+    if (targetStep >= 2 && !selectedCategory) {
       setError("Category required hai.");
       setStep(1);
       return false;
@@ -773,10 +773,13 @@ export default function ListBusinessPage() {
     setError("");
     setMessage("");
 
-    if (listingPlan !== "free") {
-      setError(
-        "Paid plan selected hai. Secure UPI payment integration next step me activate hogi. Abhi Free plan select karke listing publish kar sakte ho."
-      );
+    if (paidPlan && !upiId) {
+      setError("Paid plans ke liye NEXT_PUBLIC_UPI_ID configure karna zaroori hai.");
+      return;
+    }
+
+    if (paidPlan && !paymentUtr.trim()) {
+      setError("Payment ke baad UTR / transaction number enter karo.");
       return;
     }
 
@@ -786,7 +789,7 @@ export default function ListBusinessPage() {
       return;
     }
 
-    if (!category) {
+    if (!selectedCategory) {
       setError("Category required hai.");
       setStep(1);
       return;
@@ -831,11 +834,11 @@ export default function ListBusinessPage() {
         imageUrl = data.publicUrl;
       }
 
-      const { error: insertError } = await supabase
+      const { data: businessRow, error: insertError } = await supabase
         .from("businesses")
         .insert({
           business_name: businessName.trim(),
-          category: category.trim(),
+          category: selectedCategory,
           subcategory: subcategory.trim() || null,
           services,
           description: description.trim() || null,
@@ -856,23 +859,45 @@ export default function ListBusinessPage() {
           owner_id: userId,
           image_url: imageUrl || null,
 
-          // Free plan: 3 months validity
-          listing_plan: "free",
-          listing_status: "active",
+          listing_plan: listingPlan,
+          listing_status: paidPlan ? "pending" : "active",
           listing_started_at: new Date().toISOString(),
-          listing_expires_at: new Date(
-            new Date().setMonth(new Date().getMonth() + 3)
-          ).toISOString(),
+          listing_expires_at: paidPlan
+            ? null
+            : new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
           payment_id: null,
           payment_order_id: null,
           paid_at: null,
-        });
+        })
+        .select("id")
+        .single();
 
       if (insertError) {
         throw insertError;
       }
 
-      setMessage("✓ Business successfully listed.");
+      if (!businessRow?.id) {
+        throw new Error("Business ID generate nahi hua.");
+      }
+
+      if (paidPlan) {
+        const { error: paymentError } = await supabase
+          .from("listing_payments")
+          .insert({
+            business_id: businessRow.id,
+            user_id: userId,
+            plan: listingPlan,
+            amount: planAmounts[listingPlan],
+            utr_number: paymentUtr.trim(),
+            payment_screenshot: null,
+            status: "pending",
+          });
+
+        if (paymentError) throw paymentError;
+        setMessage("✓ Payment details submit ho gaye. Admin approval ke baad listing active hogi.");
+      } else {
+        setMessage("✓ Business successfully listed.");
+      }
 
       setTimeout(() => {
         router.push("/dashboard");
@@ -1254,6 +1279,19 @@ export default function ListBusinessPage() {
                         </option>
                       ))}
                     </select>
+
+                    {category === "Other" && (
+                      <input
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="Type your business category"
+                        className="mt-3 h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500"
+                      />
+                    )}
+
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Aap koi bhi business category type kar sakte ho. Uske keywords aur profile automatically generate honge.
+                    </p>
                   </div>
 
                   <div>
@@ -1635,7 +1673,7 @@ export default function ListBusinessPage() {
 
                   <div className="bg-gradient-to-br from-blue-700 to-indigo-800 p-5 text-white sm:p-6">
                     <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold">
-                      {category}
+                      {selectedCategory}
                     </span>
 
                     <h3 className="mt-4 break-words text-2xl font-extrabold">
@@ -1643,7 +1681,7 @@ export default function ListBusinessPage() {
                     </h3>
 
                     <p className="mt-2 text-sm text-blue-100">
-                      {subcategory || category}
+                      {subcategory || selectedCategory}
                     </p>
 
                     <p className="mt-3 text-sm text-blue-100">
@@ -1687,6 +1725,30 @@ export default function ListBusinessPage() {
                     )}
                   </div>
                 </div>
+
+                {paidPlan && (
+                  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <h3 className="font-extrabold text-amber-950">Payment verification</h3>
+                    <p className="mt-1 text-xs leading-5 text-amber-800">
+                      ₹{planAmounts[listingPlan]} UPI se pay karke transaction/UTR number yahan enter karo. Admin verify karke {listingPlan === "6_month" ? "6 months" : "1 year"} plan activate karega.
+                    </p>
+                    {upiPaymentLink ? (
+                      <a href={upiPaymentLink} className="mt-3 inline-flex rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-extrabold text-white">
+                        Open UPI app · Pay ₹{planAmounts[listingPlan]}
+                      </a>
+                    ) : (
+                      <p className="mt-3 rounded-xl bg-white/70 p-3 text-xs font-bold text-amber-900">
+                        Admin ko NEXT_PUBLIC_UPI_ID configure karna hoga.
+                      </p>
+                    )}
+                    <input
+                      value={paymentUtr}
+                      onChange={(event) => setPaymentUtr(event.target.value)}
+                      placeholder="UTR / transaction number"
+                      className="mt-3 h-12 w-full rounded-xl border border-amber-200 bg-white px-3 text-sm outline-none focus:border-amber-500"
+                    />
+                  </div>
+                )}
 
                 <button
                   type="button"

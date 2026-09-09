@@ -3,20 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: "localplatform-auth",
-    },
-  }
-);
+import { supabase } from "../lib/supabase";
 
 type Business = {
   id: string;
@@ -170,6 +157,13 @@ export default function DashboardPage() {
               className="rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700 sm:py-2"
             >
               + Add Business
+            </Link>
+
+            <Link
+              href="/promote"
+              className="rounded-lg border border-orange-300 px-4 py-3 text-center text-sm font-semibold text-orange-700 hover:bg-orange-50 sm:py-2"
+            >
+              Promote Banner
             </Link>
 
             <button

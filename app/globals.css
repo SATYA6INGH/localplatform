@@ -288,6 +288,16 @@ a {
   font-weight: 600;
 }
 
+.lp-adsense-slot {
+  width: calc(100% - 30px);
+  min-height: 0;
+  margin: 10px 15px 2px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f8fafc;
+  text-align: center;
+}
+
 /* STATUS */
 .lp-status-scroll {
   gap: 12px;
@@ -444,7 +454,8 @@ a {
   padding: 3px 4px 5px;
 }
 
-.lp-mini-actions button {
+.lp-mini-actions button,
+.lp-mini-actions a {
   height: 20px;
   border-radius: 5px;
   background: #eaf3ff;
@@ -452,7 +463,8 @@ a {
   font-size: 10px;
 }
 
-.lp-mini-actions button:nth-child(2) {
+.lp-mini-actions button:nth-child(2),
+.lp-mini-actions a:nth-child(2) {
   background: #eaf9ef;
   color: #079447;
 }
@@ -1583,6 +1595,7 @@ a {
 .lp-status-header,
 .lp-chat-header,
 .lp-user-header { height: 74px; display: flex; align-items: center; justify-content: space-between; padding: 13px 16px 8px; background: #fff; border-bottom: 1px solid #edf0f4; }
+.lp-profile-login { border: 1px solid #d8e4f4; border-radius: 10px; padding: 7px 10px; color: #0868f2; font-size: 10px; font-weight: 800; background: #fff; }
 .lp-status-header h1,
 .lp-chat-header h1,
 .lp-user-header h1 { margin: 0; color: #101828; font-size: 20px; }
@@ -1629,6 +1642,18 @@ a {
 .lp-status-reply { display: flex; align-items: center; justify-content: space-between; margin: 0 10px 9px; padding: 8px 10px; border-radius: 7px; background: #f5f7fa; }
 .lp-status-reply a { color: #98a2b3; font-size: 8px; }
 .lp-status-reply span { color: #98a2b3; font-size: 12px; }
+.lp-inline-notice { margin: 8px 14px; padding: 9px 10px; border: 1px solid #f2d5a4; border-radius: 8px; background: #fffaf0; color: #8a5a00; font-size: 9px; line-height: 1.45; }
+.lp-status-composer { display: flex; flex-direction: column; gap: 7px; margin: 0 14px 10px; padding: 10px; border: 1px solid #e4e9ef; border-radius: 10px; background: #fff; }
+.lp-status-composer textarea, .lp-status-composer input, .lp-status-composer select { width: 100%; min-height: 32px; padding: 8px; border: 1px solid #e3e8ef; border-radius: 7px; outline: 0; color: #344054; font: inherit; font-size: 9px; }
+.lp-status-composer textarea { min-height: 64px; resize: vertical; }
+.lp-status-composer button { min-height: 32px; border-radius: 7px; background: #0868f2; color: #fff; font-size: 9px; font-weight: 600; }
+.lp-status-image.no-image { display: grid; place-items: center; background: linear-gradient(135deg, #eef5ff, #f9fbff); }
+.lp-status-image.no-image .lp-status-image-overlay { position: static; padding: 20px; color: #344054; text-shadow: none; }
+.lp-status-image.no-image .lp-status-image-overlay p { font-size: 13px; line-height: 1.45; }
+.lp-status-reply { gap: 7px; }
+.lp-status-reply input { min-width: 0; flex: 1; height: 28px; padding: 0 8px; border: 1px solid #e3e8ef; border-radius: 6px; outline: 0; font-size: 8px; }
+.lp-status-reply button { height: 28px; padding: 0 9px; border-radius: 6px; background: #0868f2; color: #fff; font-size: 8px; }
+.lp-status-reply button:disabled, .lp-message-input button:disabled { cursor: not-allowed; opacity: .45; }
 
 /* CHAT */
 .lp-chat-search { height: 39px; display: flex; align-items: center; gap: 8px; margin: 12px 14px 8px; padding: 0 10px; border: 1px solid #e4e9ef; border-radius: 10px; background: #fff; }
@@ -1698,6 +1723,18 @@ a {
 .lp-saved-item i,
 .lp-settings-list i { color: #98a2b3; font-size: 17px; font-style: normal; }
 .lp-settings-list button > span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; background: #f1f5ff; color: #365ccf; font-size: 15px; }
+.lp-settings-list > div { display: flex; align-items: center; gap: 9px; padding: 9px; border: 1px solid #e7ebf0; border-radius: 9px; background: #fff; }
+.lp-settings-list > div > div { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.lp-settings-list > div > span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; background: #f1f5ff; color: #365ccf; font-size: 15px; }
+.lp-profile-helper { margin: 10px 0; color: #98a2b3; font-size: 9px; }
+.lp-edit-form { display: flex; flex-direction: column; gap: 10px; margin: 14px; padding: 14px; border: 1px solid #e7ebf0; border-radius: 12px; background: #fff; }
+.lp-edit-form label { display: flex; flex-direction: column; gap: 5px; color: #475467; font-size: 9px; font-weight: 600; }
+.lp-edit-form input, .lp-edit-form textarea { width: 100%; min-height: 34px; padding: 8px; border: 1px solid #e3e8ef; border-radius: 7px; outline: 0; color: #344054; font: inherit; font-size: 9px; font-weight: 400; }
+.lp-edit-form textarea { min-height: 90px; resize: vertical; }
+.lp-edit-submit { min-height: 35px; border-radius: 8px; background: #0868f2; color: #fff; font-size: 9px; font-weight: 700; }
+.lp-edit-submit:disabled { opacity: .5; }
+.lp-edit-cancel { color: #667085; font-size: 9px; text-align: center; }
+.lp-inline-success { margin: 0; padding: 9px 10px; border: 1px solid #b7e6c7; border-radius: 8px; background: #f0fff4; color: #087443; font-size: 9px; }
 .lp-profile-empty { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 28px; text-align: center; }
 .lp-profile-empty span { color: #98a2b3; font-size: 28px; }
 .lp-profile-empty strong { color: #475467; font-size: 11px; }

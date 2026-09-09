@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { getBusinessIcon, getBusinessImage } from "../../lib/business-images";
 
 export default function BusinessProfilePage() {
   const params = useParams<{ id: string }>();
@@ -12,21 +13,21 @@ export default function BusinessProfilePage() {
   const [tab, setTab] = useState("Overview");
   const [expanded, setExpanded] = useState(false);
   const [business, setBusiness] = useState({
-    business_name: "Spice Hub Restaurant",
-    category: "Restaurant • North Indian • Chinese",
-    city: "Lucknow",
-    area: "Gomti Nagar",
-    address: "Gomti Nagar, Lucknow",
-    description: "Delicious food, great ambience and unforgettable experiences. Visit Spice Hub for the best dining in Lucknow.",
+    business_name: "Business",
+    category: "Local business",
+    city: "",
+    area: "",
+    address: "",
+    description: "Business description not added yet.",
     image_url: "",
-    phone: "+919876543210",
+    phone: "",
   });
 
   useEffect(() => {
     let mounted = true;
 
     async function loadBusiness() {
-      if (!supabase || !businessId) return;
+      if (!businessId) return;
 
       const { data } = await supabase
         .from("businesses")
@@ -55,6 +56,9 @@ export default function BusinessProfilePage() {
     };
   }, [businessId]);
 
+  const coverImage = getBusinessImage(business.category, business.image_url);
+  const businessIcon = getBusinessIcon(business.category);
+
   const tabs = [
     "Overview",
     "Posts",
@@ -70,10 +74,7 @@ export default function BusinessProfilePage() {
 
       <section className="lp-business-cover">
 
-        <div
-          className="lp-cover-image"
-          style={business.image_url ? { backgroundImage: `url("${business.image_url}")` } : undefined}
-        />
+        <div className={`lp-cover-image ${coverImage ? "has-image" : "no-image"}`} style={coverImage ? { backgroundImage: `url("${coverImage}")` } : undefined} />
 
         <div className="lp-cover-overlay" />
 
@@ -88,14 +89,10 @@ export default function BusinessProfilePage() {
           ⋯
         </button>
 
-        <div className="lp-cover-count">
-          1 / 10
-        </div>
-
         {/* BUSINESS LOGO */}
 
         <div className="lp-business-logo">
-          🍛
+          {businessIcon}
         </div>
 
       </section>
@@ -120,9 +117,7 @@ export default function BusinessProfilePage() {
               ⌖ {business.category}
             </p>
 
-            <p>
-              ⌖ {business.address || `${business.area}, ${business.city}`}
-            </p>
+            <p>⌖ {business.address || [business.area, business.city].filter(Boolean).join(", ") || "Address not added"}</p>
 
           </div>
 
@@ -134,8 +129,8 @@ export default function BusinessProfilePage() {
 
 
         <div className="lp-open-status">
-          <b>Open Now</b>
-          <span>• Closes at 11:00 PM</span>
+          <b>Hours not added</b>
+          <span>• Contact the business for availability</span>
         </div>
 
 
@@ -144,17 +139,17 @@ export default function BusinessProfilePage() {
         <div className="lp-profile-stats">
 
           <div>
-            <strong>1.2K</strong>
+            <strong>0</strong>
             <small>Followers</small>
           </div>
 
           <div>
-            <strong>86</strong>
+            <strong>0</strong>
             <small>Posts</small>
           </div>
 
           <div>
-            <strong>4.8</strong>
+            <strong>—</strong>
             <small>Rating</small>
           </div>
 
@@ -279,7 +274,7 @@ export default function BusinessProfilePage() {
                 <div>
                   <strong>Address</strong>
                   <small>
-                    {business.address || `${business.area}, ${business.city}`}
+                    {business.address || [business.area, business.city].filter(Boolean).join(", ") || "Address not added"}
                   </small>
                 </div>
               </div>
@@ -290,7 +285,7 @@ export default function BusinessProfilePage() {
                 <div>
                   <strong>Opening Hours</strong>
                   <small>
-                    Today · 11:00 AM – 11:00 PM
+                    Not added yet
                   </small>
                 </div>
               </div>
@@ -301,7 +296,7 @@ export default function BusinessProfilePage() {
                 <div>
                   <strong>Price Range</strong>
                   <small>
-                    ₹₹ · Moderate
+                    Not added yet
                   </small>
                 </div>
               </div>
@@ -330,91 +325,19 @@ export default function BusinessProfilePage() {
         )}
 
 
-        {tab === "Offers" && (
-
-          <div className="lp-profile-offer">
-
-            <div className="lp-profile-offer-image" />
-
-            <div>
-
-              <strong>
-                20% OFF
-              </strong>
-
-              <h3>
-                20% OFF on All Combos
-              </h3>
-
-              <p>
-                Valid today · Spice Hub Restaurant
-              </p>
-
-              <button>
-                View Offer
-              </button>
-
-            </div>
-
-          </div>
-
-        )}
+        {tab === "Offers" && <div className="lp-empty-profile"><span>🏷</span><h3>No offers yet</h3><p>Offers added by this business will appear here.</p></div>}
 
 
         {tab === "Services" && (
 
-          <div className="lp-services">
-
-            <div>
-              <span>🍛</span>
-              <strong>
-                North Indian
-              </strong>
-            </div>
-
-            <div>
-              <span>🥡</span>
-              <strong>
-                Chinese
-              </strong>
-            </div>
-
-            <div>
-              <span>🍽</span>
-              <strong>
-                Fast Food
-              </strong>
-            </div>
-
-            <div>
-              <span>🚚</span>
-              <strong>
-                Home Delivery
-              </strong>
-            </div>
-
-          </div>
+          <div className="lp-empty-profile"><span>⌂</span><h3>No services added yet</h3><p>The owner can add services from the dashboard.</p></div>
 
         )}
 
 
         {tab === "Reviews" && (
 
-          <div className="lp-review-summary">
-
-            <strong>
-              4.8
-            </strong>
-
-            <span>
-              ★★★★★
-            </span>
-
-            <small>
-              Based on 320 reviews
-            </small>
-
-          </div>
+          <div className="lp-review-summary"><strong>—</strong><span>No reviews yet</span><small>Ratings will appear after real customer reviews.</small></div>
 
         )}
 

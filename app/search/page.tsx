@@ -3,53 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
+import { getBusinessImage } from "../lib/business-images";
 
-const businesses = [
-  {
-    id: "1",
-    name: "Spice Hub Restaurant",
-    category: "Food",
-    area: "Gomti Nagar, Lucknow",
-    rating: "4.8",
-    reviews: "320",
-    image:
-      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
-    open: true,
-  },
-  {
-    id: "2",
-    name: "The Urban Cafe",
-    category: "Cafe",
-    area: "Hazratganj, Lucknow",
-    rating: "4.6",
-    reviews: "210",
-    image:
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80",
-    open: true,
-  },
-  {
-    id: "3",
-    name: "Glow Beauty Salon",
-    category: "Salon",
-    area: "Aliganj, Lucknow",
-    rating: "4.7",
-    reviews: "185",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80",
-    open: false,
-  },
-  {
-    id: "4",
-    name: "Care Life Clinic",
-    category: "Doctors",
-    area: "Indira Nagar, Lucknow",
-    rating: "4.9",
-    reviews: "410",
-    image:
-      "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=600&q=80",
-    open: true,
-  },
-];
+type BusinessCard = {
+  id: string;
+  name: string;
+  category: string;
+  area: string;
+  rating: string | null;
+  reviews: string | null;
+  phone: string;
+  keywords: string;
+  image: string;
+  open: boolean | null;
+};
 
 const filters = [
   "All",
@@ -65,7 +32,7 @@ const filters = [
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
-  const [remoteBusinesses, setRemoteBusinesses] = useState<typeof businesses>([]);
+  const [remoteBusinesses, setRemoteBusinesses] = useState<BusinessCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Read the URL only after hydration so the server and client render the same markup.
@@ -81,14 +48,9 @@ export default function SearchPage() {
     let mounted = true;
 
     async function loadBusinesses() {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase
         .from("businesses")
-        .select("id, business_name, category, city, area, address, image_url, listing_status")
+        .select("id, business_name, category, city, area, address, phone, subcategory, services, seo_keywords, highlights, image_url, listing_status")
         .eq("listing_status", "active")
         .order("business_name", { ascending: true })
         .limit(40);
@@ -106,10 +68,17 @@ export default function SearchPage() {
           name: business.business_name,
           category: business.category || "Local business",
           area: business.area || business.address || business.city || "Nearby",
-          rating: "4.8",
-          reviews: "New",
-          image: business.image_url || businesses[0].image,
-          open: true,
+          rating: null,
+          reviews: null,
+          phone: business.phone || "",
+          keywords: [
+            business.subcategory,
+            ...(Array.isArray(business.services) ? business.services : []),
+            ...(Array.isArray(business.seo_keywords) ? business.seo_keywords : []),
+            ...(Array.isArray(business.highlights) ? business.highlights : []),
+          ].filter(Boolean).join(" "),
+          image: getBusinessImage(business.category, business.image_url),
+          open: null,
         })),
       );
       setLoading(false);
@@ -121,14 +90,14 @@ export default function SearchPage() {
     };
   }, []);
 
-  const availableBusinesses = remoteBusinesses.length ? remoteBusinesses : businesses;
+  const availableBusinesses = remoteBusinesses;
 
   const filteredBusinesses = useMemo(() => {
     return availableBusinesses.filter((business) => {
       const matchesFilter =
-        activeFilter === "All" || business.category === activeFilter;
+        activeFilter === "All" || business.category.toLowerCase().includes(activeFilter.toLowerCase());
 
-      const searchText = `${business.name} ${business.category} ${business.area}`
+      const searchText = `${business.name} ${business.category} ${business.area} ${business.keywords}`
         .toLowerCase()
         .includes(query.toLowerCase());
 
@@ -202,11 +171,9 @@ export default function SearchPage() {
               <article className="lp-result-card" key={business.name}>
               <div
                 className="lp-result-image"
-                style={{ backgroundImage: `url(${business.image})` }}
+                style={business.image ? { backgroundImage: `url(${business.image})` } : undefined}
               >
-                <span className={business.open ? "open" : "closed"}>
-                  {business.open ? "OPEN NOW" : "CLOSED"}
-                </span>
+                {business.open !== null && <span className={business.open ? "open" : "closed"}>{business.open ? "OPEN NOW" : "CLOSED"}</span>}
 
                 <button className="lp-result-save" aria-label="Save business">
                   ♡
@@ -216,7 +183,7 @@ export default function SearchPage() {
               <div className="lp-result-content">
                 <div className="lp-result-title">
                   <h3>{business.name}</h3>
-                  <strong>★ {business.rating}</strong>
+                  {business.rating ? <strong>★ {business.rating}</strong> : <strong className="lp-muted-rating">New listing</strong>}
                 </div>
 
                 <p className="lp-result-category">{business.category}</p>
@@ -226,12 +193,18 @@ export default function SearchPage() {
                 </p>
 
                 <p className="lp-result-reviews">
-                  {business.reviews} reviews · Available today
+                  {business.reviews ? `${business.reviews} reviews` : "No reviews yet"}
                 </p>
 
                 <div className="lp-result-actions">
-                  <button>☎ Call</button>
-                  <button>◉ WhatsApp</button>
+                  <a href={business.phone ? `tel:${business.phone}` : undefined}>☎ Call</a>
+                  <a
+                    href={business.phone ? `https://wa.me/${business.phone.replace(/\D/g, "")}` : undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    ◉ WhatsApp
+                  </a>
                   <Link className="lp-result-view" href={`/business/${business.id ?? "1"}`}>View</Link>
                 </div>
               </div>

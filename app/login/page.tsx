@@ -1,25 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://ckuiskbegrlrethnlhzq.supabase.co";
-
-const SUPABASE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  "sb_publishable_RnrbgHC56vWK6cSA1hmfkA_VVP74VPL";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    storageKey: "localplatform-auth",
-  },
-});
+import { supabase } from "../lib/supabase";
 
 const ADMIN_EMAIL = "architectsunlight@gmail.com";
 
@@ -37,10 +21,12 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [confirmationPending, setConfirmationPending] = useState(false);
 
   function clearStatus() {
     setError("");
     setMessage("");
+    setConfirmationPending(false);
   }
 
   function validEmail(value: string) {
@@ -72,9 +58,11 @@ export default function LoginPage() {
     setBusy(false);
 
     if (loginError) {
-      if (
-        loginError.message.toLowerCase().includes("invalid login credentials")
-      ) {
+      const normalized = loginError.message.toLowerCase();
+      if (normalized.includes("email not confirmed")) {
+        setConfirmationPending(true);
+        setError("Email confirm nahi hua. Pehle inbox me Supabase confirmation link open karo.");
+      } else if (normalized.includes("invalid login credentials")) {
         setError("Email या password गलत है.");
       } else {
         setError(loginError.message);
@@ -136,9 +124,57 @@ export default function LoginPage() {
     setMessage(
       "Registration successful. अब इसी email और password से Login करें."
     );
+    setConfirmationPending(!data.session);
     setMode("login");
     setPassword("");
     setConfirmPassword("");
+  }
+
+  async function resendConfirmation() {
+    clearStatus();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!validEmail(cleanEmail)) {
+      setError("Confirmation link ke liye valid email डालें.");
+      return;
+    }
+
+    setBusy(true);
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email: cleanEmail,
+    });
+    setBusy(false);
+
+    if (resendError) {
+      setError(resendError.message);
+      return;
+    }
+
+    setMessage("Confirmation email dobara send kar diya gaya hai.");
+  }
+
+  async function resetPassword() {
+    clearStatus();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!validEmail(cleanEmail)) {
+      setError("Password reset ke liye pehle email डालें.");
+      return;
+    }
+
+    setBusy(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    setBusy(false);
+
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    setMessage("Password reset link email par bhej diya gaya hai.");
   }
 
   async function adminLogin() {
@@ -297,18 +333,38 @@ export default function LoginPage() {
                 </>
               )}
 
-              <button
-                type="button"
-                onClick={mode === "login" ? loginUser : registerUser}
-                disabled={busy}
-                className="mt-5 w-full rounded-2xl bg-blue-600 py-4 text-sm font-black text-white shadow-lg shadow-blue-100 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (mode === "login") loginUser();
+                  else registerUser();
+                }}
               >
-                {busy
-                  ? "Please wait..."
-                  : mode === "login"
-                    ? "Login"
-                    : "Create Account"}
-              </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="mt-5 w-full rounded-2xl bg-blue-600 py-4 text-sm font-black text-white shadow-lg shadow-blue-100 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {busy
+                    ? "Please wait..."
+                    : mode === "login"
+                      ? "Login"
+                      : "Create Account"}
+                </button>
+              </form>
+
+              {mode === "login" && (
+                <div className="mt-3 flex items-center justify-between gap-3 text-xs font-bold">
+                  <button type="button" onClick={resetPassword} className="text-blue-600 hover:underline">
+                    Forgot password?
+                  </button>
+                  {confirmationPending && (
+                    <button type="button" onClick={resendConfirmation} className="text-orange-600 hover:underline">
+                      Resend confirmation
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="mt-5 border-t border-slate-100 pt-4 text-center">
                 <button

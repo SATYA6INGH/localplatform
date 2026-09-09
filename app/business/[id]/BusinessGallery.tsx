@@ -1,20 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: "localplatform-auth",
-    },
-  }
-);
+import { supabase } from "../../lib/supabase";
 
 type Photo = {
   id: string;
@@ -34,6 +21,7 @@ export default function BusinessGallery({
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -53,6 +41,13 @@ export default function BusinessGallery({
     } = await supabase.auth.getUser();
 
     setUserId(user?.id ?? null);
+
+    const { data: business } = await supabase
+      .from("businesses")
+      .select("owner_id")
+      .eq("id", businessId)
+      .maybeSingle();
+    setOwnerId(business?.owner_id ?? null);
 
     const { data, error } = await supabase
       .from("business_photos")
@@ -83,8 +78,8 @@ export default function BusinessGallery({
     setError("");
     setMessage("");
 
-    if (!userId) {
-      setError("Photo upload karne ke liye login karein.");
+    if (!userId || !ownerId || ownerId !== userId) {
+      setError("Sirf business owner apne visual upload kar sakta hai.");
       return;
     }
 
@@ -160,8 +155,8 @@ export default function BusinessGallery({
   }
 
   async function deletePhoto(photo: Photo) {
-    if (!userId || photo.user_id !== userId) {
-      setError("Aap sirf apni uploaded photo delete kar sakte hain.");
+    if (!userId || !ownerId || ownerId !== userId || photo.user_id !== userId) {
+      setError("Sirf business owner apna uploaded visual delete kar sakta hai.");
       return;
     }
 
@@ -206,7 +201,7 @@ export default function BusinessGallery({
           </p>
         </div>
 
-        {userId ? (
+        {userId && ownerId === userId ? (
           <>
             <input
               ref={fileInputRef}
@@ -230,7 +225,7 @@ export default function BusinessGallery({
             href="/login"
             className="rounded-xl border border-blue-200 px-5 py-3 text-center font-bold text-blue-600 hover:bg-blue-50"
           >
-            Login to Add Photo
+            Owner login required
           </a>
         )}
       </div>

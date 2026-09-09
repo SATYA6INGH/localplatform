@@ -4,6 +4,9 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "./lib/supabase";
+import { getBusinessImage } from "./lib/business-images";
+import AdSenseSlot from "./components/AdSenseSlot";
+import HomeTopAds from "./components/HomeTopAds";
 
 const categories = [
   ["Food", "🍴", "food"],
@@ -14,54 +17,20 @@ const categories = [
   ["Interior", "▣", "interior"],
 ] as const;
 
-const statuses = [
-  ["Your Status", "👤", "", "add"],
-  ["Spice Hub", "🍛", "Online", "online"],
-  ["City Salon", "👩", "2h ago", ""],
-  ["Care Life", "❤", "Online", "online"],
-  ["FitZone", "🏋", "8h ago", ""],
-] as const;
-
-const businesses = [
-  {
-    id: "1",
-    name: "Spice Hub",
-    rating: "4.8",
-    area: "Gomti Nagar",
-    image:
-      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: "2",
-    name: "Urban Cafe",
-    rating: "4.6",
-    area: "Hazratganj",
-    image:
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: "3",
-    name: "Glow Salon",
-    rating: "4.7",
-    area: "Aliganj",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80",
-  },
-  {
-    id: "4",
-    name: "Studio Nest",
-    rating: "4.9",
-    area: "Indira Nagar",
-    image:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=80",
-  },
-];
+type BusinessCard = {
+  id: string;
+  name: string;
+  rating: string | null;
+  area: string;
+  phone: string;
+  image: string;
+};
 
 export default function HomePage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("Lucknow");
-  const [remoteBusinesses, setRemoteBusinesses] = useState<typeof businesses>([]);
+  const [remoteBusinesses, setRemoteBusinesses] = useState<BusinessCard[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -70,7 +39,7 @@ export default function HomePage() {
       if (!supabase) return;
       const { data } = await supabase
         .from("businesses")
-        .select("id, business_name, category, city, area, address, image_url, listing_status")
+        .select("id, business_name, category, city, area, address, phone, image_url, listing_status")
         .eq("listing_status", "active")
         .order("business_name", { ascending: true })
         .limit(12);
@@ -81,9 +50,10 @@ export default function HomePage() {
         data.map((business) => ({
           id: String(business.id),
           name: business.business_name,
-          rating: "4.8",
+          rating: null,
           area: business.area || business.address || business.city || "Nearby",
-          image: business.image_url || businesses[0].image,
+          phone: business.phone || "",
+          image: getBusinessImage(business.category, business.image_url),
         })),
       );
     }
@@ -94,7 +64,7 @@ export default function HomePage() {
     };
   }, []);
 
-  const availableBusinesses = remoteBusinesses.length ? remoteBusinesses : businesses;
+  const availableBusinesses = remoteBusinesses;
 
   const search = (event: FormEvent) => {
     event.preventDefault();
@@ -126,17 +96,17 @@ export default function HomePage() {
         </div>
 
         <div className="lp-header-actions">
-          <button className="lp-header-action" aria-label="Notifications">
+          <Link className="lp-header-action" aria-label="Notifications" href="/status">
             ♧<i>2</i>
-          </button>
+          </Link>
 
-          <button className="lp-header-action" aria-label="Messages">
+          <Link className="lp-header-action" aria-label="Messages" href="/chat">
             ◌
-          </button>
+          </Link>
 
-          <button className="lp-profile-mini" aria-label="Profile">
+          <Link className="lp-profile-mini" aria-label="Profile" href="/profile">
             👤
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -166,7 +136,7 @@ export default function HomePage() {
             <button
               className="lp-category-item"
               key={name}
-              onClick={() => setQuery(name)}
+              onClick={() => router.push(`/search?q=${encodeURIComponent(name)}`)}
             >
               <span className={`lp-category-round ${color}`}>{icon}</span>
               <small>{name}</small>
@@ -175,40 +145,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      <Section title="Status" action="See All">
+      <AdSenseSlot slot={process.env.NEXT_PUBLIC_ADSENSE_HOME_SLOT} />
+
+      <HomeTopAds />
+
+      <Section title="Status" action="See All" href="/status">
         <div className="lp-status-scroll">
-          {statuses.map(([name, icon, time, state]) => (
-            <button className="lp-status-item" key={name}>
-              <span
-                className={`lp-status-ring ${
-                  state === "online" ? "status-online" : ""
-                } ${state === "add" ? "status-add" : ""}`}
-              >
-                {icon}
-                {state === "add" && <b>+</b>}
-              </span>
-
-              <strong>{name}</strong>
-
-              {time && (
-                <small className={state === "online" ? "online-text" : ""}>
-                  {time}
-                </small>
-              )}
-            </button>
-          ))}
+          <button className="lp-status-item" onClick={() => router.push("/status")}><span className="lp-status-ring status-add">＋</span><strong>View live updates</strong><small>Only real statuses</small></button>
         </div>
       </Section>
 
-      <Section title="🔥 Trending Near You" action="See All">
+      <Section title="🔥 Trending Near You" action="See All" href="/search">
         <div className="lp-business-scroll">
           {availableBusinesses.map((business) => (
             <article className="lp-mini-business" key={business.name}>
               <div
                 className="lp-mini-business-image"
-                style={{ backgroundImage: `url(${business.image})` }}
+                style={business.image ? { backgroundImage: `url(${business.image})` } : undefined}
               >
-                <span className="lp-open">OPEN</span>
+                <span className="lp-open">LISTED</span>
                 <span className="lp-save">♡</span>
               </div>
 
@@ -216,49 +171,24 @@ export default function HomePage() {
                 <h3><Link href={`/business/${business.id}`}>{business.name}</Link></h3>
 
                 <div className="lp-rating">
-                  <b>★ {business.rating}</b>
-                  <span>(120)</span>
+                  {business.rating ? <b>★ {business.rating}</b> : <span>New listing</span>}
                 </div>
 
                 <p>⌖ {business.area}</p>
               </div>
 
               <div className="lp-mini-actions">
-                <button>☎</button>
-                <button>◉</button>
-                <button>◌</button>
+                <a href={business.phone ? `tel:${business.phone}` : undefined} aria-label="Call">☎</a>
+                <a href={business.phone ? `https://wa.me/${business.phone.replace(/\D/g, "")}` : undefined} target="_blank" rel="noreferrer" aria-label="WhatsApp">◉</a>
+                <Link href={`/chat?business=${business.id}`} aria-label="Chat">◌</Link>
               </div>
             </article>
           ))}
+          {availableBusinesses.length === 0 && <div className="lp-empty-results"><span>⌕</span><h3>No active businesses yet</h3><p>Verified listings will appear here.</p></div>}
         </div>
       </Section>
 
-      <Section title="🏷 Offers Near You" action="See All">
-        <div className="lp-offers-scroll">
-          <Offer
-            image="https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=200&q=80"
-            title="20% OFF"
-            text="on all food combos"
-            shop="Spice Hub"
-          />
-
-          <Offer
-            image="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=200&q=80"
-            title="30% OFF"
-            text="on salon services"
-            shop="Glow Salon"
-          />
-
-          <Offer
-            image="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=200&q=80"
-            title="FREE"
-            text="first consultation"
-            shop="Care Life"
-          />
-        </div>
-      </Section>
-
-      <Section title="Popular Categories" action="See All">
+      <Section title="Popular Categories" action="See All" href="/search">
         <div className="lp-popular-scroll">
           {[
             ["⌂", "Architect"],
@@ -269,7 +199,7 @@ export default function HomePage() {
             ["♧", "Fitness"],
             ["•••", "More"],
           ].map(([icon, name]) => (
-            <button className="lp-popular-item" key={name}>
+            <button className="lp-popular-item" key={name} onClick={() => router.push(`/search?q=${encodeURIComponent(name)}`)}>
               <span>{icon}</span>
               <small>{name}</small>
             </button>
@@ -277,7 +207,7 @@ export default function HomePage() {
         </div>
       </Section>
 
-      <button className="lp-list-business">
+      <Link className="lp-list-business" href="/list-business">
         <span className="lp-list-icon">🏪</span>
 
         <span className="lp-list-text">
@@ -286,7 +216,7 @@ export default function HomePage() {
         </span>
 
         <span className="lp-list-arrow">›</span>
-      </button>
+      </Link>
 
       <nav className="lp-bottom-nav">
         <Link className="active" href="/">
@@ -321,47 +251,22 @@ export default function HomePage() {
 function Section({
   title,
   action,
+  href,
   children,
 }: {
   title: string;
   action: string;
+  href: string;
   children: React.ReactNode;
 }) {
   return (
     <section className="lp-section">
       <div className="lp-section-head">
         <h2>{title}</h2>
-        <a href="#all">{action}</a>
+        <Link href={href}>{action}</Link>
       </div>
 
       {children}
     </section>
-  );
-}
-
-function Offer({
-  image,
-  title,
-  text,
-  shop,
-}: {
-  image: string;
-  title: string;
-  text: string;
-  shop: string;
-}) {
-  return (
-    <article className="lp-offer-card">
-      <div
-        className="lp-offer-image"
-        style={{ backgroundImage: `url(${image})` }}
-      />
-
-      <div className="lp-offer-info">
-        <strong>{title}</strong>
-        <span>{text}</span>
-        <small>{shop}</small>
-      </div>
-    </article>
   );
 }

@@ -1,21 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-
-const supabase = createClient(
-  "https://ckuiskbegrlrethnlhzq.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: "localplatform-auth",
-    },
-  }
-);
+import { supabase } from "../lib/supabase";
 
 type Payment = {
   id: string;
