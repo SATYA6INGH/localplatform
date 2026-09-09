@@ -1,588 +1,328 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const categories = [
-  { name: "Food", icon: "🍴", color: "food" },
-  { name: "Doctors", icon: "⚕", color: "doctor" },
-  { name: "Salon", icon: "✂", color: "salon" },
-  { name: "Home Services", icon: "⌂", color: "home" },
-  { name: "Real Estate", icon: "▥", color: "real" },
-  { name: "Interior", icon: "▣", color: "interior" },
-];
+  ["Food", "🍴", "food"],
+  ["Doctors", "⚕", "doctor"],
+  ["Salon", "✂", "salon"],
+  ["Home Services", "⌂", "home"],
+  ["Real Estate", "▥", "real"],
+  ["Interior", "▣", "interior"],
+] as const;
 
 const statuses = [
-  { name: "Your Status", image: "👤", time: "", add: true },
-  { name: "Spice Hub", image: "🍛", time: "Online", online: true },
-  { name: "City Salon", image: "👩", time: "2h ago" },
-  { name: "Care Life", image: "👩", time: "5h ago", online: true },
-  { name: "FitzZone", image: "🏋", time: "8h ago", online: true },
-  { name: "More", image: "•••", time: "" },
-];
+  ["Your Status", "👤", "", "add"],
+  ["Spice Hub", "🍛", "Online", "online"],
+  ["City Salon", "👩", "2h ago", ""],
+  ["Care Life", "❤", "Online", "online"],
+  ["FitZone", "🏋", "8h ago", ""],
+] as const;
 
-const trending = [
+const businesses = [
   {
     name: "Spice Hub",
-    category: "Restaurant",
     rating: "4.8",
-    reviews: "320",
-    location: "Gomti Nagar",
+    area: "Gomti Nagar",
     image:
-      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=85",
-    status: "Open",
+      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80",
   },
   {
-    name: "The Urban Cafe",
-    category: "Cafe",
+    name: "Urban Cafe",
     rating: "4.6",
-    reviews: "210",
-    location: "Hazratganj",
+    area: "Hazratganj",
     image:
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=85",
-    status: "Open",
+      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=80",
   },
   {
-    name: "City Salon",
-    category: "Salon",
+    name: "Glow Salon",
     rating: "4.7",
-    reviews: "180",
-    location: "Aliganj",
+    area: "Aliganj",
     image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=85",
-    status: "Open",
+      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80",
   },
   {
-    name: "Dream Interiors",
-    category: "Interior",
-    rating: "4.5",
-    reviews: "120",
-    location: "Indira Nagar",
+    name: "Studio Nest",
+    rating: "4.9",
+    area: "Indira Nagar",
     image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=85",
-    status: "Closed",
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=80",
   },
-];
-
-const offers = [
-  {
-    title: "20% OFF",
-    sub: "on All Combos",
-    name: "Spice Hub",
-    image:
-      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=500&q=80",
-  },
-  {
-    title: "Flat 30% OFF",
-    sub: "on Hair Services",
-    name: "City Salon",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=500&q=80",
-  },
-  {
-    title: "Free Consultation",
-    sub: "Interior Design",
-    name: "Dream Interiors",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80",
-  },
-];
-
-const popularCategories = [
-  { name: "Architect", icon: "▥" },
-  { name: "Electrician", icon: "ϟ" },
-  { name: "Plumber", icon: "♒" },
-  { name: "AC Service", icon: "▤" },
-  { name: "Car Service", icon: "🚗" },
-  { name: "Fitness", icon: "🏋" },
-  { name: "More", icon: "•••" },
 ];
 
 export default function HomePage() {
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [city, setCity] = useState("Lucknow");
+
+  const search = (event: FormEvent) => {
+    event.preventDefault();
+
+    const value = query.trim();
+    router.push(value ? `/search?q=${encodeURIComponent(value)}` : "/search");
+  };
+
+  const changeCity = () => {
+    const next = prompt("Enter your city", city);
+
+    if (next?.trim()) {
+      setCity(next.trim());
+    }
+  };
 
   return (
-    <>
-      <div className="lp-mobile-app">
-
-        {/* ================= HEADER ================= */}
-
-        <header className="lp-top-header">
-
-          <div className="lp-brand-block">
-            <div className="lp-brand">
-              <span>Local</span>
-              <strong>Platform</strong>
-            </div>
-
-            <button className="lp-city">
-              <span>⌖</span>
-              Lucknow
-              <span className="lp-chevron">⌄</span>
-            </button>
+    <main className="lp-mobile-app">
+      <header className="lp-top-header">
+        <div>
+          <div className="lp-brand">
+            <span>Local</span>
+            <strong>Platform</strong>
           </div>
 
-          <div className="lp-header-actions">
+          <button className="lp-city" onClick={changeCity}>
+            ⌖ {city} <span>⌄</span>
+          </button>
+        </div>
 
+        <div className="lp-header-actions">
+          <button className="lp-header-action" aria-label="Notifications">
+            ♧<i>2</i>
+          </button>
+
+          <button className="lp-header-action" aria-label="Messages">
+            ◌
+          </button>
+
+          <button className="lp-profile-mini" aria-label="Profile">
+            👤
+          </button>
+        </div>
+      </header>
+
+      <form className="lp-main-search" onSubmit={search}>
+        <label className="lp-search-input-wrap">
+          <span>⌕</span>
+
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search businesses or services..."
+          />
+        </label>
+
+        <button
+          className="lp-filter-button"
+          aria-label="Search filters"
+          type="submit"
+        >
+          ☷
+        </button>
+      </form>
+
+      <section className="lp-category-section" aria-label="Categories">
+        <div className="lp-horizontal-list">
+          {categories.map(([name, icon, color]) => (
             <button
-              className="lp-header-action"
-              aria-label="Notifications"
+              className="lp-category-item"
+              key={name}
+              onClick={() => setQuery(name)}
             >
-              ♧
-              <i>3</i>
+              <span className={`lp-category-round ${color}`}>{icon}</span>
+              <small>{name}</small>
             </button>
+          ))}
+        </div>
+      </section>
 
-            <button
-              className="lp-header-action"
-              aria-label="Messages"
-            >
-              ◌
-              <i>5</i>
-            </button>
-
-            <button
-              className="lp-profile-mini"
-              aria-label="Profile"
-            >
-              👨🏻
-            </button>
-
-          </div>
-
-        </header>
-
-
-        {/* ================= SEARCH ================= */}
-
-        <section className="lp-main-search">
-
-          <div className="lp-search-input-wrap">
-
-            <span>⌕</span>
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search businesses or services..."
-            />
-
-          </div>
-
-          <Link
-            href="/search"
-            className="lp-filter-button"
-          >
-            ☷
-          </Link>
-
-        </section>
-
-
-        {/* ================= CATEGORIES ================= */}
-
-        <section className="lp-category-section">
-
-          <div className="lp-horizontal-list">
-
-            {categories.map((category) => (
-
-              <Link
-                key={category.name}
-                href={`/search?category=${encodeURIComponent(
-                  category.name
-                )}`}
-                className="lp-category-item"
+      <Section title="Status" action="See All">
+        <div className="lp-status-scroll">
+          {statuses.map(([name, icon, time, state]) => (
+            <button className="lp-status-item" key={name}>
+              <span
+                className={`lp-status-ring ${
+                  state === "online" ? "status-online" : ""
+                } ${state === "add" ? "status-add" : ""}`}
               >
+                {icon}
+                {state === "add" && <b>+</b>}
+              </span>
 
-                <span
-                  className={`lp-category-round ${category.color}`}
-                >
-                  {category.icon}
-                </span>
+              <strong>{name}</strong>
 
-                <small>
-                  {category.name}
+              {time && (
+                <small className={state === "online" ? "online-text" : ""}>
+                  {time}
                 </small>
+              )}
+            </button>
+          ))}
+        </div>
+      </Section>
 
-              </Link>
-
-            ))}
-
-          </div>
-
-        </section>
-
-
-        {/* ================= STATUS ================= */}
-
-        <section className="lp-section">
-
-          <div className="lp-section-head">
-
-            <div>
-              <h2>Status</h2>
-            </div>
-
-            <Link href="/status">
-              See All ›
-            </Link>
-
-          </div>
-
-
-          <div className="lp-status-scroll">
-
-            {statuses.map((status) => (
-
-              <Link
-                key={status.name}
-                href={
-                  status.name === "More"
-                    ? "/status"
-                    : "/status"
-                }
-                className="lp-status-item"
+      <Section title="🔥 Trending Near You" action="See All">
+        <div className="lp-business-scroll">
+          {businesses.map((business) => (
+            <article className="lp-mini-business" key={business.name}>
+              <div
+                className="lp-mini-business-image"
+                style={{ backgroundImage: `url(${business.image})` }}
               >
+                <span className="lp-open">OPEN</span>
+                <span className="lp-save">♡</span>
+              </div>
 
-                <div
-                  className={`lp-status-ring ${
-                    status.online
-                      ? "status-online"
-                      : ""
-                  } ${
-                    status.add
-                      ? "status-add"
-                      : ""
-                  }`}
-                >
+              <div className="lp-mini-business-content">
+                <h3>{business.name}</h3>
 
-                  <span>
-                    {status.image}
-                  </span>
-
-                  {status.add && (
-                    <b>+</b>
-                  )}
-
+                <div className="lp-rating">
+                  <b>★ {business.rating}</b>
+                  <span>(120)</span>
                 </div>
 
-                <strong>
-                  {status.name}
-                </strong>
-
-                {status.time && (
-                  <small
-                    className={
-                      status.online
-                        ? "online-text"
-                        : ""
-                    }
-                  >
-                    {status.time}
-                  </small>
-                )}
-
-              </Link>
-
-            ))}
-
-          </div>
-
-        </section>
-
-
-        {/* ================= TRENDING ================= */}
-
-        <section className="lp-section">
-
-          <div className="lp-section-head">
-
-            <h2>
-              🔥 Trending Near You
-            </h2>
-
-            <Link href="/search">
-              See All ›
-            </Link>
-
-          </div>
-
-
-          <div className="lp-business-scroll">
-
-            {trending.map((business) => (
-
-              <Link
-                key={business.name}
-                href="/business/1"
-                className="lp-mini-business"
-              >
-
-                <div
-                  className="lp-mini-business-image"
-                  style={{
-                    backgroundImage:
-                      `url("${business.image}")`,
-                  }}
-                >
-
-                  <span
-                    className={
-                      business.status === "Open"
-                        ? "lp-open"
-                        : "lp-closed"
-                    }
-                  >
-                    {business.status}
-                  </span>
-
-                  <span className="lp-save">
-                    ♡
-                  </span>
-
-                </div>
-
-
-                <div className="lp-mini-business-content">
-
-                  <h3>
-                    {business.name}
-                  </h3>
-
-                  <div className="lp-rating">
-                    <b>★ {business.rating}</b>
-                    <span>
-                      ({business.reviews})
-                    </span>
-                  </div>
-
-                  <p>
-                    ⌖ {business.location}
-                  </p>
-
-                </div>
-
-
-                <div className="lp-mini-actions">
-
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href =
-                        "tel:+919876543210";
-                    }}
-                  >
-                    ☎
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.open(
-                        "https://wa.me/919876543210",
-                        "_blank"
-                      );
-                    }}
-                  >
-                    ◉
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href =
-                        "/chat";
-                    }}
-                  >
-                    ◌
-                  </button>
-
-                </div>
-
-              </Link>
-
-            ))}
-
-          </div>
-
-        </section>
-
-
-        {/* ================= OFFERS ================= */}
-
-        <section className="lp-section">
-
-          <div className="lp-section-head">
-
-            <h2>
-              🏷 Offers Near You
-            </h2>
-
-            <Link href="/search">
-              See All ›
-            </Link>
-
-          </div>
-
-
-          <div className="lp-offers-scroll">
-
-            {offers.map((offer) => (
-
-              <Link
-                href="/business/1"
-                key={offer.name}
-                className="lp-offer-card"
-              >
-
-                <div
-                  className="lp-offer-image"
-                  style={{
-                    backgroundImage:
-                      `url("${offer.image}")`,
-                  }}
-                />
-
-                <div className="lp-offer-info">
-
-                  <strong>
-                    {offer.title}
-                  </strong>
-
-                  <span>
-                    {offer.sub}
-                  </span>
-
-                  <small>
-                    {offer.name}
-                  </small>
-
-                </div>
-
-              </Link>
-
-            ))}
-
-          </div>
-
-        </section>
-
-
-        {/* ================= POPULAR CATEGORIES ================= */}
-
-        <section className="lp-section">
-
-          <div className="lp-section-head">
-
-            <h2>
-              Popular Categories
-            </h2>
-
-            <Link href="/search">
-              See All ›
-            </Link>
-
-          </div>
-
-
-          <div className="lp-popular-scroll">
-
-            {popularCategories.map(
-              (category) => (
-
-                <Link
-                  href={`/search?category=${encodeURIComponent(
-                    category.name
-                  )}`}
-                  key={category.name}
-                  className="lp-popular-item"
-                >
-
-                  <span>
-                    {category.icon}
-                  </span>
-
-                  <small>
-                    {category.name}
-                  </small>
-
-                </Link>
-
-              )
-            )}
-
-          </div>
-
-        </section>
-
-
-        {/* ================= LIST BUSINESS ================= */}
-
-        <section className="lp-list-business">
-
-          <div className="lp-list-icon">
-            🏪
-          </div>
-
-          <div className="lp-list-text">
-
-            <strong>
-              List Your Business for FREE
-            </strong>
-
-            <small>
-              Grow your business with LocalPlatform
-            </small>
-
-          </div>
-
-          <Link
-            href="/list-business"
-            className="lp-list-arrow"
-          >
-            →
-          </Link>
-
-        </section>
-
-
-        {/* ================= BOTTOM NAV ================= */}
-
-        <nav className="lp-bottom-nav">
-
-          <Link
-            href="/"
-            className="active"
-          >
-            <span>⌂</span>
-            <small>Home</small>
-          </Link>
-
-          <Link href="/search">
-            <span>⌕</span>
-            <small>Explore</small>
-          </Link>
-
-          <Link href="/search">
-            <span>⊙</span>
-            <small>Nearby</small>
-          </Link>
-
-          <Link href="/chat">
-            <span>◌</span>
-            <small>Chat</small>
-          </Link>
-
-          <Link href="/profile">
-            <span>♙</span>
-            <small>Profile</small>
-          </Link>
-
-        </nav>
-
+                <p>⌖ {business.area}</p>
+              </div>
+
+              <div className="lp-mini-actions">
+                <button>☎</button>
+                <button>◉</button>
+                <button>◌</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="🏷 Offers Near You" action="See All">
+        <div className="lp-offers-scroll">
+          <Offer
+            image="https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=200&q=80"
+            title="20% OFF"
+            text="on all food combos"
+            shop="Spice Hub"
+          />
+
+          <Offer
+            image="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=200&q=80"
+            title="30% OFF"
+            text="on salon services"
+            shop="Glow Salon"
+          />
+
+          <Offer
+            image="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=200&q=80"
+            title="FREE"
+            text="first consultation"
+            shop="Care Life"
+          />
+        </div>
+      </Section>
+
+      <Section title="Popular Categories" action="See All">
+        <div className="lp-popular-scroll">
+          {[
+            ["⌂", "Architect"],
+            ["ϟ", "Electrician"],
+            ["♨", "Plumber"],
+            ["❄", "AC"],
+            ["▰", "Car"],
+            ["♧", "Fitness"],
+            ["•••", "More"],
+          ].map(([icon, name]) => (
+            <button className="lp-popular-item" key={name}>
+              <span>{icon}</span>
+              <small>{name}</small>
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <button className="lp-list-business">
+        <span className="lp-list-icon">🏪</span>
+
+        <span className="lp-list-text">
+          <strong>List Your Business FREE</strong>
+          <small>Reach more local customers today</small>
+        </span>
+
+        <span className="lp-list-arrow">›</span>
+      </button>
+
+      <nav className="lp-bottom-nav">
+        <Link className="active" href="/">
+          <span>⌂</span>
+          <small>Home</small>
+        </Link>
+
+        <Link href="/search">
+          <span>⌕</span>
+          <small>Explore</small>
+        </Link>
+
+        <Link href="/search">
+          <span>⌖</span>
+          <small>Nearby</small>
+        </Link>
+
+        <Link href="/chat">
+          <span>◌</span>
+          <small>Chat</small>
+        </Link>
+
+        <Link href="/profile">
+          <span>♙</span>
+          <small>Profile</small>
+        </Link>
+      </nav>
+    </main>
+  );
+}
+
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="lp-section">
+      <div className="lp-section-head">
+        <h2>{title}</h2>
+        <a href="#all">{action}</a>
       </div>
-    </>
+
+      {children}
+    </section>
+  );
+}
+
+function Offer({
+  image,
+  title,
+  text,
+  shop,
+}: {
+  image: string;
+  title: string;
+  text: string;
+  shop: string;
+}) {
+  return (
+    <article className="lp-offer-card">
+      <div
+        className="lp-offer-image"
+        style={{ backgroundImage: `url(${image})` }}
+      />
+
+      <div className="lp-offer-info">
+        <strong>{title}</strong>
+        <span>{text}</span>
+        <small>{shop}</small>
+      </div>
+    </article>
   );
 }

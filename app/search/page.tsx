@@ -1,331 +1,197 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
 
 const businesses = [
   {
-    id: 1,
     name: "Spice Hub Restaurant",
-    category: "Restaurant",
+    category: "Food",
     area: "Gomti Nagar, Lucknow",
     rating: "4.8",
     reviews: "320",
     image:
-      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=85",
-    offer: "20% OFF All Combos",
+      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80",
     open: true,
   },
   {
-    id: 2,
     name: "The Urban Cafe",
     category: "Cafe",
     area: "Hazratganj, Lucknow",
     rating: "4.6",
     reviews: "210",
     image:
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=85",
-    offer: "Free Coffee",
+      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80",
     open: true,
   },
   {
-    id: 3,
-    name: "Royal Biryani House",
-    category: "Restaurant",
-    area: "Aliganj, Lucknow",
-    rating: "4.7",
-    reviews: "480",
-    image:
-      "https://images.unsplash.com/photo-1563379091339-03246963d96c?auto=format&fit=crop&w=600&q=85",
-    offer: "Buy 1 Get 1",
-    open: true,
-  },
-  {
-    id: 4,
-    name: "City Salon",
+    name: "Glow Beauty Salon",
     category: "Salon",
     area: "Aliganj, Lucknow",
     rating: "4.7",
-    reviews: "180",
+    reviews: "185",
     image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=85",
-    offer: "30% OFF",
+      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80",
+    open: false,
+  },
+  {
+    name: "Care Life Clinic",
+    category: "Doctors",
+    area: "Indira Nagar, Lucknow",
+    rating: "4.9",
+    reviews: "410",
+    image:
+      "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=600&q=80",
     open: true,
   },
 ];
 
-const filters = [
-  "Sort",
-  "Open Now",
-  "Top Rated",
-  "Offers",
-];
+const filters = ["All", "Food", "Doctors", "Salon", "Cafe"];
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] =
-    useState("Sort");
-
-  const filtered = businesses.filter((business) =>
-    `${business.name} ${business.category} ${business.area}`
-      .toLowerCase()
-      .includes(query.toLowerCase())
+  const [query, setQuery] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : new URLSearchParams(window.location.search).get("q") ?? "",
   );
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  const filteredBusinesses = useMemo(() => {
+    return businesses.filter((business) => {
+      const matchesFilter =
+        activeFilter === "All" || business.category === activeFilter;
+
+      const searchText = `${business.name} ${business.category} ${business.area}`
+        .toLowerCase()
+        .includes(query.toLowerCase());
+
+      return matchesFilter && searchText;
+    });
+  }, [query, activeFilter]);
 
   return (
-    <main className="lp-explore-page">
-
-      {/* HEADER */}
-
-      <header className="lp-explore-header">
-
-        <Link href="/" className="lp-back">
+    <main className="lp-mobile-app lp-search-page">
+      <header className="lp-search-header">
+        <Link href="/" className="lp-back-button" aria-label="Go back">
           ‹
         </Link>
 
         <div>
-          <h1>Explore Near You</h1>
-          <p>⌖ Lucknow</p>
+          <h1>Explore</h1>
+          <p>Find the best places near you</p>
         </div>
 
-        <button className="lp-explore-search">
-          ⌕
+        <button className="lp-header-action" aria-label="Filter">
+          ☷
         </button>
-
       </header>
 
-
-      {/* SEARCH */}
-
-      <div className="lp-explore-searchbox">
-
+      <section className="lp-explore-search">
         <span>⌕</span>
 
         <input
           value={query}
-          onChange={(e) =>
-            setQuery(e.target.value)
-          }
-          placeholder="Search businesses, services..."
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search businesses or services..."
         />
 
         {query && (
           <button
+            className="lp-clear-search"
             onClick={() => setQuery("")}
+            aria-label="Clear search"
           >
             ×
           </button>
         )}
-
-      </div>
-
-
-      {/* FILTERS */}
-
-      <div className="lp-filter-scroll">
-
-        {filters.map((filter) => (
-
-          <button
-            key={filter}
-            className={
-              activeFilter === filter
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveFilter(filter)
-            }
-          >
-            {filter}
-            {filter === "Sort" && " ⌄"}
-          </button>
-
-        ))}
-
-      </div>
-
-
-      {/* RESULT HEADER */}
-
-      <section className="lp-result-head">
-
-        <div>
-          <h2>
-            Businesses Near You
-          </h2>
-
-          <p>
-            {filtered.length} places found
-          </p>
-        </div>
-
-        <button>
-          ☷
-        </button>
-
       </section>
 
-
-      {/* BUSINESS LIST */}
-
-      <section className="lp-result-list">
-
-        {filtered.map((business) => (
-
-          <article
-            key={business.id}
-            className="lp-result-card"
+      <section className="lp-filter-scroll">
+        {filters.map((filter) => (
+          <button
+            key={filter}
+            className={activeFilter === filter ? "selected" : ""}
+            onClick={() => setActiveFilter(filter)}
           >
+            {filter}
+          </button>
+        ))}
+      </section>
 
-            <Link
-              href={`/business/${business.id}`}
-              className="lp-result-main"
-            >
+      <section className="lp-results-section">
+        <div className="lp-results-heading">
+          <div>
+            <h2>{query ? `Results for “${query}”` : "Popular near you"}</h2>
+            <p>{filteredBusinesses.length} places found</p>
+          </div>
 
+          <button className="lp-sort-button">Sort⌄</button>
+        </div>
+
+        <div className="lp-results-list">
+          {filteredBusinesses.map((business) => (
+            <article className="lp-result-card" key={business.name}>
               <div
                 className="lp-result-image"
-                style={{
-                  backgroundImage:
-                    `url("${business.image}")`,
-                }}
+                style={{ backgroundImage: `url(${business.image})` }}
               >
-
-                <span
-                  className={
-                    business.open
-                      ? "lp-result-open"
-                      : "lp-result-closed"
-                  }
-                >
-                  {business.open
-                    ? "Open Now"
-                    : "Closed"}
+                <span className={business.open ? "open" : "closed"}>
+                  {business.open ? "OPEN NOW" : "CLOSED"}
                 </span>
 
+                <button className="lp-result-save" aria-label="Save business">
+                  ♡
+                </button>
               </div>
 
-
-              <div className="lp-result-info">
-
+              <div className="lp-result-content">
                 <div className="lp-result-title">
-
-                  <h3>
-                    {business.name}
-                  </h3>
-
-                  <span>♡</span>
-
+                  <h3>{business.name}</h3>
+                  <strong>★ {business.rating}</strong>
                 </div>
 
+                <p className="lp-result-category">{business.category}</p>
 
-                <div className="lp-result-rating">
-
-                  <strong>
-                    ★ {business.rating}
-                  </strong>
-
-                  <small>
-                    ({business.reviews})
-                  </small>
-
-                </div>
-
-
-                <p>
-                  {business.category}
-                </p>
-
-                <p>
+                <p className="lp-result-location">
                   ⌖ {business.area}
                 </p>
 
+                <p className="lp-result-reviews">
+                  {business.reviews} reviews · Available today
+                </p>
 
-                <div className="lp-result-offer">
-                  ♥ {business.offer}
+                <div className="lp-result-actions">
+                  <button>☎ Call</button>
+                  <button>◉ WhatsApp</button>
+                  <button>View</button>
                 </div>
-
               </div>
+            </article>
+          ))}
+        </div>
 
-            </Link>
-
-
-            {/* ACTIONS */}
-
-            <div className="lp-result-actions">
-
-              <button
-                onClick={() =>
-                  (window.location.href =
-                    "tel:+919876543210")
-                }
-              >
-                ☎ Call
-              </button>
-
-              <button
-                onClick={() =>
-                  window.open(
-                    "https://wa.me/919876543210",
-                    "_blank"
-                  )
-                }
-              >
-                ◉ WhatsApp
-              </button>
-
-              <Link href="/chat">
-                ◌ Chat
-              </Link>
-
-            </div>
-
-          </article>
-
-        ))}
-
-
-        {filtered.length === 0 && (
-
-          <div className="lp-no-result">
-
-            <div>⌕</div>
-
-            <h3>
-              No businesses found
-            </h3>
-
-            <p>
-              Try another business,
-              service or location.
-            </p>
-
+        {filteredBusinesses.length === 0 && (
+          <div className="lp-empty-results">
+            <span>⌕</span>
+            <h3>No businesses found</h3>
+            <p>Try another search or category.</p>
           </div>
-
         )}
-
       </section>
 
-
-      {/* BOTTOM NAV */}
-
       <nav className="lp-bottom-nav">
-
         <Link href="/">
           <span>⌂</span>
           <small>Home</small>
         </Link>
 
-        <Link
-          href="/search"
-          className="active"
-        >
+        <Link className="active" href="/search">
           <span>⌕</span>
           <small>Explore</small>
         </Link>
 
         <Link href="/search">
-          <span>⊙</span>
+          <span>⌖</span>
           <small>Nearby</small>
         </Link>
 
@@ -338,9 +204,7 @@ export default function SearchPage() {
           <span>♙</span>
           <small>Profile</small>
         </Link>
-
       </nav>
-
     </main>
   );
 }
