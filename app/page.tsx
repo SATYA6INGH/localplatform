@@ -9,12 +9,14 @@ import AdSenseSlot from "./components/AdSenseSlot";
 import HomeTopAds from "./components/HomeTopAds";
 
 const categories = [
-  ["Food", "🍴", "food"],
+  ["Restaurants", "🍴", "food"],
   ["Doctors", "⚕", "doctor"],
-  ["Salon", "✂", "salon"],
+  ["Salons", "✂", "salon"],
   ["Home Services", "⌂", "home"],
+  ["Architects", "⌂", "interior"],
   ["Real Estate", "▥", "real"],
-  ["Interior", "▣", "interior"],
+  ["Fitness", "♨", "fitness"],
+  ["More", "•••", "more"],
 ] as const;
 
 type BusinessCard = {
@@ -97,7 +99,7 @@ export default function HomePage() {
 
         <div className="lp-header-actions">
           <Link className="lp-header-action" aria-label="Notifications" href="/status">
-            ♧<i>2</i>
+            ♧
           </Link>
 
           <Link className="lp-header-action" aria-label="Messages" href="/chat">
@@ -110,25 +112,15 @@ export default function HomePage() {
         </div>
       </header>
 
-      <form className="lp-main-search" onSubmit={search}>
-        <label className="lp-search-input-wrap">
-          <span>⌕</span>
-
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search businesses or services..."
-          />
-        </label>
-
-        <button
-          className="lp-filter-button"
-          aria-label="Search filters"
-          type="submit"
-        >
-          ☷
-        </button>
-      </form>
+      <section className="lp-discovery-hero">
+        <div className="lp-hero-glow" />
+        <div className="lp-hero-copy"><h1>Find Local<br />Businesses Near You</h1><p>Shops · Services · Professionals · Offers</p></div>
+        <form className="lp-main-search lp-hero-search" onSubmit={search}>
+          <label className="lp-search-input-wrap"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search business or service..." /></label>
+          <button className="lp-hero-location" type="button" onClick={changeCity}>⌖ {city}</button>
+          <button className="lp-filter-button" aria-label="Search" type="submit">⌕</button>
+        </form>
+      </section>
 
       <section className="lp-category-section" aria-label="Categories">
         <div className="lp-horizontal-list">
@@ -149,9 +141,10 @@ export default function HomePage() {
 
       <HomeTopAds />
 
-      <Section title="Status" action="See All" href="/status">
+      <Section title="Live Status" action="See All" href="/status">
         <div className="lp-status-scroll">
-          <button className="lp-status-item" onClick={() => router.push("/status")}><span className="lp-status-ring status-add">＋</span><strong>View live updates</strong><small>Only real statuses</small></button>
+          <button className="lp-status-item" onClick={() => router.push("/status")}><span className="lp-status-ring status-add">＋</span><strong>Add Status</strong><small>24 hours</small></button>
+          <Link className="lp-live-status-empty" href="/status">View real business updates near you</Link>
         </div>
       </Section>
 
